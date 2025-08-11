@@ -98,6 +98,9 @@ dist
 # public
 
 # vuepress build output
+
+# Screenshots (uncomment if you don't want to track screenshots)
+# screenshots/
 .vuepress/dist
 
 # vuepress v2.x temp and cache directory
@@ -128,3 +131,4 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+.history/
