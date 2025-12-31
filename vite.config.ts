@@ -10,7 +10,16 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html')
-      }
+      },
+      external: [
+        'electron',
+        'electron-store',
+        'better-sqlite3',
+        '@andb/core',
+        'mysql2',
+        'path',
+        'fs'
+      ]
     }
   },
   resolve: {
@@ -20,5 +29,14 @@ export default defineConfig({
   },
   server: {
     port: 5173
+  },
+  optimizeDeps: {
+    exclude: [
+      'electron',
+      'electron-store',
+      'better-sqlite3',
+      '@andb/core',
+      'mysql2'
+    ]
   }
 })

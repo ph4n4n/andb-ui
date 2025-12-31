@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useAppStore } from './app'
+import { storage } from '../utils/storage-ipc'
 
 export interface Environment {
   id: string
@@ -21,44 +23,86 @@ export interface ConnectionPair {
 
 export const useConnectionPairsStore = defineStore('connectionPairs', () => {
   // State
-  const environments = ref<Environment[]>([
-    { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
-    { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
-    { id: '3', name: 'UAT', description: 'User Acceptance Testing', enabled: true, order: 3 },
-    { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
-  ])
+  const environments = ref<Environment[]>([])
+  const connectionPairs = ref<ConnectionPair[]>([])
 
-  const connectionPairs = ref<ConnectionPair[]>([
-    {
-      id: '1',
-      name: 'DEV to STAGE',
-      sourceEnv: 'DEV',
-      targetEnv: 'STAGE',
-      description: 'Development to staging migration',
-      isDefault: true,
-      status: 'idle'
-    },
-    {
-      id: '2',
-      name: 'STAGE to UAT',
-      sourceEnv: 'STAGE',
-      targetEnv: 'UAT',
-      description: 'Staging to UAT testing',
-      isDefault: false,
-      status: 'idle'
-    },
-    {
-      id: '3',
-      name: 'UAT to PROD',
-      sourceEnv: 'UAT',
-      targetEnv: 'PROD',
-      description: 'UAT to production deployment',
-      isDefault: false,
-      status: 'idle'
+  // Initialize
+  const init = async () => {
+    const savedEnvironments = await storage.getEnvironments()
+    if (savedEnvironments.length > 0) {
+      environments.value = savedEnvironments
+    } else {
+      environments.value = [
+        { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
+        { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
+        { id: '3', name: 'UAT', description: 'User Acceptance Testing', enabled: true, order: 3 },
+        { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
+      ]
     }
-  ])
+
+    const savedPairs = await storage.getConnectionPairs()
+    if (savedPairs.length > 0) {
+      connectionPairs.value = savedPairs
+    } else {
+      connectionPairs.value = [
+        {
+          id: '1',
+          name: 'DEV to STAGE',
+          sourceEnv: 'DEV',
+          targetEnv: 'STAGE',
+          description: 'Development to staging migration',
+          isDefault: true,
+          status: 'idle'
+        },
+        {
+          id: '2',
+          name: 'STAGE to UAT',
+          sourceEnv: 'STAGE',
+          targetEnv: 'UAT',
+          description: 'Staging to UAT testing',
+          isDefault: false,
+          status: 'idle'
+        },
+        {
+          id: '3',
+          name: 'UAT to PROD',
+          sourceEnv: 'UAT',
+          targetEnv: 'PROD',
+          description: 'UAT to production deployment',
+          isDefault: false,
+          status: 'idle'
+        }
+      ]
+    }
+
+    // Set default selection
+    const defaultPair = connectionPairs.value.find(p => p.isDefault)
+    if (defaultPair) {
+      selectedPairId.value = defaultPair.id
+    }
+  }
+
+  // Call init
+  init()
 
   const selectedPairId = ref('1') // Default to first pair
+
+  // Watch and auto-save to storage
+  watch(
+    environments,
+    newEnvs => {
+      storage.saveEnvironments(newEnvs)
+    },
+    { deep: true }
+  )
+
+  watch(
+    connectionPairs,
+    newPairs => {
+      storage.saveConnectionPairs(newPairs)
+    },
+    { deep: true }
+  )
 
   // Getters
   const enabledEnvironments = computed(() => {
@@ -83,6 +127,33 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
 
   const getPairsByTarget = computed(() => {
     return (targetEnv: string) => connectionPairs.value.filter(p => p.targetEnv === targetEnv)
+  })
+
+  const activePair = computed(() => {
+    try {
+      if (!connectionPairs.value) return null
+      if (!selectedPairId || !selectedPairId.value) return null
+
+      const pair = connectionPairs.value.find(p => p.id === selectedPairId.value)
+      if (!pair) return null
+
+      const appStore = useAppStore()
+      if (!appStore || !appStore.connections) return null
+
+      const source = appStore.connections.find(c => c.environment === pair.sourceEnv)
+      const target = appStore.connections.find(c => c.environment === pair.targetEnv)
+
+      if (!source || !target) return null
+
+      return {
+        ...pair,
+        source,
+        target
+      }
+    } catch (e) {
+      console.error('Error in activePair computed:', e)
+      return null
+    }
   })
 
   // Actions
@@ -139,7 +210,7 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     connectionPairs.value.forEach(pair => {
       pair.isDefault = false
     })
-    
+
     // Set this pair as default
     const pair = connectionPairs.value.find(p => p.id === pairId)
     if (pair) {
@@ -154,15 +225,31 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     if (!pair) return
 
     pair.status = 'testing'
-    
+
     try {
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Random result for demo
-      const success = Math.random() > 0.3
-      pair.status = success ? 'success' : 'failed'
+      const appStore = useAppStore()
+
+      // Find actual connections for this pair's environments
+      const sourceConn = appStore.connections.find(c => c.environment === pair.sourceEnv)
+      const targetConn = appStore.connections.find(c => c.environment === pair.targetEnv)
+
+      if (!sourceConn || !targetConn) {
+        pair.status = 'failed'
+        return
+      }
+
+      // Test both connections with a minimum delay for better UX (avoid flicker on local)
+      const minDelay = new Promise(resolve => setTimeout(resolve, 800))
+
+      const [sourceSuccess, targetSuccess] = await Promise.all([
+        appStore.testConnection(sourceConn.id),
+        appStore.testConnection(targetConn.id),
+        minDelay
+      ])
+
+      pair.status = (sourceSuccess && targetSuccess) ? 'success' : 'failed'
     } catch (error) {
+      console.error('Connection pair test error:', error)
       pair.status = 'failed'
     }
   }
@@ -174,28 +261,65 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     }))
   }
 
-  // Initialize with default pair selected
-  const initialize = () => {
-    const defaultPair = connectionPairs.value.find(p => p.isDefault)
-    if (defaultPair) {
-      selectedPairId.value = defaultPair.id
-    }
+  const resetEnvironments = async () => {
+    environments.value = [
+      { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
+      { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
+      { id: '3', name: 'UAT', description: 'UAT environment', enabled: true, order: 3 },
+      { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
+    ]
+    await storage.saveEnvironments(environments.value)
   }
+
+  const resetConnectionPairs = async () => {
+    connectionPairs.value = [
+      {
+        id: '1',
+        name: 'DEV to STAGE',
+        sourceEnv: 'DEV',
+        targetEnv: 'STAGE',
+        description: 'Development to staging migration',
+        isDefault: true,
+        status: 'idle'
+      },
+      {
+        id: '2',
+        name: 'STAGE to UAT',
+        sourceEnv: 'STAGE',
+        targetEnv: 'UAT',
+        description: 'Staging to UAT testing',
+        isDefault: false,
+        status: 'idle'
+      },
+      {
+        id: '3',
+        name: 'UAT to PROD',
+        sourceEnv: 'UAT',
+        targetEnv: 'PROD',
+        description: 'UAT to production deployment',
+        isDefault: false,
+        status: 'idle'
+      }
+    ]
+    await storage.saveConnectionPairs(connectionPairs.value)
+  }
+
 
   return {
     // State
     environments,
     connectionPairs,
     selectedPairId,
-    
+
     // Getters
     enabledEnvironments,
     availablePairs,
     defaultPair,
     selectedPair,
+    activePair,
     getPairsBySource,
     getPairsByTarget,
-    
+
     // Actions
     setSelectedPair,
     addEnvironment,
@@ -207,6 +331,8 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     setDefaultPair,
     testConnectionPair,
     reorderEnvironments,
-    initialize
+    resetEnvironments,
+    resetConnectionPairs,
+    reloadData: init
   }
 })

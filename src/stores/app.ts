@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { Andb } from '@/utils/andb'
+import { storage } from '../utils/storage-ipc'
 
 export interface DatabaseConnection {
   id: string
@@ -9,8 +11,13 @@ export interface DatabaseConnection {
   database: string
   username: string
   password?: string
-  status: 'connected' | 'testing' | 'failed'
-  environment: 'DEV' | 'STAGE' | 'PROD'
+  status: 'idle' | 'connected' | 'testing' | 'failed'
+  environment: 'DEV' | 'STAGE' | 'UAT' | 'PROD'
+  lastTested?: string
+  domainMapping?: {
+    from: string  // e.g., '@dev.example.com'
+    to: string    // e.g., '@prod.example.com'
+  }
 }
 
 export interface ConnectionPair {
@@ -21,48 +28,69 @@ export interface ConnectionPair {
 export const useAppStore = defineStore('app', () => {
   // State
   const sidebarCollapsed = ref(false)
-  const connections = ref<DatabaseConnection[]>([
-    {
-      id: '1',
-      name: 'DEV1',
-      host: 'localhost',
-      port: 3306,
-      database: 'dev_db',
-      username: 'dev_user',
-      status: 'connected',
-      environment: 'DEV'
-    },
-    {
-      id: '2',
-      name: 'DEV2',
-      host: 'dev2-server',
-      port: 3306,
-      database: 'dev2_db',
-      username: 'dev2_user',
-      status: 'connected',
-      environment: 'DEV'
-    },
-    {
-      id: '3',
-      name: 'STAGE',
-      host: 'stage-server',
-      port: 3306,
-      database: 'stage_db',
-      username: 'stage_user',
-      status: 'testing',
-      environment: 'STAGE'
-    },
-    {
-      id: '4',
-      name: 'PROD',
-      host: 'prod-server',
-      port: 3306,
-      database: 'prod_db',
-      username: 'prod_user',
-      status: 'failed',
-      environment: 'PROD'
+  const connections = ref<DatabaseConnection[]>([])
+
+  // Initialize state
+  const init = async () => {
+    const savedSettings = await storage.getSettings()
+    sidebarCollapsed.value = savedSettings.sidebarCollapsed
+
+    const savedConnections = await storage.getConnections()
+    if (savedConnections.length > 0) {
+      connections.value = savedConnections
+    } else {
+      // Default demo connections
+      connections.value = [
+        {
+          id: '1',
+          name: 'DEV',
+          host: '127.0.0.1',
+          port: 3306,
+          database: 'dev_database',
+          username: 'root',
+          password: 'root123',
+          status: 'idle',
+          environment: 'DEV'
+        },
+        {
+          id: '2',
+          name: 'STAGE',
+          host: '127.0.0.1',
+          port: 3307,
+          database: 'stage_database',
+          username: 'root',
+          password: 'root123',
+          status: 'idle',
+          environment: 'STAGE'
+        },
+        {
+          id: '3',
+          name: 'UAT',
+          host: '127.0.0.1',
+          port: 3308,
+          database: 'uat_database',
+          username: 'root',
+          password: 'root123',
+          status: 'idle',
+          environment: 'UAT'
+        },
+        {
+          id: '4',
+          name: 'PROD',
+          host: '127.0.0.1',
+          port: 3309,
+          database: 'prod_database',
+          username: 'root',
+          password: 'root123',
+          status: 'idle',
+          environment: 'PROD'
+        }
+      ]
     }
-  ])
+  }
+
+  // Call init
+  init()
 
   const currentPair = ref<ConnectionPair>({
     source: null,
@@ -82,6 +110,19 @@ export const useAppStore = defineStore('app', () => {
     return currentPair.value.source && currentPair.value.target
   })
 
+  // Watch and auto-save to storage
+  watch(
+    connections,
+    newConnections => {
+      storage.saveConnections(newConnections)
+    },
+    { deep: true }
+  )
+
+  watch(sidebarCollapsed, newValue => {
+    storage.updateSettings({ sidebarCollapsed: newValue })
+  })
+
   // Actions
   const toggleSidebar = () => {
     sidebarCollapsed.value = !sidebarCollapsed.value
@@ -90,7 +131,7 @@ export const useAppStore = defineStore('app', () => {
   const setConnectionPair = (sourceId: string, targetId: string) => {
     const source = getConnectionById.value(sourceId)
     const target = getConnectionById.value(targetId)
-    
+
     if (source && target) {
       currentPair.value = { source, target }
     }
@@ -119,21 +160,70 @@ export const useAppStore = defineStore('app', () => {
     const connection = getConnectionById.value(id)
     if (!connection) return
 
-    // Update status to testing
     updateConnection(id, { status: 'testing' })
 
     try {
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Random result for demo
-      const success = Math.random() > 0.3
-      updateConnection(id, { 
-        status: success ? 'connected' : 'failed' 
+      const success = await Andb.testConnection(connection)
+      updateConnection(id, {
+        status: success ? 'connected' : 'failed',
+        lastTested: new Date().toISOString()
       })
+      return success
     } catch (error) {
+      console.error('Connection test error:', error)
       updateConnection(id, { status: 'failed' })
+      return false
     }
+  }
+
+  const resetConnections = async () => {
+    connections.value = [
+      {
+        id: '1',
+        name: 'DEV',
+        host: '127.0.0.1',
+        port: 3306,
+        database: 'dev_database',
+        username: 'root',
+        password: 'root123',
+        status: 'idle',
+        environment: 'DEV'
+      },
+      {
+        id: '2',
+        name: 'STAGE',
+        host: '127.0.0.1',
+        port: 3307,
+        database: 'stage_database',
+        username: 'root',
+        password: 'root123',
+        status: 'idle',
+        environment: 'STAGE'
+      },
+      {
+        id: '3',
+        name: 'UAT',
+        host: '127.0.0.1',
+        port: 3308,
+        database: 'uat_database',
+        username: 'root',
+        password: 'root123',
+        status: 'idle',
+        environment: 'UAT'
+      },
+      {
+        id: '4',
+        name: 'PROD',
+        host: '127.0.0.1',
+        port: 3309,
+        database: 'prod_database',
+        username: 'root',
+        password: 'root123',
+        status: 'idle',
+        environment: 'PROD'
+      }
+    ]
+    await storage.saveConnections(connections.value)
   }
 
   return {
@@ -141,18 +231,20 @@ export const useAppStore = defineStore('app', () => {
     sidebarCollapsed,
     connections,
     currentPair,
-    
+
     // Getters
     getConnectionById,
     getConnectionsByEnvironment,
     isPairValid,
-    
+
     // Actions
     toggleSidebar,
     setConnectionPair,
     addConnection,
     updateConnection,
     removeConnection,
-    testConnection
+    testConnection,
+    resetConnections,
+    reloadData: init
   }
 })

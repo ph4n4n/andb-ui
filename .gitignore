@@ -91,6 +91,18 @@ out
 .nuxt
 dist
 
+# Electron build output
+dist-electron
+out
+
+# Compiled JS from TS in source directories
+electron/**/*.js
+electron/**/*.d.ts
+src/**/*.js
+!electron/test-*.js
+!src/**/*.config.js
+!src/**/*.setup.js
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
@@ -132,3 +144,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .history/
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.cursor/rules/snyk_rules.mdc

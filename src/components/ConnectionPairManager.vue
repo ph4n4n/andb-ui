@@ -150,7 +150,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Plus, ArrowRight, Wifi, Star, Copy, Trash2 } from 'lucide-vue-next'
-import { useConnectionPairsStore, type ConnectionPair, type Environment } from '@/stores/connectionPairs'
+import { useConnectionPairsStore, type ConnectionPair } from '@/stores/connectionPairs'
 
 const connectionPairsStore = useConnectionPairsStore()
 

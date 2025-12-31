@@ -4,32 +4,76 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Outfit', system-ui, sans-serif;
   }
-  
+
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased;
   }
 }
 
 @layer components {
+  /* Premium Buttons */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply px-4 py-2 rounded-xl font-semibold transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
   }
-  
+
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5;
   }
-  
+
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80;
   }
-  
-  .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700;
+
+  /* Glassmorphism */
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl;
   }
-  
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+
+  .glass-panel {
+    @apply bg-white/40 dark:bg-gray-950/40 backdrop-blur-md border border-white/10 dark:border-white/5;
   }
+
+  /* Glow Effects */
+  .glow-primary {
+    @apply shadow-[0_0_20px_rgba(59,130,246,0.15)];
+  }
+  .glow-success {
+    @apply shadow-[0_0_20px_rgba(16,185,129,0.15)];
+  }
+  .glow-error {
+    @apply shadow-[0_0_20px_rgba(239,68,68,0.15)];
+  }
+
+  /* Animated Backgrounds */
+  .bg-mesh {
+    background-image:
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(147, 51, 234, 0.05) 0px, transparent 50%);
+  }
+}
+
+/* Modern Scrollbars - Premium Minimalist */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300/50 dark:bg-gray-700/50 rounded-full transition-colors;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* Chrome/Edge scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
 }

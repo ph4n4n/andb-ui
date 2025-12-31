@@ -112,7 +112,7 @@
           <input
             v-model.number="form.timeout"
             type="number"
-            :placeholder="30"
+            placeholder="30"
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
           <p class="text-gray-500 text-sm mt-1">{{ $t('connections.timeoutInSeconds') }}</p>
@@ -191,7 +191,7 @@
           :disabled="isTesting || !isFormValid"
           class="btn btn-primary flex items-center"
         >
-          <Wifi v-if="!isTesting" class="w-4 h-4 mr-2" />
+          <ShieldQuestion v-if="!isTesting" class="w-4 h-4 mr-2" />
           <Loader v-else class="w-4 h-4 mr-2 animate-spin" />
           {{ isTesting ? $t('connections.testing') : $t('connections.test') }}
         </button>
@@ -199,7 +199,7 @@
 
       <div v-if="testResult" class="p-4 rounded-lg" :class="testResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
         <div class="flex items-center">
-          <CheckCircle v-if="testResult.success" class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+          <ShieldCheck v-if="testResult.success" class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
           <XCircle v-else class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
           <span :class="testResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
             {{ testResult.message }}
@@ -235,9 +235,9 @@ import {
   Eye, 
   EyeOff, 
   ChevronDown, 
-  Wifi, 
+  ShieldQuestion, 
   Loader, 
-  CheckCircle, 
+  ShieldCheck, 
   XCircle 
 } from 'lucide-vue-next'
 import type { DatabaseConnection } from '@/stores/app'

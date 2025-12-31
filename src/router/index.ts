@@ -1,31 +1,22 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Dashboard from '@/views/Dashboard.vue'
+import SplashScreen from '@/views/SplashScreen.vue'
 
 const routes = [
+  {
+    path: '/splash',
+    name: 'Splash',
+    component: SplashScreen
+  },
   {
     path: '/',
     name: 'Dashboard',
     component: Dashboard
   },
   {
-    path: '/export',
-    name: 'Export',
-    component: () => import('@/views/Export.vue')
-  },
-  {
     path: '/compare',
     name: 'Compare',
     component: () => import('@/views/Compare.vue')
-  },
-  {
-    path: '/migrate',
-    name: 'Migrate',
-    component: () => import('@/views/Migrate.vue')
-  },
-  {
-    path: '/scripts',
-    name: 'Scripts',
-    component: () => import('@/views/Scripts.vue')
   },
   {
     path: '/settings',

@@ -431,7 +431,7 @@ const getStatusColor = (status: string) => {
   return colors[status as keyof typeof colors] || 'bg-gray-400'
 }
 
-const formatLastTested = (lastTested?: Date) => {
+const formatLastTested = (lastTested?: string | Date) => {
   if (!lastTested) return $t('connections.neverTested')
   return new Date(lastTested).toLocaleString()
 }

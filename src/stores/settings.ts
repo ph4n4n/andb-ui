@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { setLanguage } from '@/i18n'
 
 export type Theme = 'light' | 'dark' | 'system'
 export type Language = 'en' | 'vi'
@@ -46,7 +45,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement
-    
+
     if (theme === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       root.classList.toggle('dark', isDark)
