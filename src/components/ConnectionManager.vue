@@ -80,7 +80,7 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900 dark:text-white">
+                  <div class="text-sm text-gray-900 dark:text-white truncate max-w-[200px]" :title="`${connection.host}:${connection.port}`">
                     {{ connection.host }}:{{ connection.port }}
                   </div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -105,7 +105,7 @@
                             :disabled="connection.status === 'testing'"
                             class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                             :title="$t('connections.testConnection')">
-                      <Wifi class="w-4 h-4" />
+                      <ShieldQuestion class="w-4 h-4" />
                     </button>
                     <button @click="editConnection(connection)"
                             class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
@@ -171,7 +171,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Database, Wifi, Edit, Trash2, X, Copy } from 'lucide-vue-next'
+import { Plus, Database, ShieldQuestion, Edit, Trash2, X, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import ConnectionForm from './ConnectionForm.vue'

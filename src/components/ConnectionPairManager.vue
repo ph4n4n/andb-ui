@@ -36,14 +36,16 @@
           <div class="flex items-center space-x-2">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Source:</span>
             <select
-              v-model="pair.sourceEnv"
-              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              @change="updatePair(pair)"
+              :value="pair.sourceConnectionId"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent max-w-[200px]"
+              @change="updateSource(pair, ($event.target as HTMLSelectElement).value)"
             >
-              <option value="">Select Source</option>
-              <option v-for="env in enabledEnvironments" :key="env.name" :value="env.name">
-                {{ env.name }}
-              </option>
+              <option value="">Select Connection</option>
+              <optgroup v-for="env in enabledEnvironments" :key="env.id" :label="env.name">
+                <option v-for="conn in getConnectionsByEnv(env.name)" :key="conn.id" :value="conn.id">
+                  {{ conn.name }}
+                </option>
+              </optgroup>
             </select>
           </div>
 
@@ -54,14 +56,16 @@
           <div class="flex items-center space-x-2">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Target:</span>
             <select
-              v-model="pair.targetEnv"
-              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              @change="updatePair(pair)"
+              :value="pair.targetConnectionId"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent max-w-[200px]"
+              @change="updateTarget(pair, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">Select Target</option>
-              <option v-for="env in enabledEnvironments" :key="env.name" :value="env.name">
-                {{ env.name }}
-              </option>
+              <optgroup v-for="env in enabledEnvironments" :key="env.id" :label="env.name">
+                <option v-for="conn in getConnectionsByEnv(env.name)" :key="conn.id" :value="conn.id">
+                  {{ conn.name }}
+                </option>
+              </optgroup>
             </select>
           </div>
 
@@ -84,7 +88,7 @@
               title="Test Connection"
               :disabled="!pair.sourceEnv || !pair.targetEnv"
             >
-              <Wifi class="w-4 h-4" />
+              <ShieldQuestion class="w-4 h-4" />
             </button>
             <button
               @click="setAsDefault(pair)"
@@ -149,21 +153,30 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Plus, ArrowRight, Wifi, Star, Copy, Trash2 } from 'lucide-vue-next'
+import { Plus, ArrowRight, ShieldQuestion, Star, Copy, Trash2 } from 'lucide-vue-next'
 import { useConnectionPairsStore, type ConnectionPair } from '@/stores/connectionPairs'
+import { useAppStore } from '@/stores/app'
 
 const connectionPairsStore = useConnectionPairsStore()
+const appStore = useAppStore()
 
 const connectionPairs = computed(() => connectionPairsStore.connectionPairs)
 const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
+const connections = computed(() => appStore.connections)
 
 const defaultPair = computed(() => connectionPairsStore.defaultPair)
+
+const getConnectionsByEnv = (envName: string) => {
+  return connections.value.filter(c => c.environment === envName)
+}
 
 const addConnectionPair = () => {
   connectionPairsStore.addConnectionPair({
     name: 'New Pair',
     sourceEnv: '',
     targetEnv: '',
+    sourceConnectionId: '',
+    targetConnectionId: '',
     description: '',
     isDefault: false,
     status: 'idle'
@@ -175,6 +188,8 @@ const duplicatePair = (pair: ConnectionPair) => {
     name: `${pair.name}_COPY`,
     sourceEnv: pair.sourceEnv,
     targetEnv: pair.targetEnv,
+    sourceConnectionId: pair.sourceConnectionId,
+    targetConnectionId: pair.targetConnectionId,
     description: pair.description,
     isDefault: false,
     status: 'idle'
@@ -208,18 +223,33 @@ const updatePair = (pair: ConnectionPair) => {
     pair.name = `${pair.name}_${Date.now()}`
   }
   
-  // Validate source and target are different
-  if (pair.sourceEnv === pair.targetEnv && pair.sourceEnv !== '') {
-    pair.targetEnv = ''
-  }
-  
   // Update in store
   connectionPairsStore.updateConnectionPair(pair.id, {
     name: pair.name,
     sourceEnv: pair.sourceEnv,
     targetEnv: pair.targetEnv,
+    sourceConnectionId: pair.sourceConnectionId,
+    targetConnectionId: pair.targetConnectionId,
     description: pair.description
   })
+}
+
+const updateSource = (pair: ConnectionPair, connectionId: string) => {
+  const connection = connections.value.find(c => c.id === connectionId)
+  if (connection) {
+    pair.sourceConnectionId = connectionId
+    pair.sourceEnv = connection.environment
+    updatePair(pair)
+  }
+}
+
+const updateTarget = (pair: ConnectionPair, connectionId: string) => {
+  const connection = connections.value.find(c => c.id === connectionId)
+  if (connection) {
+    pair.targetConnectionId = connectionId
+    pair.targetEnv = connection.environment
+    updatePair(pair)
+  }
 }
 
 const getPairStatusClass = (pair: ConnectionPair) => {

@@ -6,10 +6,11 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 
 - **Auto-hide Sidebar**: Collapsible navigation with keyboard shortcuts
 - **Dual-Pane Layout**: Resizable source/destination panes for efficient comparison
+- **Atomic Operations**: Smart Refresh & Compare individual objects or categories
 - **Multiple Database Connections**: Manage multiple database configurations
 - **Connection Pairs**: Select source ↔ target for compare/migrate operations
-- **Visual Diff**: Side-by-side comparison with status indicators
-- **Export Preview**: Live SQL preview with syntax highlighting
+- **Visual Diff**: Side-by-side comparison with status indicators & syntax highlighting
+- **Export Preview**: Live SQL preview with syntax highlighting (Rainbow brackets + Line numbers)
 - **Migration Management**: Create and track database migrations
 - **Script Generator**: Generate andb-core CLI scripts
 - **Dark/Light Theme**: Modern UI with theme support
@@ -95,11 +96,13 @@ andb-ui/
 ## 🎨 UI Components
 
 ### Layout Components
+
 - **Sidebar**: Auto-hide navigation with connection management
 - **Header**: Connection pair selector and quick actions
 - **Main Content**: Resizable dual-pane layout
 
 ### Views
+
 - **Dashboard**: Overview of connections and recent operations
 - **Export**: Database objects export with SQL preview
 - **Compare**: Side-by-side database comparison
@@ -141,6 +144,11 @@ PROD_DB_NAME=prod_database
 PROD_DB_USER=prod_user
 PROD_DB_PASS=prod_password
 ```
+
+## 📚 Documentation
+
+- [Development Guide](docs/DEVELOPMENT.md) - Deep dive into architecture and status.
+- [Changelog](docs/CHANGELOG.md) - History of changes and updates.
 
 ## 🤝 Contributing
 

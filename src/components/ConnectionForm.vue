@@ -25,9 +25,13 @@
             :class="{ 'border-red-500': errors.environment }"
           >
             <option value="">{{ $t('common.select') }}</option>
-            <option value="DEV">{{ $t('environments.dev') }}</option>
-            <option value="STAGE">{{ $t('environments.stage') }}</option>
-            <option value="PROD">{{ $t('environments.prod') }}</option>
+            <option 
+              v-for="env in enabledEnvironments" 
+              :key="env.name" 
+              :value="env.name"
+            >
+              {{ $t(`environments.${env.name.toLowerCase()}`) }}
+            </option>
           </select>
           <p v-if="errors.environment" class="text-red-500 text-sm mt-1">{{ errors.environment }}</p>
         </div>
@@ -182,14 +186,24 @@
       </div>
     </div>
 
-    <!-- Test Connection -->
-    <div class="card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold">{{ $t('connections.testConnection') }}</h3>
+    <!-- Test Result -->
+    <div v-if="testResult" class="p-4 rounded-lg" :class="testResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
+      <div class="flex items-center">
+        <ShieldCheck v-if="testResult.success" class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+        <XCircle v-else class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+        <span :class="testResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
+          {{ testResult.message }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <div class="mr-auto">
         <button
           @click="testConnection"
           :disabled="isTesting || !isFormValid"
-          class="btn btn-primary flex items-center"
+          class="btn btn-secondary flex items-center"
         >
           <ShieldQuestion v-if="!isTesting" class="w-4 h-4 mr-2" />
           <Loader v-else class="w-4 h-4 mr-2 animate-spin" />
@@ -197,19 +211,6 @@
         </button>
       </div>
 
-      <div v-if="testResult" class="p-4 rounded-lg" :class="testResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
-        <div class="flex items-center">
-          <ShieldCheck v-if="testResult.success" class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
-          <XCircle v-else class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
-          <span :class="testResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
-            {{ testResult.message }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="flex justify-end space-x-4">
       <button
         @click="$emit('cancel')"
         class="btn btn-secondary"
@@ -240,9 +241,13 @@ import {
   ShieldCheck, 
   XCircle 
 } from 'lucide-vue-next'
+import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import type { DatabaseConnection } from '@/stores/app'
 
 const { t: $t } = useI18n()
+const connectionPairsStore = useConnectionPairsStore()
+
+const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
 
 interface Props {
   connection?: DatabaseConnection

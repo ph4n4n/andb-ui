@@ -70,12 +70,15 @@ export class AndbBuilder {
    */
   static buildConfig(
     sourceConn: DatabaseConnection,
-    targetConn: DatabaseConnection
+    targetConn: DatabaseConnection | null
   ): AndbConfig {
     // Build ENVIRONMENTS object dynamically
     const ENVIRONMENTS: Record<string, string> = {
-      [sourceConn.environment]: sourceConn.environment,
-      [targetConn.environment]: targetConn.environment
+      [sourceConn.environment]: sourceConn.environment
+    }
+
+    if (targetConn) {
+      ENVIRONMENTS[targetConn.environment] = targetConn.environment
     }
 
     return {
@@ -86,9 +89,15 @@ export class AndbBuilder {
        * Get database destination configuration
        */
       getDBDestination: (env: string, mail = false) => {
-        const conn = env.toUpperCase() === sourceConn.environment
+        if (!env) return undefined
+
+        const srcEnv = sourceConn?.environment?.toUpperCase()
+        const trgEnv = targetConn?.environment?.toUpperCase()
+        const currentEnv = env.toUpperCase()
+
+        const conn = (srcEnv && currentEnv === srcEnv)
           ? sourceConn
-          : targetConn
+          : (trgEnv && currentEnv === trgEnv ? targetConn : null)
 
         if (!conn) return undefined
 
@@ -107,23 +116,29 @@ export class AndbBuilder {
        * Get source environment (always return source from pair)
        */
       getSourceEnv: (_envName: string) => {
-        return sourceConn.environment
+        return sourceConn?.environment || ''
       },
 
       /**
        * Get destination environment (always return target from pair)
        */
       getDestEnv: (_env: string) => {
-        return targetConn.environment
+        return targetConn?.environment || ''
       },
 
       /**
        * Get database name for environment
        */
       getDBName: (env: string, _isDbMail = false) => {
-        const conn = env.toUpperCase() === sourceConn.environment
+        if (!env) return ''
+
+        const srcEnv = sourceConn?.environment?.toUpperCase()
+        const trgEnv = targetConn?.environment?.toUpperCase()
+        const currentEnv = env.toUpperCase()
+
+        const conn = (srcEnv && currentEnv === srcEnv)
           ? sourceConn
-          : targetConn
+          : (trgEnv && currentEnv === trgEnv ? targetConn : null)
 
         return conn?.database || ''
       },
@@ -144,7 +159,7 @@ export class AndbBuilder {
         }
 
         // Apply target domain mapping (if exists)
-        if (targetConn.domainMapping?.from && targetConn.domainMapping?.to) {
+        if (targetConn?.domainMapping?.from && targetConn?.domainMapping?.to) {
           result = result.replace(
             new RegExp(targetConn.domainMapping.from, 'g'),
             targetConn.domainMapping.to
@@ -167,10 +182,10 @@ export class AndbBuilder {
 
   public static getCorePath() {
     try {
-      console.log('[AndbBuilder] Resolved @andb/core path:', require.resolve('@andb/core'));
-      console.log('[AndbBuilder] Resolved @andb/core/package.json:', require.resolve('@andb/core/package.json'));
+      require.resolve('@andb/core');
+      require.resolve('@andb/core/package.json');
     } catch (e) {
-      console.error('[AndbBuilder] Could not resolve @andb/core path', e);
+      // Quietly fail
     }
   }
 
@@ -179,8 +194,8 @@ export class AndbBuilder {
    */
   static async execute(
     sourceConn: DatabaseConnection,
-    targetConn: DatabaseConnection,
-    operation: 'export' | 'compare' | 'migrate' | 'generate',
+    targetConn: DatabaseConnection | null,
+    operation: 'export' | 'compare' | 'migrate' | 'generate' | 'getSchemaObjects',
     options: any = {}
   ): Promise<any> {
     const fs = require('fs')
@@ -188,23 +203,22 @@ export class AndbBuilder {
     const userDataDir = app.getPath('userData')
 
     try {
-      console.log(`[AndbBuilder] Executing ${operation}...`)
+      // Strict Rule: Disallow comparison within the same environment
+      if (targetConn && sourceConn?.environment?.toUpperCase() === targetConn?.environment?.toUpperCase()) {
+        throw new Error(`Comparison within the same environment '${sourceConn.environment}' is not permitted. Please select different environments to prevent conflicts.`)
+      }
 
       // Force CWD to userData to ensure andb-core writes files there
-      // This fixes the issue where files are written to unknown locations
       if (!fs.existsSync(userDataDir)) {
         fs.mkdirSync(userDataDir, { recursive: true })
       }
       process.chdir(userDataDir)
-      console.log(`[AndbBuilder] Changed CWD to: ${process.cwd()}`)
 
       // Build config from pair
       const config = this.buildConfig(sourceConn, targetConn)
-      console.log('[AndbBuilder] Config built')
 
       // Initialize global logger
       try {
-        // Handle different export formats of andb-logger
         let loggerInstance;
         if (typeof Logger.getInstance === 'function') {
           loggerInstance = Logger.getInstance({
@@ -218,76 +232,40 @@ export class AndbBuilder {
             dirpath: app.getPath('userData'),
             logName: 'ANDB-UI'
           });
-        } else {
-          console.warn('Logger structure unknown:', Logger);
         }
 
         if (loggerInstance) {
           (global as any).logger = loggerInstance;
-          console.log('[AndbBuilder] Logger initialized')
         }
       } catch (e) {
-        console.warn('Failed to initialize logger:', e)
-      }
-
-      // Debug: Check mysql2 availability
-      try {
-        console.log('[AndbBuilder] Checking mysql2...')
-        const mysql = require('mysql2')
-        console.log('[AndbBuilder] mysql2 loaded. createConnection is:', typeof mysql.createConnection)
-      } catch (e) {
-        console.error('[AndbBuilder] Failed to require mysql2:', e)
+        // Silently fail logger init
       }
 
       // Create container with config
-      console.log('[AndbBuilder] Creating container...')
       const container = new Container(config)
-      console.log('[AndbBuilder] Container created')
-
-      // Debug: Test source connection directly to verify data access
-      try {
-        console.log('[AndbBuilder] Testing source connection...')
-        const mysql = require('mysql2/promise')
-        const conn = await mysql.createConnection({
-          host: sourceConn.host,
-          user: sourceConn.username,
-          password: sourceConn.password,
-          database: sourceConn.database,
-          port: sourceConn.port
-        })
-        const [rows] = await conn.execute('SHOW TABLES')
-        console.log(`[AndbBuilder] Source DB Tables (${rows.length}):`, rows.map((r: any) => Object.values(r)[0]))
-        await conn.end()
-      } catch (e) {
-        console.error('[AndbBuilder] Source DB Connection Failed:', e)
-      }
-
       const services = container.getServices()
-      console.log('[AndbBuilder] Services retrieved')
 
       // Execute operation based on type
       switch (operation) {
         case 'export':
-          console.log('[AndbBuilder] Calling executeExport')
           return await this.executeExport(services, options)
 
         case 'compare':
-          // Pass config to compare so we can read source env etc.
+          if (!targetConn) throw new Error('Target connection is required for comparison')
           return await this.executeCompare(services, options, config, targetConn.environment)
 
-
         case 'migrate':
+          if (!targetConn) throw new Error('Target connection is required for migration')
           return await this.executeMigrate(services, options, targetConn.environment)
 
         case 'generate':
-          // Generate is CLI-only, not available in programmatic API
           throw new Error('Generate operation is only available via andb-cli')
 
         default:
           throw new Error(`Unknown operation: ${operation}`)
       }
     } catch (error: any) {
-      console.error('[AndbBuilder] Execution failed:', error)
+      if ((global as any).logger) (global as any).logger.error('[AndbBuilder] execute error:', error)
       return {
         success: false,
         error: error.message || 'Unknown error occurred'
@@ -296,9 +274,8 @@ export class AndbBuilder {
       // Restore original CWD
       try {
         process.chdir(originalCwd)
-        console.log(`[AndbBuilder] Restored CWD to: ${process.cwd()}`)
       } catch (e) {
-        console.error('[AndbBuilder] Failed to restore CWD:', e)
+        // Silently fail CWD restore
       }
     }
   }
@@ -307,36 +284,19 @@ export class AndbBuilder {
    * Execute export operation
    */
   private static async executeExport(services: any, options: any) {
-    const fs = require('fs')
-    const path = require('path')
-
-    console.log('[AndbBuilder] executeExport start', options)
-    console.log('[AndbBuilder] Current CWD:', process.cwd())
-
     const {
       type = 'tables',
       environment,
       name = null
     } = options
 
-    // Map type to DDL constant (lowercase to match andb-core constants)
     const ddlType = type.toLowerCase()
-    console.log('[AndbBuilder] ddlType:', ddlType, 'environment:', environment, 'name:', name)
 
     try {
-      // Call exporter service directly
-      console.log('[AndbBuilder] Getting exporter service...')
       const exportFn = services.exporter(ddlType, name)
-      console.log('[AndbBuilder] exportFn type:', typeof exportFn)
-
-      console.log(`[AndbBuilder] Calling exportFn for ${ddlType}...`)
       const result = await exportFn(environment)
-      console.log(`[AndbBuilder] exportFn completed for ${ddlType}. Success: ${result?.success}, Count: ${result?.count}`)
-
       return result
     } catch (error: any) {
-      console.error('[AndbBuilder] Export failed:', error)
-      console.error('[AndbBuilder] Error stack:', error.stack)
       throw error
     }
   }
@@ -345,57 +305,28 @@ export class AndbBuilder {
    * Execute compare operation
    */
   private static async executeCompare(services: any, options: any, config: any, destEnv: string) {
-    const fs = require('fs')
-    const path = require('path')
-
     const {
       type = 'tables',
       name = null
     } = options
 
-    // Map type to DDL constant (lowercase to match andb-core constants)
     const ddlType = type.toLowerCase()
 
-    console.log('[executeCompare] Starting comparison for', ddlType, name ? `(${name})` : '')
-    console.log('[executeCompare] baseDir:', config.baseDir)
-
     try {
-      // Call comparator service directly
       const compareFn = services.comparator(ddlType, name)
+      // Use destEnv passed from execute(), which should be the *aliased* name if applicable
       await compareFn(destEnv)
 
-      console.log('[executeCompare] Comparator completed')
-
-      // Debug: Check what files were created
       const srcEnv = config.getSourceEnv(destEnv)
       const dbName = config.getDBName(srcEnv)
 
-      console.log('[executeCompare] Checking created files:')
-      const checkPaths = [
-        path.join(config.baseDir, 'db'),
-        path.join(config.baseDir, 'db', srcEnv),
-        path.join(config.baseDir, 'db', destEnv),
-        path.join(config.baseDir, 'map-migrate')
-      ]
-
-      checkPaths.forEach(p => {
-        if (fs.existsSync(p)) {
-          console.log(`[executeCompare] ✓ ${p}`)
-          try {
-            const files = fs.readdirSync(p)
-            console.log(`[executeCompare]   Contents:`, files.slice(0, 5))
-          } catch (e) {
-            console.log(`[executeCompare]   Could not read contents`)
-          }
-        } else {
-          console.log(`[executeCompare] ✗ ${p}`)
-        }
-      })
-
       // Read and return results from SQLite
       const storage = this.getSQLiteStorage();
-      const destDbName = config.getDBName(destEnv);
-      const results = storage.getComparisons(srcEnv, destEnv, dbName, ddlType);
+      const normalizedSrcEnv = srcEnv.toUpperCase();
+      const normalizedDestEnv = destEnv.toUpperCase();
+      const destDbName = config.getDBName(normalizedDestEnv);
+
+      const results = storage.getComparisons(normalizedSrcEnv, normalizedDestEnv, dbName, ddlType);
 
       const mapped = results.map((res: any) => ({
         name: res.ddl_name,
@@ -407,10 +338,8 @@ export class AndbBuilder {
         }
       }))
 
-      console.log(`[executeCompare] Found ${mapped.length} total objects (including identical: ${mapped.filter((i: any) => i.status === 'equal').length})`)
       return mapped
     } catch (error: any) {
-      console.error('[executeCompare] Compare failed:', error)
       throw error
     }
   }
@@ -422,14 +351,11 @@ export class AndbBuilder {
   private static async executeMigrate(services: any, options: any, destEnv: string) {
     const {
       type = 'tables',
-      status = 'NEW', // NEW, UPDATED, DEPRECATED
-      name = null // Specific DDL name to migrate
+      status = 'NEW',
+      name = null
     } = options
 
-    // Map type to DDL constant (lowercase to match andb-core constants)
     const ddlType = type.toLowerCase()
-    // Call migrator service directly
-    // Signature: migrate(ddl, status, specificName = null)
     const migrateFn = services.migrator(ddlType, status.toLowerCase(), name)
     return await migrateFn(destEnv)
   }
@@ -450,7 +376,6 @@ export class AndbBuilder {
     const dbName = sourceConn.database
     const destDbName = targetConn.database
 
-    console.log(`[AndbBuilder] Fetching saved results for ${ddlType} (${srcEnv} -> ${destEnv})...`)
     const results = storage.getComparisons(srcEnv, destEnv, dbName, ddlType);
 
     const mapped = results.map((res: any) => ({
@@ -463,8 +388,16 @@ export class AndbBuilder {
       }
     }))
 
-    console.log(`[AndbBuilder] Found ${mapped.length} saved objects for ${ddlType}`)
     return mapped
+  }
+
+
+  /**
+   * Clear cached data for a specific connection
+   */
+  static clearConnectionData(connection: DatabaseConnection): void {
+    const storage = this.getSQLiteStorage()
+    storage.clearDataForConnection(connection.environment, connection.database)
   }
 
   /**
@@ -475,7 +408,6 @@ export class AndbBuilder {
       const { Container } = require('@andb/core')
       return !!Container
     } catch (error) {
-      console.error('andb-core not available:', error)
       return false
     }
   }

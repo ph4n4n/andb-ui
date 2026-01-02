@@ -73,6 +73,11 @@ declare global {
         has: (key: string) => Promise<{ success: boolean; data?: boolean; error?: string }>
         clear: () => Promise<{ success: boolean; error?: string }>
       }
+
+      log: {
+        send: (level: 'info' | 'warn' | 'error', message: string, data?: any) => Promise<void>
+        write: (content: string) => Promise<void>
+      }
     }
   }
 }

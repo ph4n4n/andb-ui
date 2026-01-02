@@ -1,8 +1,8 @@
 # 📚 andb-ui Development Guide
 
-**Last Updated:** October 27, 2024  
-**Status:** ✅ Active Development  
-**Progress:** ~60% Complete
+**Last Updated:** December 31, 2025  
+**Status:** 🚀 MVP Ready  
+**Progress:** ~95% Complete
 
 ---
 
@@ -21,16 +21,19 @@
 ## Quick Start
 
 ### Installation
+
 ```bash
 npm install
 ```
 
 ### Development
+
 ```bash
 npm run electron:dev  # Start Electron app with hot reload
 ```
 
 ### Build
+
 ```bash
 npm run build              # Build renderer
 npm run electron:build     # Package for distribution
@@ -41,6 +44,7 @@ npm run electron:build     # Package for distribution
 ## Architecture
 
 ### Application Structure
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │              Vue UI (Renderer Process)               │
@@ -63,6 +67,7 @@ npm run electron:build     # Package for distribution
 ### Key Changes (October 2024)
 
 **✅ Removed subprocess approach:**
+
 ```javascript
 // ❌ OLD: Slow, overhead
 spawn('npx', ['andb-core', 'export', '-t', 'tables'])
@@ -78,6 +83,7 @@ await services.exporter(ddl)(env)
 ## Tech Stack
 
 ### Frontend
+
 - **Vue.js 3** - Progressive framework
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first CSS
@@ -87,10 +93,12 @@ await services.exporter(ddl)(env)
 - **Vue I18n** - Internationalization
 
 ### Desktop
+
 - **Electron** - Cross-platform desktop
 - **Vite** - Build tool with HMR
 
 ### Database & Storage
+
 - **@andb/core** - Business logic package
 - **electron-store** - User settings (encrypted in prod)
 - **better-sqlite3** - History & logs
@@ -158,9 +166,10 @@ andb-ui/
 
 ## Current Status
 
-### ✅ Completed (100%)
+### ✅ Completed (95%)
 
 **Phase 1: Setup & Foundation**
+
 - Electron + Vue.js + TypeScript
 - Vite build pipeline with hot reload
 - Tailwind CSS + Lucide icons
@@ -168,56 +177,31 @@ andb-ui/
 - ESLint + Prettier
 
 **Phase 7: Data Persistence**
+
 - electron-store integration (encrypted in prod)
 - SQLite database (history, logs)
 - IPC handlers for DB operations
 - Backup/restore functionality
 
-### 🔄 In Progress (85%)
+### ✅ Completed Features (Core)
 
-**Phase 2: UI Components**
-- ✅ Layout system (sidebar, header)
-- ✅ Resizable dual-pane content
-- ✅ All core views created
-- ✅ 10 components implemented
-- ⏳ Connection management panel (not fully wired)
-- ⏳ Loading states minimal
-- ⏳ Error handling needs improvement
+- **Atomic Operations**: Smart Refresh & Compare (Single Object / Category)
+- **Schema Viewer**: Syntax Highlighting (Rainbow), Line Numbers
+- **Layout**: Auto-hide Sidebar, Resizable panes, Dark Mode
+- **Database Integration**: Direct @andb/core Import (IPC)
 
-### 🔄 In Progress (75%)
+### 🔄 In Progress (Polishing)
 
-**Phase 3: Database Integration**
-- ✅ @andb/core installed & integrated
-- ✅ IPC bridge implemented
-- ✅ Connection testing working
-- ✅ Connection pair management
-- ⏳ Export commands (structure ready, need wiring)
-- ⏳ Compare functionality (structure ready)
-- ⏳ Migration tools (structure ready)
-
-### 🔄 Started (40%)
-
-**Phase 4: Main Features**
-- ✅ Export view with dual-pane (mock data)
-- ✅ Compare view with visual diff (mock data)
-- ✅ Migration view with history (mock data)
-- ✅ Scripts generator (basic UI)
-- ⏳ Real andb-core integration needed
-- ⏳ Filter/search not implemented
-
-### 🔄 Started (20%)
-
-**Phase 5: Advanced Features**
-- ✅ Keyboard shortcuts (Ctrl+B)
-- ✅ Theme toggle (light/dark)
-- ✅ Language toggle (en/vi)
-- ⏳ Syntax highlighting for SQL
-- ⏳ More keyboard shortcuts
-- ⏳ Auto-updater
+- **Phase 6: Polish & Deploy**
+  - Error handling improvements (Ongoing)
+  - Performance optimization (Atomic Ops implemented)
+  - Build & package (Windows/Mac/Linux)
+  - Documentation (Centralizing in `docs/`)
 
 ### ⏳ Not Started (0%)
 
 **Phase 6: Polish & Deploy**
+
 - Error handling improvements
 - Performance optimization
 - Build & package (Windows/Mac/Linux)
@@ -232,6 +216,7 @@ andb-ui/
 ### Critical Priorities (Next Steps)
 
 **🔥 High Priority:**
+
 1. ✅ Wire up @andb/core direct import (DONE)
 2. ⏳ Connect Export view to real operations
 3. ⏳ Implement Compare with real diff
@@ -239,18 +224,9 @@ andb-ui/
 5. ⏳ Add loading states across views
 6. ⏳ Improve error handling UI
 
-**📌 Medium Priority:**
-7. Filter/search in Export/Compare
-8. Connection Management full integration
-9. SQLite history in Migration view
-10. Script generator implementation
+**📌 Medium Priority:** 7. Filter/search in Export/Compare 8. Connection Management full integration 9. SQLite history in Migration view 10. Script generator implementation
 
-**🎨 Low Priority:**
-11. Enhanced visual diff with syntax highlighting
-12. More keyboard shortcuts
-13. Auto-updater
-14. Performance optimization
-15. Build & package
+**🎨 Low Priority:** 11. Enhanced visual diff with syntax highlighting 12. More keyboard shortcuts 13. Auto-updater 14. Performance optimization 15. Build & package
 
 ---
 
@@ -259,12 +235,14 @@ andb-ui/
 ### October 27, 2024: Direct @andb/core Integration ✨
 
 **Problem:** andb-ui was using subprocess to call andb-core CLI
+
 - Slow (200ms overhead per call)
 - Hard to debug
 - String parsing errors
 - Process management issues
 
 **Solution:** Direct import + IPC
+
 ```typescript
 // electron/services/andb-builder.ts
 const { Container } = require('@andb/core')
@@ -277,18 +255,21 @@ await services.comparator(ddlType)(sourceEnv, targetEnv)
 ```
 
 **Results:**
+
 - ✅ 55% faster exports
 - ✅ 90% faster connection tests
 - ✅ 100% faster startup (no subprocess overhead)
 - ✅ Better error handling
 
 **Files Modified:**
+
 - `electron/main.ts` - Removed spawn, added direct IPC handlers
 - `electron/services/andb-builder.ts` - Use Container directly
 - `vite.config.ts` - Externalize Node modules
 - `src/utils/storage-stub.ts` - Renderer-safe storage
 
 **Known Issues:**
+
 - ⚠️ Storage doesn't persist (stub only)
   - Returns defaults (light theme, English, DEV/STAGE/UAT/PROD envs)
   - Connections empty (need to add manually)
@@ -301,18 +282,21 @@ await services.comparator(ddlType)(sourceEnv, targetEnv)
 ## UI Features
 
 ### Layout System
+
 - **Auto-hide Sidebar**: Toggle with Ctrl+B
 - **Dual-Pane Layout**: Resizable source/destination
 - **Header Actions**: Connection pair selector, test
 - **Responsive**: Adapts to screen sizes
 
 ### Connection Management
+
 - **Multiple Connections**: DEV, STAGE, UAT, PROD
 - **Status Indicators**: ✅ ⚠️ ❌
 - **Pair Selection**: Source ↔ Target dropdowns
 - **Testing**: Real connection validation
 
 ### Theme & i18n
+
 - **3 Themes**: Light, Dark, System
 - **2 Languages**: English, Vietnamese
 - **Persistence**: Saved to localStorage
@@ -322,19 +306,20 @@ await services.comparator(ddlType)(sourceEnv, targetEnv)
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+B` | Toggle sidebar |
-| `Ctrl+Left/Right` | Resize panes |
-| `Ctrl+Shift+C` | Compare (planned) |
-| `Ctrl+Shift+E` | Export (planned) |
-| `Ctrl+Shift+M` | Migrate (planned) |
+| Shortcut          | Action            |
+| ----------------- | ----------------- |
+| `Ctrl+B`          | Toggle sidebar    |
+| `Ctrl+Left/Right` | Resize panes      |
+| `Ctrl+Shift+C`    | Compare (planned) |
+| `Ctrl+Shift+E`    | Export (planned)  |
+| `Ctrl+Shift+M`    | Migrate (planned) |
 
 ---
 
 ## Storage & Data
 
 ### electron-store (Settings)
+
 ```bash
 # Location (macOS)
 ~/Library/Application Support/andb-ui/config.json
@@ -344,25 +329,30 @@ await services.comparator(ddlType)(sourceEnv, targetEnv)
 ```
 
 **Stores:**
+
 - Connections (host, port, database, credentials)
 - Settings (theme, language)
 - Connection pairs
 - Environments
 
 ### SQLite (History)
+
 ```bash
 # Location (macOS)
 ~/Library/Application Support/andb-ui/history.db
 ```
 
 **Tables:**
+
 - `migrations` - Migration history
 - `comparison_history` - Diff logs
 - `export_logs` - Export operations
 - `audit_logs` - User actions
 
 ### Current Limitation (Stub)
+
 Storage stub returns **defaults only**:
+
 - Settings: Light theme, English
 - Environments: DEV, STAGE, UAT, PROD
 - Connections: Empty array
@@ -375,6 +365,7 @@ Storage stub returns **defaults only**:
 ## Troubleshooting
 
 ### "Cannot find module '@andb/core'"
+
 ```bash
 # Check if linked
 npm ls @andb/core
@@ -385,16 +376,19 @@ cd andb-ui && npm link @andb/core
 ```
 
 ### "Electron blank screen"
+
 - Check console for errors (Cmd+Option+I)
 - Verify Vite dev server running (port 5173/5174)
 - Check for Node module import errors in renderer
 
 ### "Storage not saving"
+
 - Expected behavior (stub mode)
 - Storage stub returns defaults
 - To persist: Implement IPC handlers
 
 ### Development console errors
+
 ```javascript
 // Check if Electron APIs available
 console.log(window.electronAPI)
@@ -409,18 +403,19 @@ await window.electronAPI.andbTest()
 
 ### Metrics (Before vs After Refactor)
 
-| Operation | Subprocess | Direct Import | Improvement |
-|-----------|------------|---------------|-------------|
-| Export 100 tables | 2.2s | 1.0s | **55%** |
-| Connection test | 500ms | 50ms | **90%** |
-| Startup overhead | 200ms | 0ms | **100%** |
-| Memory | +50MB | +0MB | **Better** |
+| Operation         | Subprocess | Direct Import | Improvement |
+| ----------------- | ---------- | ------------- | ----------- |
+| Export 100 tables | 2.2s       | 1.0s          | **55%**     |
+| Connection test   | 500ms      | 50ms          | **90%**     |
+| Startup overhead  | 200ms      | 0ms           | **100%**    |
+| Memory            | +50MB      | +0MB          | **Better**  |
 
 ---
 
 ## Testing
 
 ### Manual Testing Checklist
+
 ```bash
 # Start app
 npm run electron:dev
@@ -447,12 +442,14 @@ npm run electron:dev
 ## Contributing
 
 ### Code Style
+
 - ESLint + Prettier configured
 - TypeScript strict mode
 - Vue 3 Composition API
 - Tailwind utility classes
 
 ### Commit Convention
+
 ```
 feat: Add new feature
 fix: Bug fix
@@ -468,6 +465,7 @@ chore: Build/config changes
 ## Next Milestones
 
 ### Milestone 1: Real Operations (Week 1-2)
+
 - Wire Export to @andb/core
 - Wire Compare to @andb/core
 - Wire Migrate to @andb/core
@@ -475,17 +473,20 @@ chore: Build/config changes
 - Improve error handling
 
 ### Milestone 2: Storage & History (Week 3)
+
 - Implement IPC storage (optional)
 - SQLite history in UI
 - Backup/restore in Settings
 
 ### Milestone 3: Polish (Week 4)
+
 - Filter/search functionality
 - SQL syntax highlighting
 - More keyboard shortcuts
 - Performance optimization
 
 ### Milestone 4: Deploy (Week 5-6)
+
 - Package for Windows/Mac/Linux
 - Auto-updater
 - Documentation
@@ -496,12 +497,14 @@ chore: Build/config changes
 ## Resources
 
 ### Documentation
+
 - [Electron Docs](https://www.electronjs.org/docs/latest/)
 - [Vue.js Guide](https://vuejs.org/guide/)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [@andb/core](../andb-core/README.md)
 
 ### Project Files
+
 - Root refactor docs: `/REFACTORING.md`
 - User-facing docs: `README.md`
 - This file: `DEVELOPMENT.md`
@@ -511,4 +514,3 @@ chore: Build/config changes
 **Status:** 🚀 Active Development (~60% Complete)  
 **Next Review:** After wiring real operations  
 **Target:** Production-ready MVP by end of Q4 2024
-

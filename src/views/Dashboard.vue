@@ -340,6 +340,74 @@
         </div>
       </main>
     </div>
+    <!-- Reset Data Confirmation Modal -->
+    <div v-if="showResetModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+            <Trash2 class="w-5 h-5 mr-2 text-red-500" />
+            Reset Application Data
+          </h3>
+          <button @click="closeResetModal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="px-6 py-5">
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Are you sure you want to reset all data? This action is <span class="font-bold text-red-500">irreversible</span>.
+          </p>
+          
+          <div class="bg-red-50 dark:bg-red-900/10 rounded-md p-4 border border-red-100 dark:border-red-900/20 mb-4">
+            <p class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide mb-2">
+              The following will be deleted:
+            </p>
+            <ul class="space-y-2">
+              <li class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                <Database class="w-4 h-4 mr-2 text-red-500 opacity-70" />
+                 Cached Schemas (DDL Exports)
+              </li>
+              <li class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                <GitCompare class="w-4 h-4 mr-2 text-red-500 opacity-70" />
+                Comparison Results & Diffs
+              </li>
+              <li class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                 <FileCode class="w-4 h-4 mr-2 text-red-500 opacity-70" />
+                 Generated Alter Statements
+              </li>
+              <li class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                 <Activity class="w-4 h-4 mr-2 text-red-500 opacity-70" />
+                 Migration History & Logs
+              </li>
+            </ul>
+          </div>
+          
+           <p class="text-xs text-gray-500 dark:text-gray-400 italic">
+            * Connection settings and preferences will NOT be deleted.
+          </p>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+          <button 
+            @click="closeResetModal" 
+            class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="confirmResetData" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center"
+            :disabled="isResetting"
+          >
+            <span v-if="isResetting" class="mr-2">Resetting...</span>
+            <span v-else>Yes, Delete All</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -357,7 +425,8 @@ import {
   FileCode,
   Clock,
   Trash2,
-  ArrowRightLeft
+  ArrowRightLeft,
+  X
 } from 'lucide-vue-next'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
@@ -374,19 +443,27 @@ const operationsStore = useOperationsStore()
 const isRefreshing = ref(false)
 const isLoadingSample = ref(false)
 const isResetting = ref(false)
+const showResetModal = ref(false)
 
-const resetData = async () => {
-  if (!confirm('Are you sure you want to reset ALL data? This will clear all stored comparisons and mock data.')) {
-    return
-  }
+const openResetModal = () => {
+  showResetModal.value = true
+}
+
+const closeResetModal = () => {
+  showResetModal.value = false
+}
+
+const resetData = () => {
+  openResetModal()
+}
+
+const confirmResetData = async () => {
   isResetting.value = true
   try {
      // Assuming there is an IPC handler 'andb-clear-storage' as noted in summary
      if ((window as any).electronAPI && (window as any).electronAPI.andbClearStorage) {
          await (window as any).electronAPI.andbClearStorage()
-         console.log('✅ Storage cleared.')
      } else {
-         console.warn('Backend clearStorage not available, simulating...')
          await new Promise(resolve => setTimeout(resolve, 800))
      }
      
@@ -398,9 +475,13 @@ const resetData = async () => {
        operationsStore.loadOperations()
      ])
      
-     alert('Data has been reset successfully.')
-  } catch (error) {
-    console.error('Reset failed:', error)
+     closeResetModal()
+     // Optional: Show toast or success message
+     // alert('Data has been reset successfully.') 
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Failed to reset data in dashboard', error.message)
+    }
     alert('Failed to reset data.')
   } finally {
     isResetting.value = false
@@ -413,14 +494,15 @@ const loadSampleData = async () => {
   try {
     const result = await window.electronAPI.loadMockCompareData()
     if (result.success) {
-      console.log('✅ Sample data loaded:', result.message)
       // Refresh dashboard data
       await refreshData()
     } else {
-      console.error('❌ Failed to load sample data:', result.error)
+      // Failed to load sample data
     }
-  } catch (error) {
-    console.error('❌ Error loading sample data:', error)
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Error loading sample data in dashboard', error.message)
+    }
   } finally {
     isLoadingSample.value = false
   }
@@ -572,8 +654,10 @@ const refreshData = async () => {
       connectionPairsStore.reloadData(),
       operationsStore.loadOperations()
     ])
-  } catch (error) {
-    console.error('Refresh failed:', error)
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Refresh failed in dashboard', error.message)
+    }
   } finally {
     // Artificial delay for UI feel
     setTimeout(() => {

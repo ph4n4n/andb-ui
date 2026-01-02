@@ -26,9 +26,9 @@ class DatabaseManager {
       this.db.pragma('journal_mode = WAL') // Better performance
 
       this.createTables()
-      console.log(`📊 SQLite database initialized: ${this.dbPath}`)
-    } catch (error) {
-      console.error('Failed to initialize database:', error)
+      if ((global as any).logger) (global as any).logger.info(`📊 SQLite database initialized: ${this.dbPath}`)
+    } catch (error: any) {
+      if ((global as any).logger) (global as any).logger.error('Failed to initialize database:', error)
     }
   }
 
@@ -262,7 +262,7 @@ class DatabaseManager {
     this.db.prepare('DELETE FROM export_logs WHERE timestamp < ?').run(cutoff)
     this.db.prepare('DELETE FROM audit_logs WHERE timestamp < ?').run(cutoff)
 
-    console.log(`🧹 Cleaned up records older than ${daysToKeep} days`)
+    if ((global as any).logger) (global as any).logger.info(`🧹 Cleaned up records older than ${daysToKeep} days`)
   }
 
   /**
@@ -272,7 +272,7 @@ class DatabaseManager {
     if (this.db) {
       this.db.close()
       this.db = null
-      console.log('📊 Database connection closed')
+      if ((global as any).logger) (global as any).logger.info('📊 Database connection closed')
     }
   }
 }

@@ -152,7 +152,12 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  const removeConnection = (id: string) => {
+  const removeConnection = async (id: string) => {
+    const conn = getConnectionById.value(id)
+    if (conn) {
+      // Clear cached data for this connection
+      await Andb.clearConnectionData(conn)
+    }
     connections.value = connections.value.filter(conn => conn.id !== id)
   }
 
@@ -169,8 +174,10 @@ export const useAppStore = defineStore('app', () => {
         lastTested: new Date().toISOString()
       })
       return success
-    } catch (error) {
-      console.error('Connection test error:', error)
+    } catch (error: any) {
+      if (window.electronAPI) {
+        window.electronAPI.log.send('error', `Connection test error for connection ID: ${id}`, error.message)
+      }
       updateConnection(id, { status: 'failed' })
       return false
     }

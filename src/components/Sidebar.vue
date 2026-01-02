@@ -1,141 +1,182 @@
 <template>
   <aside 
     :class="[
-      'bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out',
-      isCollapsed ? 'w-16' : 'w-64'
+      'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out select-none text-sm',
+      isCollapsed ? 'w-12' : 'w-72'
     ]"
   >
-    <!-- Header/Logo Area removed (moved to Header.vue) -->
-
-    <!-- Navigation Menu (Minimal) -->
-    <nav class="py-4 border-b border-gray-100 dark:border-gray-700">
-      <ul class="space-y-1 px-2">
-        <li v-for="item in navItems" :key="item.path">
-          <router-link
-            :to="item.path"
-            class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-            :class="[
-              $route.path === item.path
-                ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50'
-            ]"
-            :title="item.name"
-          >
-            <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
-            <span v-show="!isCollapsed" class="ml-3 truncate">{{ item.name }}</span>
-          </router-link>
-        </li>
-      </ul>
+    <!-- Navigation Menu (Side Activity Bar style if collapsed, or just top menu) -->
+    <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center px-2 py-1 space-x-1">
+        <router-link
+          v-for="item in navItems" :key="item.path"
+          :to="item.path"
+          class="flex items-center justify-center p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          :class="{ 'text-primary-600 dark:text-white bg-white dark:bg-gray-700 shadow-sm ring-1 ring-gray-200 dark:ring-0': $route.path === item.path }"
+          :title="item.name"
+        >
+          <component :is="item.icon" class="w-4 h-4" />
+        </router-link>
+      </div>
     </nav>
 
-    <!-- Source Environment Tree Section -->
-    <div class="flex-1 overflow-y-auto py-4">
-      <div v-show="!isCollapsed" class="px-4 mb-3">
-        <!-- Source Tree Header -->
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">
-            <Server class="w-3 h-3 mr-2" />
-            Source Explorer
-          </h3>
-          <button @click="refreshSchemas" class="text-gray-400 hover:text-primary-500 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-            <RefreshCw class="w-3 h-3" :class="{ 'animate-spin': loading }" />
-          </button>
-        </div>
+    <!-- Explorer Header -->
+    <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
+      <span>{{ route.path === '/compare' ? 'Source Explorer' : 'Schema Explorer' }}</span>
+      <div class="flex items-center space-x-1">
+        <button @click="refreshSchemas" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Refresh">
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+        </button>
+        <button @click="collapseAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Collapse All">
+          <MinusSquare class="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Tree Content -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-white dark:bg-gray-900">
+      <!-- Loading State -->
+      <div v-if="loading" class="p-4 space-y-2 opacity-50">
+        <div class="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
+        <div class="h-4 bg-gray-700 rounded animate-pulse w-1/2"></div>
+        <div class="h-4 bg-gray-700 rounded animate-pulse w-2/3"></div>
       </div>
 
-      <!-- Environment Groups -->
-      <div class="px-2 space-y-1">
-        <div v-for="env in filteredEnvironments" :key="env.name" class="space-y-1">
+      <!-- Tree Roots (Environments) -->
+      <div v-else class="pb-4">
+        <div v-for="env in filteredEnvironments" :key="env.name">
           <!-- Environment Node -->
           <div 
+            class="group/env flex items-center h-7 px-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
+            :class="{ 
+              'text-gray-900 dark:text-white': expandedEnvironments.has(env.name),
+              'border-blue-500 bg-blue-50 dark:bg-gray-800': isSourceEnvironment(env.name)
+            }"
             @click="toggleEnvironment(env.name)"
-            class="flex items-center px-3 py-2 rounded-lg cursor-pointer transition-colors group"
-            :class="[
-              isSourceEnvironment(env.name) 
-                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold' 
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
-            ]"
           >
-            <ChevronRight 
-              class="w-4 h-4 mr-2 transition-transform duration-200"
-              :class="{ 'rotate-90': expandedEnvironments.has(env.name) }"
-            />
-            <component :is="getEnvIcon(env.name)" class="w-4 h-4 mr-2" />
-            <span v-show="!isCollapsed" class="text-sm truncate">{{ env.name }}</span>
-            <span v-show="!isCollapsed && isSourceEnvironment(env.name)" class="ml-auto text-[10px] bg-blue-100 dark:bg-blue-800 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-300 uppercase">Source</span>
+            <span class="w-4 flex items-center justify-center mr-1">
+              <ChevronRight 
+                class="w-3.5 h-3.5 transition-transform duration-200"
+                :class="{ 'rotate-90': expandedEnvironments.has(env.name) }" 
+              />
+            </span>
+            <component :is="getEnvIcon(env.name)" class="w-4 h-4 mr-2 text-blue-500 dark:text-blue-400" />
+            <span class="font-semibold truncate flex-1">{{ env.name }}</span>
+            <span v-if="isSourceEnvironment(env.name)" class="ml-auto text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-400/10 px-1 rounded">SRC</span>
           </div>
 
-          <!-- Objects Under Environment (Only if it's the source or expanded) -->
-          <div v-if="expandedEnvironments.has(env.name)" class="ml-4 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1 mt-1">
-            <div v-for="db in env.databases" :key="db.name" class="space-y-1">
+          <!-- Databases -->
+          <div v-if="expandedEnvironments.has(env.name)">
+            <div v-for="db in env.databases" :key="db.name" class="relative">
+              <!-- Indentation Guide -->
+              <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700"></div>
+              
               <div 
+                class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
+                :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800': expandedDatabases.has(`${env.name}-${db.name}`) }"
                 @click="selectDatabase(env.name, db.name)"
-                class="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-sm rounded-lg transition-colors group/db"
-                :class="{ 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-bold': expandedDatabases.has(`${env.name}-${db.name}`) }"
               >
-                <ChevronRight 
+                <span 
+                  class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
                   @click.stop="toggleDatabase(env.name, db.name)"
-                  class="w-3.5 h-3.5 mr-1.5 transition-transform duration-200 shrink-0 text-gray-400"
-                  :class="{ 'rotate-90': expandedDatabases.has(`${env.name}-${db.name}`) }"
-                />
-                <Database class="w-4 h-4 mr-2 text-primary-500 group-hover/db:scale-110 transition-transform" />
-                <span class="truncate">{{ db.name }}</span>
+                >
+                  <ChevronRight 
+                    class="w-3.5 h-3.5 transition-transform duration-200"
+                    :class="{ 'rotate-90': expandedDatabases.has(`${env.name}-${db.name}`) }" 
+                  />
+                </span>
+                <Database class="w-3.5 h-3.5 mr-2 text-amber-600 dark:text-amber-500" />
+                <span class="truncate flex-1">{{ db.name }}</span>
+
+                <!-- Fast Refresh Action -->
+                <button 
+                  @click.stop="refreshDatabase(env.name, db.name)"
+                  class="p-1 opacity-0 group-hover/db:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 mx-1"
+                  title="Force Refresh Schema"
+                >
+                  <RefreshCw class="w-3 h-3" />
+                </button>
               </div>
 
-              <!-- Object Types (Tables, Procs, etc.) -->
-              <div v-if="expandedDatabases.has(`${env.name}-${db.name}`)" class="ml-4 pl-2 border-l border-gray-100 dark:border-gray-800 space-y-1">
-                <div v-for="type in ddlTypes" :key="type.key">
-                  <div 
-                    v-if="db[type.key]?.length > 0"
-                    @click="selectCategory(env.name, db.name, type.key)"
-                    class="flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer group/cat transition-all"
-                    :class="[
-                      expandedTypes.has(`${env.name}-${db.name}-${type.key}`)
-                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
-                    ]"
-                  >
-                    <ChevronRight 
-                      @click.stop="toggleType(env.name, db.name, type.key)"
-                      class="w-3 h-3 mr-2 transition-transform duration-200 shrink-0"
-                      :class="{ 'rotate-90': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
-                    />
-                    <span class="truncate">{{ type.label }}</span>
-                    <div class="ml-auto flex items-center space-x-1.5">
-                      <!-- Change Count Badge (Orange/Amber) -->
-                      <span v-if="getCategoryChangeCount(db, type.key) > 0" class="text-[10px] bg-amber-500 dark:bg-amber-600 text-white px-1.5 py-0.5 rounded-full font-black shadow-sm flex items-center justify-center min-w-[18px]">
-                        {{ getCategoryChangeCount(db, type.key) }}
-                      </span>
-                      <!-- Total Count Badge (Subtle Gray) -->
-                      <span class="text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded font-bold border border-gray-300/50 dark:border-gray-600/50">
-                        {{ db[type.key].length }}
-                      </span>
-                    </div>
-                  </div>
+              <!-- Object Categories -->
+              <div v-if="expandedDatabases.has(`${env.name}-${db.name}`)" class="relative">
+                 <!-- Indentation Guide Level 2 -->
+                 <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                 <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
 
-                  <!-- Individual Objects -->
-                  <div v-if="expandedTypes.has(`${env.name}-${db.name}-${type.key}`)" class="ml-4 space-y-0.5">
+                <div v-for="type in ddlTypes" :key="type.key">
+                  <!-- Only show if has items -->
+                  <div v-if="db[type.key]?.length > 0">
                     <div 
-                      v-for="item in db[type.key]" 
-                      :key="item.name"
-                      @click="selectObject(env.name, db.name, type.key, item)"
-                      class="flex items-center px-3 py-1 rounded-md text-sm cursor-pointer transition-colors"
-                      :class="[
-                        selectedObjectId === item.name 
-                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
-                      ]"
+                      class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
+                      :class="{ 'text-gray-900 dark:text-gray-100': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
+                      @click="selectCategory(env.name, db.name, type.key)"
                     >
-                      <component :is="type.icon" class="w-3.5 h-3.5 mr-2 opacity-70" />
-                      <span class="truncate font-mono text-[13px] mr-2">{{ item.name }}</span>
-                      
-                      <!-- Status Badge -->
-                      <div v-if="comparisonMap[`${type.key}-${item.name}`]" class="ml-auto flex items-center">
-                        <component 
-                          :is="getStatusIcon(comparisonMap[`${type.key}-${item.name}`].status)" 
-                          class="w-3.5 h-3.5"
-                          :class="getStatusClass(comparisonMap[`${type.key}-${item.name}`].status)"
+                      <span 
+                        class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
+                        @click.stop="toggleType(env.name, db.name, type.key)"
+                      >
+                        <ChevronRight 
+                          class="w-3.5 h-3.5 transition-transform duration-200"
+                          :class="{ 'rotate-90': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }" 
                         />
+                      </span>
+                      <component 
+                        :is="expandedTypes.has(`${env.name}-${db.name}-${type.key}`) ? FolderOpen : Folder" 
+                        class="w-3.5 h-3.5 mr-2"
+                        :class="type.colorClass || 'text-indigo-400'"
+                      />
+                       <span class="truncate flex-1">{{ type.label }}</span>
+                       <span class="ml-2 text-[10px] opacity-40 font-mono">{{ db[type.key].length }}</span>
+
+                       <!-- Fast Refresh Category -->
+                       <button 
+                         @click.stop="refreshCategory(env.name, db.name, type.key)"
+                         class="p-0.5 opacity-0 group-hover/cat:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-1.5"
+                         title="Refresh this category"
+                       >
+                         <RefreshCw class="w-3 h-3" />
+                       </button>
+                       
+                       <!-- Changes Badge (Compare Mode Only) -->
+                       <span v-if="isCompareView && getCategoryChangeCount(db, type.key) > 0" class="ml-1.5 mr-1 h-3.5 min-w-[14px] px-1 flex items-center justify-center rounded-sm bg-amber-100 dark:bg-amber-500 text-[10px] text-amber-700 dark:text-gray-900 font-bold leading-none">
+                         {{ getCategoryChangeCount(db, type.key) }}
+                       </span>
+                    </div>
+
+                    <!-- Leaves (Objects) -->
+                    <div v-if="expandedTypes.has(`${env.name}-${db.name}-${type.key}`)" class="relative">
+                       <!-- Indentation Guide Level 3 -->
+                       <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                       <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                       <div class="absolute left-[63px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                      
+                      <div 
+                        v-for="item in db[type.key]" 
+                        :key="item.name"
+                        @click="selectObject(env.name, db.name, type.key, item)"
+                        class="group/obj flex items-center h-6 px-2 pl-[66px] cursor-pointer text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
+                        :class="{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border-blue-500': selectedObjectId === item.name }"
+                      >
+                        <component :is="type.icon" class="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
+                        <span 
+                          class="truncate font-mono text-sm leading-tight flex-1"
+                          :class="{ 
+                            'text-amber-600 dark:text-amber-400': isCompareView && isModified(type.key, item.name), 
+                            'text-green-600 dark:text-green-400': isCompareView && isNew(type.key, item.name) 
+                          }"
+                        >
+                          {{ item.name }}
+                        </span>
+
+                        <!-- Fast Refresh Object -->
+                        <button 
+                          @click.stop="refreshObject(env.name, db.name, type.key, item.name)"
+                          class="p-0.5 opacity-0 group-hover/obj:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-2"
+                          title="Refresh this object"
+                        >
+                          <RefreshCw class="w-2.5 h-2.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -146,16 +187,11 @@
         </div>
       </div>
     </div>
-
-    <!-- Bottom Actions: Settings -->
-    <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
-      <router-link 
-        to="/settings" 
-        class="flex items-center px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        title="Settings"
-      >
-        <Settings class="w-5 h-5 flex-shrink-0 text-gray-400 group-hover:text-primary-500" />
-        <span v-show="!isCollapsed" class="ml-3 text-sm font-medium">Settings</span>
+    
+    <!-- Collapsed Mode Icon Bar -->
+    <div v-if="isCollapsed" class="flex flex-col items-center py-4 space-y-4">
+      <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 rounded" :title="item.name">
+        <component :is="item.icon" class="w-5 h-5" />
       </router-link>
     </div>
   </aside>
@@ -163,10 +199,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import Andb from '@/utils/andb'
+import { useSidebarStore } from '@/stores/sidebar'
 import { 
   Home, 
   Database,
@@ -180,28 +218,28 @@ import {
   Layers,
   ShieldCheck,
   Server,
-  AlertCircle,
-  CheckCircle2,
-  PlusCircle,
-  XCircle
+  Folder,
+  FolderOpen,
+  MinusSquare
 } from 'lucide-vue-next'
 
+const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
+const sidebarStore = useSidebarStore()
 
 const isCollapsed = computed(() => appStore.sidebarCollapsed)
 const activePair = computed(() => connectionPairsStore.activePair)
 
 // Navigation Items
-const navItems = [
-  { name: 'Dashboard', path: '/', icon: Home },
-  { name: 'Compare', path: '/compare', icon: GitCompare },
-]
-
-const props = defineProps<{
-  results?: any[]
-}>()
+const navItems = computed(() => [
+  { name: t('common.dashboard'), path: '/', icon: Home },
+  { name: t('common.schema'), path: '/schema', icon: Database },
+  { name: t('common.compare'), path: '/compare', icon: GitCompare },
+  { name: t('common.settings'), path: '/settings', icon: Settings },
+])
 
 // Schema Tree State
 const loading = ref(false)
@@ -211,31 +249,74 @@ const expandedDatabases = ref(new Set<string>())
 const expandedTypes = ref(new Set<string>())
 const selectedObjectId = ref<string | null>(null)
 
-// Comparison Mapping
+const isCompareView = computed(() => route.path === '/compare')
+
+// Comparison Mapping from Store
 const comparisonMap = computed(() => {
   const map: Record<string, any> = {}
-  if (props.results) {
-    props.results.forEach(res => {
+  if (sidebarStore.comparisonResults) {
+    sidebarStore.comparisonResults.forEach(res => {
       map[`${res.type}-${res.name}`] = res
     })
   }
   return map
 })
 
+const getCategoryChangeCount = (db: any, typeKey: string) => {
+  if (!sidebarStore.comparisonResults) return 0
+  return db[typeKey].filter((item: any) => {
+    const res = comparisonMap.value[`${typeKey}-${item.name}`]
+    return res && res.status !== 'equal' && res.status !== 'same'
+  }).length
+}
+
+const getItemStatus = (type: string, name: string) => {
+  return comparisonMap.value[`${type}-${name}`]?.status
+}
+
+const isModified = (type: string, name: string) => {
+  const s = getItemStatus(type, name)?.toLowerCase()
+  return s === 'modified' || s === 'different' || s === 'updated'
+}
+
+const isNew = (type: string, name: string) => {
+  const s = getItemStatus(type, name)?.toLowerCase()
+  return s === 'new' || s === 'missing_in_target'
+}
+
 const filteredEnvironments = computed(() => {
-  if (!activePair.value?.sourceEnv) {
-    return environments.value
+  let envs = environments.value
+  
+  if (route.path === '/compare' && activePair.value?.sourceEnv) {
+    envs = environments.value.filter(env => env.name === activePair.value?.sourceEnv)
   }
-  return environments.value.filter(env => env.name === activePair.value?.sourceEnv)
+
+  // Custom Sort Order: DEV -> STAGE -> UAT -> PROD
+  return [...envs].sort((a, b) => {
+    const getOrder = (name: string) => {
+      const uName = name.toUpperCase()
+      if (uName.includes('DEV')) return 1
+      if (uName.includes('STAGE')) return 2
+      if (uName.includes('UAT')) return 3
+      if (uName.includes('PROD')) return 4
+      return 99
+    }
+
+    const orderA = getOrder(a.name)
+    const orderB = getOrder(b.name)
+    
+    if (orderA !== orderB) return orderA - orderB
+    return a.name.localeCompare(b.name)
+  })
 })
 
 // DDL Types Mapping
 const ddlTypes = [
-  { key: 'tables', label: 'Tables', icon: Table },
-  { key: 'views', label: 'Views', icon: Layers },
-  { key: 'procedures', label: 'Procedures', icon: Hammer },
-  { key: 'functions', label: 'Functions', icon: Hammer },
-  { key: 'triggers', label: 'Triggers', icon: Zap }
+  { key: 'tables', label: 'Tables', icon: Table, colorClass: 'text-blue-600 dark:text-blue-400' },
+  { key: 'views', label: 'Views', icon: Layers, colorClass: 'text-indigo-600 dark:text-indigo-400' },
+  { key: 'procedures', label: 'Procedures', icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
+  { key: 'functions', label: 'Functions', icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
+  { key: 'triggers', label: 'Triggers', icon: Zap, colorClass: 'text-amber-600 dark:text-amber-400' }
 ]
 
 // Actions
@@ -249,6 +330,11 @@ const getEnvIcon = (envName: string) => {
   if (name.includes('UAT')) return Layers
   if (name.includes('STAGE')) return Server
   return Database
+}
+
+const collapseAll = () => {
+  expandedDatabases.value.clear()
+  expandedTypes.value.clear()
 }
 
 const toggleEnvironment = (envName: string) => {
@@ -277,85 +363,124 @@ const toggleType = (envName: string, dbName: string, type: string) => {
   }
 }
 
-const selectDatabase = (env: string, db: string) => {
+const selectDatabase = async (env: string, db: string) => {
   toggleDatabase(env, db)
   if (route.path === '/compare') {
     window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type: 'all' } }))
+  } else {
+    const isNavigationNeeded = route.path !== '/schema'
+    if (isNavigationNeeded) {
+      await router.push('/schema')
+    }
+    // Small delay to ensure component is mounted and listener attached if we navigated
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type: 'all' } }))
+    }, isNavigationNeeded ? 200 : 0)
   }
 }
 
-const selectCategory = (env: string, db: string, type: string) => {
+const selectCategory = async (env: string, db: string, type: string) => {
   toggleType(env, db, type)
   if (route.path === '/compare') {
     window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type } }))
+  } else {
+    const isNavigationNeeded = route.path !== '/schema'
+    if (isNavigationNeeded) {
+      await router.push('/schema')
+    }
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type } }))
+    }, isNavigationNeeded ? 200 : 0)
   }
 }
 
-const getCategoryChangeCount = (db: any, typeKey: string) => {
-  if (!props.results) return 0
-  return db[typeKey].filter((item: any) => {
-    const res = comparisonMap.value[`${typeKey}-${item.name}`]
-    return res && res.status !== 'equal' && res.status !== 'same'
-  }).length
-}
-
-const getStatusIcon = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case 'equal':
-    case 'same':
-      return CheckCircle2
-    case 'new':
-    case 'missing_in_target':
-      return PlusCircle
-    case 'deprecated':
-    case 'missing_in_source':
-      return XCircle
-    default:
-      return AlertCircle
-  }
-}
-
-const getStatusClass = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case 'equal':
-    case 'same':
-      return 'text-green-500 opacity-60'
-    case 'new':
-    case 'missing_in_target':
-      return 'text-green-500 drop-shadow-sm font-bold'
-    case 'deprecated':
-    case 'missing_in_source':
-      return 'text-red-500 drop-shadow-sm font-bold'
-    case 'modified':
-    case 'different':
-    case 'updated':
-      return 'text-orange-500 drop-shadow-sm font-bold'
-    default:
-      return 'text-gray-400'
-  }
-}
-
-const selectObject = (env: string, db: string, type: string, item: any) => {
+const selectObject = async (env: string, db: string, type: string, item: any) => {
   selectedObjectId.value = item.name
-  // Emit event or update global state to sync with Compare.vue
   if (route.path === '/compare') {
-    // Scroll both panes to the selected object
     window.dispatchEvent(new CustomEvent('object-selected', { detail: { env, db, name: item.name, type } }))
+  } else {
+    const isNavigationNeeded = route.path !== '/schema'
+    if (isNavigationNeeded) {
+      await router.push('/schema')
+    }
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('object-selected', { detail: { env, db, name: item.name, type } }))
+    }, isNavigationNeeded ? 200 : 0)
   }
+}
+
+const refreshDatabase = (env: string, db: string) => {
+  window.dispatchEvent(new CustomEvent('database-refresh-requested', { detail: { env, db } }))
+}
+
+const refreshCategory = (env: string, db: string, type: string) => {
+  window.dispatchEvent(new CustomEvent('category-refresh-requested', { detail: { env, db, type } }))
+}
+
+const refreshObject = (env: string, db: string, type: string, name: string) => {
+  window.dispatchEvent(new CustomEvent('object-refresh-requested', { detail: { env, db, type, name } }))
 }
 
 const refreshSchemas = async () => {
   loading.value = true
   try {
-    const result = await Andb.getSchemas()
-    environments.value = result || []
+    const result = await Andb.getSchemas() // Schema data from SQLite
+    const conns = appStore.connections // All configured connections
     
-    // Auto-expand source environment
-    if (activePair.value?.sourceEnv) {
-      expandedEnvironments.value.add(activePair.value.sourceEnv)
+    // Group by environment
+    const envMap = new Map<string, any>()
+    
+    // 1. Initialize with configured connections so they always appear
+    conns.forEach(c => {
+      if (!envMap.has(c.environment)) {
+        envMap.set(c.environment, { name: c.environment, databases: [] })
+      }
+      const env = envMap.get(c.environment)
+      if (!env.databases.find((db: any) => db.name === c.database)) {
+        env.databases.push({
+          name: c.database,
+          connectionId: c.id,
+          tables: [],
+          views: [],
+          procedures: [],
+          functions: [],
+          triggers: [],
+          totalCount: 0,
+          lastUpdated: null
+        })
+      }
+    })
+    
+    // 2. Merge with results from SQLite
+    if (result && Array.isArray(result)) {
+      result.forEach((remoteEnv: any) => {
+        let localEnv = envMap.get(remoteEnv.name)
+        if (!localEnv) {
+           localEnv = { name: remoteEnv.name, databases: [] }
+           envMap.set(remoteEnv.name, localEnv)
+        }
+        
+        remoteEnv.databases.forEach((remoteDb: any) => {
+          let localDb = localEnv.databases.find((db: any) => db.name === remoteDb.name)
+          if (localDb) {
+            // Found configured connection, merge actual counts/data
+            Object.assign(localDb, remoteDb)
+          } else {
+            // Schema exists in SQLite but no connection found in appStore
+            localEnv.databases.push(remoteDb)
+          }
+        })
+      })
     }
-  } catch (error) {
-    console.error('Failed to load schemas in sidebar:', error)
+    
+    environments.value = Array.from(envMap.values())
+    
+    // Auto-expand all environments by default to show connections
+    environments.value.forEach(env => expandedEnvironments.value.add(env.name))
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Failed to load schemas in sidebar', error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -368,20 +493,45 @@ watch(activePair, (newPair) => {
   }
 }, { immediate: true })
 
+watch(() => appStore.connections, () => {
+  refreshSchemas()
+}, { deep: true, immediate: true })
+
+watch(() => sidebarStore.refreshKey, () => {
+  refreshSchemas()
+})
+
 onMounted(() => {
   refreshSchemas()
 })
 
-// Expose open methods
 defineExpose({
   refreshSchemas
 })
 </script>
 
 <style scoped>
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5); /* gray-400 */
+  border-radius: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.8); /* gray-500 */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
 </style>

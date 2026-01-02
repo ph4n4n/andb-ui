@@ -1,93 +1,230 @@
 <template>
-  <div class="mirror-diff-view flex h-full overflow-hidden bg-white dark:bg-gray-900 font-mono text-sm group/view border-t border-gray-200 dark:border-gray-800">
-    <!-- Source Pane (Left) -->
-    <div 
-      ref="sourcePane" 
-      :style="{ width: leftPaneWidth + '%' }"
-      @scroll="handleScroll('source')"
-      class="shrink-0 flex flex-col overflow-hidden border-r border-gray-200 dark:border-[#30363d]"
-    >
-      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
-        <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">SOURCE: {{ sourceLabel }}</span>
-        <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">Deleted</span>
-      </div>
-      
-      <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
-        <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
-          [ DELETED OR NOT PRESENT ]
+  <div class="mirror-diff-view flex h-full overflow-hidden bg-white dark:bg-gray-900 font-mono text-sm group/view border-t border-gray-200 dark:border-gray-800 relative">
+    <!-- SPLIT VIEW MODE -->
+    <template v-if="viewType === 'split'">
+      <!-- Source Pane (Left) -->
+      <div 
+        ref="sourcePane" 
+        :style="{ width: leftPaneWidth + '%' }"
+        @scroll="handleScroll('source')"
+        class="shrink-0 flex flex-col overflow-hidden border-r border-gray-200 dark:border-[#30363d]"
+      >
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+          <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">SOURCE: {{ sourceLabel }}</span>
+          <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">Deleted</span>
         </div>
-        <div v-else class="ddl-container py-2">
-          <div 
-            v-for="(row, idx) in alignedRows" 
-            :key="'src-' + idx"
-            class="flex line-row group"
-            :class="getLineClass(row.source.type)"
-          >
-            <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
-              {{ row.source.line || '' }}
-            </div>
-            <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
-              {{ row.source.type === 'added' ? '+' : '' }}
-            </div>
+        
+        <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
+          <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
+            [ DELETED OR NOT PRESENT ]
+          </div>
+          <div v-else class="ddl-container py-2">
             <div 
-              class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
-              v-html="row.source.highlighted || row.source.content"
-            ></div>
+              v-for="(row, idx) in alignedRows" 
+              :key="'src-' + idx"
+              class="flex line-row group"
+              :class="getLineClass(row.source.type)"
+            >
+              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
+                {{ row.source.line || '' }}
+              </div>
+              <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
+                {{ row.source.type === 'added' ? '+' : '' }}
+              </div>
+              <div 
+                class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
+                v-html="row.source.highlighted || row.source.content"
+              ></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Resize Handle -->
-    <div 
-      @mousedown="startResize"
-      class="resize-handle w-[2px] hover:w-1 hover:bg-primary-500 cursor-col-resize z-20 bg-gray-200 dark:bg-[#30363d] transition-all duration-200"
-      :class="{ 'bg-primary-600 w-1': isResizing }"
-    ></div>
+      <!-- Resize Handle -->
+      <div 
+        @mousedown="startResize"
+        class="resize-handle w-[2px] hover:w-1 hover:bg-primary-500 cursor-col-resize z-20 bg-gray-200 dark:bg-[#30363d] transition-all duration-200"
+        :class="{ 'bg-primary-600 w-1': isResizing }"
+      ></div>
 
-    <!-- Target Pane (Right) -->
+      <!-- Target Pane (Right) -->
+      <div 
+        ref="targetPane" 
+        class="flex-1 flex flex-col overflow-hidden"
+        @scroll="handleScroll('target')"
+      >
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">TARGET: {{ targetLabel }}</span>
+          
+          <div class="flex items-center gap-3">
+            <span v-if="isEmptyTarget" class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 font-bold uppercase">New</span>
+            
+            <!-- Settings inside header for perfect alignment -->
+            <div class="relative" ref="settingsRef">
+              <button 
+                @click="showSettings = !showSettings"
+                class="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                :class="{ 'text-primary-500 bg-gray-200 dark:bg-gray-700': showSettings }"
+              >
+                <Settings class="w-3.5 h-3.5" />
+              </button>
+
+              <!-- Dropdown -->
+              <div v-if="showSettings" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 z-50 text-xs text-gray-600 dark:text-gray-300 pointer-events-auto">
+                <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">Diff Settings</h3>
+                
+                <div class="space-y-4 text-left">
+                  <!-- Whitespace -->
+                  <div>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Whitespace</h4>
+                    <label class="flex items-start cursor-pointer group">
+                      <div class="relative flex items-center mt-0.5">
+                        <input type="checkbox" v-model="hideWhitespace" class="sr-only" />
+                        <div class="w-4 h-4 border rounded border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center font-bold" :class="{ 'bg-primary-500 border-primary-500': hideWhitespace }">
+                          <Check v-show="hideWhitespace" class="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                      <div class="ml-2">
+                        <div class="text-gray-900 dark:text-white font-medium">Hide Whitespace Changes</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">Interacting with individual lines or hunks will be disabled while hiding whitespace.</div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <!-- Diff display -->
+                  <div>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
+                    <div class="space-y-2">
+                      <label v-for="mode in ['Unified', 'Split']" :key="mode" class="flex items-center cursor-pointer group">
+                        <input type="radio" :value="mode.toLowerCase()" v-model="viewType" class="sr-only" />
+                        <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center p-1" :class="{ 'border-primary-500': viewType === mode.toLowerCase() }">
+                          <div v-show="viewType === mode.toLowerCase()" class="w-2 h-2 rounded-full bg-primary-500"></div>
+                        </div>
+                        <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ mode }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
+          <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
+            [ NEW DDL HERE ]
+          </div>
+          <div v-else class="ddl-container py-2">
+            <div 
+              v-for="(row, idx) in alignedRows" 
+              :key="'tgt-' + idx"
+              class="flex line-row group"
+              :class="getLineClass(row.target.type)"
+            >
+              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
+                {{ row.target.line || '' }}
+              </div>
+              <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
+                {{ row.target.type === 'removed' ? '-' : '' }}
+              </div>
+              <div 
+                class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
+                v-html="row.target.highlighted || row.target.content"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- UNIFIED VIEW MODE -->
     <div 
-      ref="targetPane" 
+      v-else
       class="flex-1 flex flex-col overflow-hidden"
-      @scroll="handleScroll('target')"
     >
-      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
-        <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">TARGET: {{ targetLabel }}</span>
-        <span v-if="isEmptyTarget" class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 font-bold uppercase">New</span>
+      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+        <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">UNIFIED VIEW: {{ sourceLabel }} &rarr; {{ targetLabel }}</span>
+        
+        <!-- Settings inside header -->
+        <div class="relative" ref="settingsRefUnified">
+          <button 
+            @click="showSettings = !showSettings"
+            class="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+            :class="{ 'text-primary-500 bg-gray-200 dark:bg-gray-700': showSettings }"
+          >
+            <Settings class="w-3.5 h-3.5" />
+          </button>
+
+          <!-- Dropdown (same logic as above) -->
+          <div v-if="showSettings" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 z-50 text-xs text-gray-600 dark:text-gray-300 pointer-events-auto">
+            <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">Diff Settings</h3>
+            <div class="space-y-4 text-left">
+              <div>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Whitespace</h4>
+                <label class="flex items-start cursor-pointer group">
+                  <div class="relative flex items-center mt-0.5">
+                    <input type="checkbox" v-model="hideWhitespace" class="sr-only" />
+                    <div class="w-4 h-4 border rounded border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center font-bold" :class="{ 'bg-primary-500 border-primary-500': hideWhitespace }">
+                      <Check v-show="hideWhitespace" class="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                  <div class="ml-2">
+                    <div class="text-gray-900 dark:text-white font-medium">Hide Whitespace Changes</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">Interacting with individual lines or hunks will be disabled while hiding whitespace.</div>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
+                <div class="space-y-2">
+                  <label v-for="mode in ['Unified', 'Split']" :key="mode" class="flex items-center cursor-pointer group">
+                    <input type="radio" :value="mode.toLowerCase()" v-model="viewType" class="sr-only" />
+                    <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center p-1" :class="{ 'border-primary-500': viewType === mode.toLowerCase() }">
+                      <div v-show="viewType === mode.toLowerCase()" class="w-2 h-2 rounded-full bg-primary-500"></div>
+                    </div>
+                    <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ mode }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
-        <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
-          [ NEW DDL HERE ]
-        </div>
-        <div v-else class="ddl-container py-2">
+      <div class="flex-1 overflow-auto custom-scrollbar-diff relative ddl-container py-2">
+        <template v-for="(row, idx) in unifiedRows" :key="idx">
           <div 
-            v-for="(row, idx) in alignedRows" 
-            :key="'tgt-' + idx"
             class="flex line-row group"
-            :class="getLineClass(row.target.type)"
+            :class="getLineClass(row.type)"
           >
-            <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
-              {{ row.target.line || '' }}
+            <div class="line-numbers w-24 shrink-0 flex border-r border-gray-100 dark:border-[#30363d] select-none text-[10px]">
+              <div class="w-12 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 border-r border-gray-50 dark:border-gray-800/50">
+                {{ row.sourceLine || '' }}
+              </div>
+              <div class="w-12 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600">
+                {{ row.targetLine || '' }}
+              </div>
             </div>
             <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
-              {{ row.target.type === 'removed' ? '-' : '' }}
+              {{ row.type === 'added' ? '+' : (row.type === 'removed' ? '-' : '') }}
             </div>
             <div 
               class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
-              v-html="row.target.highlighted || row.target.content"
+              v-html="row.highlighted || row.content"
             ></div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-sql'
+import { Settings, Check } from 'lucide-vue-next'
 
 const props = defineProps<{
   sourceDdl: string | null
@@ -102,6 +239,12 @@ const targetPane = ref<HTMLElement | null>(null)
 const isSyncing = ref(false)
 const leftPaneWidth = ref(50)
 const isResizing = ref(false)
+
+const showSettings = ref(false)
+const settingsRef = ref<HTMLElement | null>(null)
+const settingsRefUnified = ref<HTMLElement | null>(null)
+const viewType = ref<'split' | 'unified'>('split')
+const hideWhitespace = ref(false)
 
 const isEmptySource = computed(() => !props.sourceDdl || props.status === 'missing_in_source')
 const isEmptyTarget = computed(() => !props.targetDdl || props.status === 'missing_in_target' || props.status === 'missing')
@@ -120,6 +263,44 @@ const alignedRows = computed(() => {
 
   // Need alignment if different
   return computeAlignedDiff(oldLines, newLines)
+})
+
+const unifiedRows = computed(() => {
+  const result: any[] = []
+  
+  alignedRows.value.forEach(row => {
+    if (row.source.type === 'equal' && row.target.type === 'equal') {
+      result.push({
+        sourceLine: row.source.line,
+        targetLine: row.target.line,
+        content: row.source.content,
+        highlighted: row.source.highlighted,
+        type: 'equal'
+      })
+    } else {
+      // In unified mode, show removed lines then added lines
+      if (row.source.type !== 'empty') {
+        result.push({
+          sourceLine: row.source.line,
+          targetLine: null,
+          content: row.source.content,
+          highlighted: row.source.highlighted,
+          type: row.source.type === 'equal' ? 'equal' : 'added' // Wait, using source as + is weird but consistent with current component
+        })
+      }
+      if (row.target.type !== 'empty') {
+        result.push({
+          sourceLine: null,
+          targetLine: row.target.line,
+          content: row.target.content,
+          highlighted: row.target.highlighted,
+          type: row.target.type === 'equal' ? 'equal' : 'removed'
+        })
+      }
+    }
+  })
+  
+  return result
 })
 
 const highlightedSourceLines = computed(() => {
@@ -142,11 +323,18 @@ function highlightLines(ddl: string) {
  * Compute aligned diff using a basic LCS alignment strategy
  */
 function computeAlignedDiff(oldLines: string[], newLines: string[]) {
+  const compare = (l1: string, l2: string) => {
+    if (hideWhitespace.value) {
+      return l1.trim() === l2.trim()
+    }
+    return l1 === l2
+  }
+
   const matrix: number[][] = Array(oldLines.length + 1).fill(0).map(() => Array(newLines.length + 1).fill(0))
   
   for (let i = 1; i <= oldLines.length; i++) {
     for (let j = 1; j <= newLines.length; j++) {
-      if (oldLines[i - 1] === newLines[j - 1]) {
+      if (compare(oldLines[i - 1], newLines[j - 1])) {
         matrix[i][j] = matrix[i - 1][j - 1] + 1
       } else {
         matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1])
@@ -159,7 +347,7 @@ function computeAlignedDiff(oldLines: string[], newLines: string[]) {
   let j = newLines.length
   
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+    if (i > 0 && j > 0 && compare(oldLines[i - 1], newLines[j - 1])) {
       result.unshift({
         source: { line: i, content: oldLines[i - 1], highlighted: highlightedSourceLines.value[i-1], type: 'equal' },
         target: { line: j, content: newLines[j - 1], highlighted: highlightedTargetLines.value[j-1], type: 'equal' }
@@ -245,7 +433,21 @@ watch(() => props.sourceDdl, () => {
   if (targetPane.value) targetPane.value.scrollTop = 0
 })
 
+const handleClickOutside = (event: MouseEvent) => {
+  const isOutsideSplit = settingsRef.value && !settingsRef.value.contains(event.target as Node)
+  const isOutsideUnified = settingsRefUnified.value && !settingsRefUnified.value.contains(event.target as Node)
+  
+  if (showSettings.value && isOutsideSplit && isOutsideUnified) {
+    showSettings.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleClickOutside)
+})
+
 onUnmounted(() => {
+  document.removeEventListener('mousedown', handleClickOutside)
   stopResize()
 })
 </script>

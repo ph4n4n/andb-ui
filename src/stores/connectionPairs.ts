@@ -16,6 +16,8 @@ export interface ConnectionPair {
   name: string
   sourceEnv: string
   targetEnv: string
+  sourceConnectionId?: string
+  targetConnectionId?: string
   description: string
   isDefault: boolean
   status: 'idle' | 'testing' | 'success' | 'failed'
@@ -140,8 +142,21 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
       const appStore = useAppStore()
       if (!appStore || !appStore.connections) return null
 
-      const source = appStore.connections.find(c => c.environment === pair.sourceEnv)
-      const target = appStore.connections.find(c => c.environment === pair.targetEnv)
+      let source = null
+      if (pair.sourceConnectionId) {
+        source = appStore.connections.find(c => c.id === pair.sourceConnectionId)
+      }
+      if (!source) {
+        source = appStore.connections.find(c => c.environment === pair.sourceEnv)
+      }
+
+      let target = null
+      if (pair.targetConnectionId) {
+        target = appStore.connections.find(c => c.id === pair.targetConnectionId)
+      }
+      if (!target) {
+        target = appStore.connections.find(c => c.environment === pair.targetEnv)
+      }
 
       if (!source || !target) return null
 
@@ -150,8 +165,10 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
         source,
         target
       }
-    } catch (e) {
-      console.error('Error in activePair computed:', e)
+    } catch (e: any) {
+      if (window.electronAPI) {
+        window.electronAPI.log.send('error', 'Error calculating activePair in connectionPairs store', e.message)
+      }
       return null
     }
   })
@@ -230,8 +247,21 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
       const appStore = useAppStore()
 
       // Find actual connections for this pair's environments
-      const sourceConn = appStore.connections.find(c => c.environment === pair.sourceEnv)
-      const targetConn = appStore.connections.find(c => c.environment === pair.targetEnv)
+      let sourceConn = null
+      if (pair.sourceConnectionId) {
+        sourceConn = appStore.connections.find(c => c.id === pair.sourceConnectionId)
+      }
+      if (!sourceConn) {
+        sourceConn = appStore.connections.find(c => c.environment === pair.sourceEnv)
+      }
+
+      let targetConn = null
+      if (pair.targetConnectionId) {
+        targetConn = appStore.connections.find(c => c.id === pair.targetConnectionId)
+      }
+      if (!targetConn) {
+        targetConn = appStore.connections.find(c => c.environment === pair.targetEnv)
+      }
 
       if (!sourceConn || !targetConn) {
         pair.status = 'failed'
@@ -248,9 +278,11 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
       ])
 
       pair.status = (sourceSuccess && targetSuccess) ? 'success' : 'failed'
-    } catch (error) {
-      console.error('Connection pair test error:', error)
+    } catch (error: any) {
       pair.status = 'failed'
+      if (window.electronAPI) {
+        window.electronAPI.log.send('error', `Connection pair test error for pair ${pair.name}`, error.message)
+      }
     }
   }
 

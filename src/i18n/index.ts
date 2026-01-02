@@ -4,7 +4,8 @@ const messages = {
   en: {
     common: {
       dashboard: 'Dashboard',
-      compare: 'Compare',
+      compare: 'Diff & Sync',
+      schema: 'Schema',
       migrate: 'Migrate',
       export: 'Export',
       import: 'Import',
@@ -122,7 +123,8 @@ const messages = {
   vi: {
     common: {
       dashboard: 'Bảng điều khiển',
-      compare: 'So sánh',
+      compare: 'Khác biệt & Đồng bộ',
+      schema: 'Lược đồ',
       migrate: 'Di chuyển',
       export: 'Xuất',
       import: 'Nhập',

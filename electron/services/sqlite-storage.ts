@@ -38,8 +38,6 @@ export class SQLiteStorageService {
     this.dbPath = path.join(app.getPath('userData'), 'andb-storage.db')
     this.db = new Database(this.dbPath)
 
-    console.log(`[SQLiteStorage] Database initialized at: ${this.dbPath}`)
-
     // Ensure the db directory exists (though path.join(userData) should be safe)
     const fs = require('fs')
     const dbDir = path.dirname(this.dbPath)
@@ -71,7 +69,6 @@ export class SQLiteStorageService {
 
     // Execute schema
     this.db.exec(schema)
-    console.log('[SQLiteStorage] Schema initialized')
   }
 
   /**
@@ -99,6 +96,58 @@ export class SQLiteStorageService {
   }
 
   /**
+   * Save multiple DDL exports at once (bulk)
+   */
+  async saveExport(environment: string, database: string, type: string, data: any[], isFullSync: boolean = false): Promise<boolean> {
+    const stmt = this.db.prepare(`
+      INSERT INTO ddl_exports (environment, database_name, ddl_type, ddl_name, ddl_content, checksum)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(environment, database_name, ddl_type, ddl_name) 
+      DO UPDATE SET 
+        ddl_content = excluded.ddl_content,
+        checksum = excluded.checksum,
+        updated_at = CURRENT_TIMESTAMP,
+        exported_to_file = 0
+    `)
+
+    const deleteStmt = this.db.prepare(`
+      DELETE FROM ddl_exports 
+      WHERE environment = ? AND database_name = ? AND ddl_type = ? AND ddl_name = ?
+    `)
+
+    const crypto = require('crypto')
+
+    // Get existing names if full sync
+    let existingNames: string[] = []
+    if (isFullSync) {
+      existingNames = this.getDDLList(environment, database, type)
+    }
+
+    const transaction = this.db.transaction((items: any[]) => {
+      const newNames = new Set<string>()
+
+      // 1. Upsert new items
+      for (const item of items) {
+        const checksum = crypto.createHash('md5').update(item.ddl).digest('hex')
+        stmt.run(environment, database, type, item.name, item.ddl, checksum)
+        if (isFullSync) newNames.add(item.name)
+      }
+
+      // 2. Delete obsolete items (only for full sync)
+      if (isFullSync) {
+        for (const name of existingNames) {
+          if (!newNames.has(name)) {
+            deleteStmt.run(environment, database, type, name)
+          }
+        }
+      }
+    })
+
+    transaction(data)
+    return true
+  }
+
+  /**
    * Get DDL content
    */
   getDDL(environment: string, database: string, type: string, name: string): string | null {
@@ -113,6 +162,21 @@ export class SQLiteStorageService {
 
     const row = stmt.get(environment, database, type.toLowerCase(), name)
     return row ? row.ddl_content : null
+  }
+
+  /**
+   * Get DDL objects list with metadata
+   */
+  getDDLObjects(environment: string, database: string, type: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT ddl_name as name, ddl_content as content, updated_at
+      FROM ddl_exports 
+      WHERE environment = ? 
+        AND database_name = ? 
+        AND LOWER(ddl_type) = ?
+      ORDER BY ddl_name
+    `)
+    return stmt.all(environment, database, type.toLowerCase())
   }
 
   /**
@@ -250,6 +314,58 @@ export class SQLiteStorageService {
   }
 
   /**
+   * Get last updated timestamp for a database
+   */
+  getLastUpdated(environment: string, database: string): string | null {
+    const stmt = this.db.prepare(`
+      SELECT MAX(updated_at) as last_updated
+      FROM ddl_exports
+      WHERE environment = ? AND database_name = ?
+    `)
+    const result = stmt.get(environment, database)
+    return result ? result.last_updated : null
+  }
+
+  /**
+   * Clear all data for a specific connection
+   */
+  clearDataForConnection(environment: string, database: string): void {
+    const deleteDDL = this.db.prepare(`
+      DELETE FROM ddl_exports 
+      WHERE environment = ? AND database_name = ?
+    `)
+
+    // Also delete related comparisons
+    // 1. Where connection is source
+    const deleteCompSource = this.db.prepare(`
+      DELETE FROM comparisons 
+      WHERE src_environment = ? AND database_name = ?
+    `)
+
+    // 2. Where connection is target (requires finding items where dest_environment matches)
+    // Note: comparisons table stores `database_name` which is usually the source DB name for mapping. 
+    // If target env matches, we should clean up too.
+    const deleteCompTarget = this.db.prepare(`
+      DELETE FROM comparisons 
+      WHERE dest_environment = ?
+    `)
+
+    const transaction = this.db.transaction(() => {
+      deleteDDL.run(environment, database)
+      deleteCompSource.run(environment, database)
+      // Be careful with deleteCompTarget - it might affect other pairs if not specific enough.
+      // But typically comparisons are scoped by pair.
+      // Ideally we delete where dest_environment = env AND implied target DB matches... 
+      // but comparisons table schema is (src_env, dest_env, database_name). 
+      // 'database_name' is the logical name (usually source).
+      // If we delete a TARGET connection, we should probably remove comparisons targeting it.
+      deleteCompTarget.run(environment)
+    })
+
+    transaction()
+  }
+
+  /**
    * Clear all data (for testing)
    */
   clearAll(): void {
@@ -257,7 +373,6 @@ export class SQLiteStorageService {
     this.db.exec('DELETE FROM comparisons')
     this.db.exec('DELETE FROM alter_statements')
     this.db.exec('DELETE FROM export_queue')
-    console.log('[SQLiteStorage] All data cleared')
   }
 
   /**
@@ -281,7 +396,6 @@ export class SQLiteStorageService {
   close(): void {
     if (this.db) {
       this.db.close()
-      console.log('[SQLiteStorage] Database closed')
     }
   }
 }

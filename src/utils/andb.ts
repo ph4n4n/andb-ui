@@ -47,7 +47,6 @@ export class Andb {
    */
   static async test(): Promise<boolean> {
     if (!isElectron) {
-      console.warn('Not in Electron environment')
       return false
     }
 
@@ -55,7 +54,6 @@ export class Andb {
       const result = await window.electronAPI.andbTest()
       return result.success && result.available === true
     } catch (error) {
-      console.error('andb-core test failed:', error)
       return false
     }
   }
@@ -74,17 +72,15 @@ export class Andb {
 
     try {
       // Sanitize connections to remove Vue proxies/observers
-      const cleanSource = { ...sourceConnection }
-      const cleanTarget = { ...targetConnection }
+      const cleanSource = sourceConnection ? { ...sourceConnection } : null
+      const cleanTarget = targetConnection ? { ...targetConnection } : null
 
-      console.log(`[Andb] Exporting ${options.type} for ${options.environment}...`)
       const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource,
-        targetConnection: cleanTarget,
+        sourceConnection: cleanSource as any,
+        targetConnection: cleanTarget as any,
         operation: 'export',
         options
       })
-      console.log(`[Andb] Export result for ${options.type}:`, result)
 
       if (result.success) {
         return result.data
@@ -92,7 +88,6 @@ export class Andb {
         throw new Error(result.error || 'Export failed')
       }
     } catch (error: any) {
-      console.error('Export error:', error)
       throw new Error(`Export failed: ${error.message}`)
     }
   }
@@ -111,17 +106,15 @@ export class Andb {
 
     try {
       // Sanitize connections
-      const cleanSource = { ...sourceConnection }
-      const cleanTarget = { ...targetConnection }
+      const cleanSource = sourceConnection ? { ...sourceConnection } : null
+      const cleanTarget = targetConnection ? { ...targetConnection } : null
 
-      console.log(`[Andb] Comparing ${options.type} from ${options.sourceEnv} to ${options.targetEnv}...`)
       const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource,
-        targetConnection: cleanTarget,
+        sourceConnection: cleanSource as any,
+        targetConnection: cleanTarget as any,
         operation: 'compare',
         options
       })
-      console.log(`[Andb] Compare result for ${options.type}:`, result)
 
       if (result.success) {
         return result.data
@@ -129,7 +122,6 @@ export class Andb {
         throw new Error(result.error || 'Compare failed')
       }
     } catch (error: any) {
-      console.error('Compare error:', error)
       throw new Error(`Compare failed: ${error.message}`)
     }
   }
@@ -159,7 +151,6 @@ export class Andb {
         throw new Error(result.error || 'Failed to fetch saved results')
       }
     } catch (error: any) {
-      console.error('getSavedComparisonResults error:', error)
       throw new Error(`Failed to fetch saved results: ${error.message}`)
     }
   }
@@ -178,12 +169,12 @@ export class Andb {
 
     try {
       // Sanitize connections
-      const cleanSource = { ...sourceConnection }
-      const cleanTarget = { ...targetConnection }
+      const cleanSource = sourceConnection ? { ...sourceConnection } : null
+      const cleanTarget = targetConnection ? { ...targetConnection } : null
 
       const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource,
-        targetConnection: cleanTarget,
+        sourceConnection: cleanSource as any,
+        targetConnection: cleanTarget as any,
         operation: 'migrate',
         options
       })
@@ -194,7 +185,6 @@ export class Andb {
         throw new Error(result.error || 'Migration failed')
       }
     } catch (error: any) {
-      console.error('Migration error:', error)
       throw new Error(`Migration failed: ${error.message}`)
     }
   }
@@ -212,9 +202,12 @@ export class Andb {
     }
 
     try {
+      const cleanSource = sourceConnection ? { ...sourceConnection } : null
+      const cleanTarget = targetConnection ? { ...targetConnection } : null
+
       const result = await window.electronAPI.andbExecute({
-        sourceConnection,
-        targetConnection,
+        sourceConnection: cleanSource as any,
+        targetConnection: cleanTarget as any,
         operation: 'generate',
         options
       })
@@ -225,7 +218,6 @@ export class Andb {
         throw new Error(result.error || 'Generate failed')
       }
     } catch (error: any) {
-      console.error('Generate error:', error)
       throw new Error(`Generate failed: ${error.message}`)
     }
   }
@@ -236,7 +228,6 @@ export class Andb {
    */
   static async testConnection(connection: DatabaseConnection): Promise<boolean> {
     if (!isElectron) {
-      console.warn('Not in Electron, using mock test')
       await new Promise(resolve => setTimeout(resolve, 1000))
       return Math.random() > 0.2
     }
@@ -250,15 +241,8 @@ export class Andb {
         password: connection.password
       })
 
-      if (result.success) {
-        console.log('Connection test successful:', result.stdout)
-        return true
-      } else {
-        console.error('Connection test failed:', result.stderr || result.error)
-        return false
-      }
+      return result.success
     } catch (error) {
-      console.error('Connection test error:', error)
       return false
     }
   }
@@ -280,11 +264,23 @@ export class Andb {
         throw new Error(result.error || 'Failed to load schemas')
       }
     } catch (error: any) {
-      console.error('Get schemas error:', error)
       throw new Error(`Failed to load schemas: ${error.message}`)
     }
   }
+
+  /**
+   * Clear cached data for a specific connection
+   */
+  static async clearConnectionData(connection: DatabaseConnection): Promise<boolean> {
+    if (!isElectron) return false
+    try {
+      const result = await window.electronAPI.andbClearConnectionData(connection)
+      return result.success
+    } catch (error) {
+      return false
+    }
+  }
+
 }
 
 export default Andb
-

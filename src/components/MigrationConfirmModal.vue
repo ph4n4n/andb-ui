@@ -86,7 +86,10 @@
                       <div class="bg-white dark:bg-gray-900/50 divide-y divide-gray-100 dark:divide-gray-800/50 max-h-40 overflow-y-auto">
                         <div v-for="obj in group" :key="obj.name" class="px-3 py-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <span class="text-xs font-mono text-gray-600 dark:text-gray-300 truncate pr-2">{{ obj.name }}</span>
-                          <span :class="getStatusClass(obj.status)" class="text-[9px] uppercase font-bold tracking-tighter">{{ getStatusText(obj.status) }}</span>
+                          <span :class="getStatusClass(obj.status)" class="text-[9px] uppercase font-bold tracking-tighter flex items-center">
+                            <component :is="getStatusIcon(obj.status)" class="w-3 h-3 mr-1" />
+                            {{ getStatusText(obj.status) }}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -167,7 +170,10 @@ import {
   Table,
   Layers,
   Hammer,
-  Database
+  Database,
+  Trash2,
+  PlusCircle,
+  FileEdit
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -191,6 +197,19 @@ const typeIcons: any = {
 const getIconForType = (type: string) => {
   const key = type?.toLowerCase() 
   return typeIcons[key] || Database
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'missing_in_source':
+    case 'deprecated': 
+      return Trash2
+    case 'missing_in_target':
+    case 'new': 
+      return PlusCircle
+    default: 
+      return FileEdit
+  }
 }
 
 const groupedItems = computed(() => {

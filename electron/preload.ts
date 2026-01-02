@@ -101,6 +101,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('andb-clear-storage')
   },
 
+  andbClearConnectionData: (connection: any) => {
+    return ipcRenderer.invoke('andb-clear-connection-data', connection)
+  },
+
   andbGetSchemas: (args?: any) => {
     return ipcRenderer.invoke('andb-get-schemas', args)
   },
@@ -111,6 +115,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     type: string
   }) => {
     return ipcRenderer.invoke('andb-get-saved-comparison-results', args)
+  },
+
+  // Logger
+  log: {
+    send: (level: 'info' | 'warn' | 'error', message: string, data?: any) => {
+      return ipcRenderer.invoke('app-log', { level, message, data })
+    },
+    write: (content: string) => {
+      return ipcRenderer.invoke('app-log-write', content)
+    }
   },
 
   // Load mock compare data for testing

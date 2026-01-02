@@ -7,13 +7,15 @@ export type Language = 'en' | 'vi'
 interface Settings {
   theme: Theme
   language: Language
+  timezone: string
 }
 
 const STORAGE_KEY = 'andb-ui-settings'
 
 const defaultSettings: Settings = {
   theme: 'system',
-  language: 'en'
+  language: 'en',
+  timezone: 'UTC'
 }
 
 const loadSettings = (): Settings => {
@@ -28,8 +30,10 @@ const loadSettings = (): Settings => {
 const saveSettings = (settings: Settings) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  } catch (error) {
-    console.error('Failed to save settings:', error)
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Failed to save settings to localStorage', error.message)
+    }
   }
 }
 

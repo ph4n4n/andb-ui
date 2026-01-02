@@ -178,8 +178,10 @@ const loadTemplates = () => {
         createdAt: new Date(t.createdAt)
       }))
     }
-  } catch (error) {
-    console.error('Failed to load templates:', error)
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Failed to load templates from localStorage', error.message)
+    }
   }
 }
 
@@ -187,8 +189,10 @@ const loadTemplates = () => {
 const saveTemplates = () => {
   try {
     localStorage.setItem('connection-templates', JSON.stringify(templates.value))
-  } catch (error) {
-    console.error('Failed to save templates:', error)
+  } catch (error: any) {
+    if (window.electronAPI) {
+      window.electronAPI.log.send('error', 'Failed to save templates to localStorage', error.message)
+    }
   }
 }
 

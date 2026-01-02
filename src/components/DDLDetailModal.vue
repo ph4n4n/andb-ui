@@ -154,11 +154,8 @@ const schemaDiff = computed(() => props.item?.diff || null)
 const ddlStatements = computed(() => {
   if (!props.item) return []
   
-  console.log('[DDLDetailModal] Item:', props.item)
-  
   // If DDL is provided directly
   if (props.item.ddl && Array.isArray(props.item.ddl)) {
-    console.log('[DDLDetailModal] DDL from item:', props.item.ddl)
     if (props.item.ddl.length > 0) {
       return props.item.ddl
     }
@@ -167,8 +164,6 @@ const ddlStatements = computed(() => {
   // Generate DDL based on status and diff
   const statements: string[] = []
   const { name, type = 'table', status, diff } = props.item
-  
-  console.log('[DDLDetailModal] Generating DDL for:', { name, type, status })
   
   if (status === 'missing_in_target' || status === 'missing') {
     // Need to create in target - use source DDL if available
@@ -210,7 +205,6 @@ const ddlStatements = computed(() => {
     }
   }
   
-  console.log('[DDLDetailModal] Generated statements:', statements)
   return statements
 })
 
@@ -323,7 +317,7 @@ const copyDDL = async (ddl: string) => {
     await navigator.clipboard.writeText(ddl)
     // TODO: Show toast notification
   } catch (err) {
-    console.error('Failed to copy:', err)
+    // Failed to copy
   }
 }
 

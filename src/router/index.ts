@@ -14,6 +14,11 @@ const routes = [
     component: Dashboard
   },
   {
+    path: '/schema',
+    name: 'Schema',
+    component: () => import('@/views/Schema.vue')
+  },
+  {
     path: '/compare',
     name: 'Compare',
     component: () => import('@/views/Compare.vue')

@@ -5,6 +5,29 @@ import { SQLiteStorageService } from './services/sqlite-storage'
 
 const isDev = process.env.NODE_ENV === 'development'
 
+// Initialize Logger early
+const Logger = require('andb-logger')
+try {
+  let loggerInstance;
+  const logConfig = {
+    mode: isDev ? 'DEV' : 'PROD',
+    dirpath: app.getPath('userData'),
+    logName: 'ANDB-UI'
+  }
+
+  if (typeof Logger.getInstance === 'function') {
+    loggerInstance = Logger.getInstance(logConfig);
+  } else if (typeof Logger === 'function') {
+    loggerInstance = new Logger(logConfig);
+  }
+
+  if (loggerInstance) {
+    (global as any).logger = loggerInstance;
+  }
+} catch (e) {
+  // Silent fail
+}
+
 // Enable hot reload for development
 if (isDev) {
   try {
@@ -14,7 +37,7 @@ if (isDev) {
       electron: join(__dirname, '../node_modules/electron/dist/Electron.app/Contents/MacOS/Electron')
     })
   } catch (error) {
-    console.log('electron-reload not available in production')
+    // electron-reload not available
   }
 }
 
@@ -77,7 +100,6 @@ app.whenReady().then(async () => {
       const hasCache = store.has('compare_DEV_STAGE_TABLES_latest')
 
       if (!hasCache) {
-        console.log('🔄 Loading mock compare data for development...')
         // Load mock data (same as IPC handler)
         const mockTables = [
           {
@@ -157,14 +179,9 @@ app.whenReady().then(async () => {
           results: []
         })
 
-        console.log('✅ Mock compare data loaded automatically!')
-        console.log('  - Tables:', mockTables.length)
-        console.log('  - Procedures:', mockProcedures.length)
-      } else {
-        console.log('ℹ️  Mock compare data already exists')
       }
     } catch (error) {
-      console.error('Failed to auto-load mock data:', error)
+      // Failed to auto-load mock data
     }
   }
 
@@ -210,6 +227,7 @@ ipcMain.handle('execute-andb-operation', async (
     )
     return { success: true, data: result }
   } catch (error: any) {
+    if ((global as any).logger) (global as any).logger.error('execute-andb-operation error:', error)
     return { success: false, error: error.message }
   }
 })
@@ -305,7 +323,7 @@ ipcMain.handle('andb-execute', async (event, args) => {
 
     return { success: true, data: result }
   } catch (error: any) {
-    console.error('andb-execute error:', error)
+    if ((global as any).logger) (global as any).logger.error('andb-execute error:', error)
     return { success: false, error: error.message }
   }
 })
@@ -394,15 +412,11 @@ ipcMain.handle('storage-clear', async () => {
 ipcMain.handle('andb-get-schemas', async (event) => {
   try {
     const storage = SQLiteStorageService.getInstance()
-    console.log('[getSchemas] Retrieving environments and databases from SQLite')
-
     const environments = storage.getEnvironments()
-    console.log('[getSchemas] Found environments:', environments)
     const result: any[] = []
 
     for (const env of environments) {
       const databases = storage.getDatabases(env)
-      console.log(`[getSchemas] Environment ${env} has databases:`, databases)
 
       const envObj = {
         name: env,
@@ -422,27 +436,25 @@ ipcMain.handle('andb-get-schemas', async (event) => {
 
         const ddlTypes = ['tables', 'views', 'procedures', 'functions', 'triggers']
         for (const type of ddlTypes) {
-          const names = storage.getDDLList(env, db, type)
-          if (names.length > 0) {
-            console.log(`[getSchemas] Found ${names.length} ${type} in ${env}/${db}`)
-          }
+          const objects = storage.getDDLObjects(env, db, type)
 
-          for (const name of names) {
-            const content = storage.getDDL(env, db, type, name)
-            if (content) {
-              // @ts-ignore
-              dbObj[type.toLowerCase()].push({
-                name,
-                content,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                checksum: require('crypto').createHash('md5').update(content).digest('hex')
-              })
-            }
+          for (const obj of objects) {
+            // @ts-ignore
+            dbObj[type.toLowerCase()].push({
+              name: obj.name,
+              content: obj.content,
+              updated_at: obj.updated_at,
+              checksum: require('crypto').createHash('md5').update(obj.content || '').digest('hex')
+            })
           }
         }
 
         dbObj.totalCount = dbObj.tables.length + dbObj.views.length + dbObj.procedures.length + dbObj.functions.length + dbObj.triggers.length
+
+        // Add last updated timestamp
+        // @ts-ignore
+        dbObj.lastUpdated = storage.getLastUpdated(env, db)
+
         if (dbObj.totalCount > 0) {
           envObj.databases.push(dbObj)
         }
@@ -453,10 +465,9 @@ ipcMain.handle('andb-get-schemas', async (event) => {
       }
     }
 
-    console.log(`[getSchemas] Returning ${result.length} environments with data`)
     return { success: true, data: result }
   } catch (error: any) {
-    console.error('[getSchemas] Error:', error)
+    if ((global as any).logger) (global as any).logger.error('andb-get-schemas error:', error)
     return { success: false, error: error.message }
   }
 })
@@ -468,10 +479,20 @@ ipcMain.handle('andb-clear-storage', async () => {
   try {
     const storage = SQLiteStorageService.getInstance()
     storage.clearAll()
-    console.log('[clearStorage] SQLite database cleared successfully')
     return { success: true }
   } catch (error: any) {
-    console.error('[clearStorage] Error:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+/**
+ * Clear specific connection data
+ */
+ipcMain.handle('andb-clear-connection-data', async (event, connection) => {
+  try {
+    await AndbBuilder.clearConnectionData(connection)
+    return { success: true }
+  } catch (error: any) {
     return { success: false, error: error.message }
   }
 })
@@ -624,17 +645,54 @@ END;`
       results: []
     })
 
-    console.log('✅ Mock compare data loaded!')
-    console.log('  - Tables:', mockTables.length)
-    console.log('  - Procedures:', mockProcedures.length)
-
     return {
       success: true,
       message: `Loaded ${mockTables.length} tables, ${mockProcedures.length} procedures`
     }
   } catch (error: any) {
-    console.error('Failed to load mock data:', error)
     return { success: false, error: error.message }
+  }
+})
+
+// ========================================
+// IPC Handlers for Logger (Cross-Process)
+// ========================================
+
+ipcMain.handle('app-log', (event, { level, message, data }) => {
+  const logger = (global as any).logger;
+  if (!logger) {
+    if (isDev) console.log(`[Renderer-${level}] ${message}`, data || '');
+    return;
+  }
+
+  try {
+    switch (level) {
+      case 'error':
+        logger.error(`[Renderer] ${message}`, data);
+        break;
+      case 'warn':
+        logger.warn(`[Renderer] ${message}`, data);
+        break;
+      case 'info':
+      default:
+        logger.info(`[Renderer] ${message}`, data);
+        break;
+    }
+  } catch (e) {
+    if (isDev) console.error('Logger direct call failed:', e);
+  }
+})
+
+ipcMain.handle('app-log-write', (event, content) => {
+  const logger = (global as any).logger;
+  if (logger && typeof logger.write === 'function') {
+    try {
+      logger.write(content);
+    } catch (e) {
+      if (isDev) console.error('Logger.write failed:', e);
+    }
+  } else if (isDev) {
+    console.log('[Renderer-Write]', content);
   }
 })
 

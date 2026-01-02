@@ -3,13 +3,7 @@
     <div class="flex items-center justify-between gap-4">
       <!-- Left side: Toggle button and title/breadcrumbs -->
       <div class="flex items-center space-x-4 min-w-0">
-        <button
-          @click="toggleSidebar"
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 shrink-0"
-          title="Toggle Sidebar (Ctrl+B)"
-        >
-          <Menu class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
+
 
         <!-- Logo & Brand -->
         <div class="flex items-center space-x-3 mr-4">
@@ -30,7 +24,7 @@
       </div>
 
       <!-- Center: Connection Pair Selector & Context Actions -->
-      <div class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div v-if="route.path === '/compare'" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center pl-2 space-x-2 border-r border-gray-200 dark:border-gray-700 pr-2">
           <Database class="w-4 h-4 text-primary-500" />
           <select
@@ -112,7 +106,7 @@ import LanguageToggle from './LanguageToggle.vue'
 import AboutModal from './AboutModal.vue'
 import Breadcrumbs from './Breadcrumbs.vue'
 import { 
-  Menu, 
+ 
   ShieldCheck, 
   RefreshCw, 
   Settings,
@@ -139,7 +133,6 @@ const testResult = computed(() => connectionPairsStore.selectedPair?.status)
 // Initialize store
 onMounted(() => {
   // Initialize is now automatic in the store
-  console.log('Header mounted')
   // Initial test on mount if we have a pair
   if (connectionPairsStore.selectedPairId) {
     testConnections()
@@ -167,18 +160,14 @@ const availablePairs = computed(() => connectionPairsStore.availablePairs)
 const currentPageTitle = computed(() => {
   const routeNames: Record<string, string> = {
     '/': $t('common.dashboard'),
-    '/export': $t('common.export'),
+    '/schema': $t('common.schema'),
     '/compare': $t('common.compare'),
-    '/migrate': $t('common.migrate'),
-    '/scripts': $t('common.scripts'),
     '/settings': $t('common.settings')
   }
   return routeNames[route.path] || $t('common.dashboard')
 })
 
-const toggleSidebar = () => {
-  appStore.toggleSidebar()
-}
+
 
 const testConnections = async () => {
   // Test current selected pair
@@ -189,8 +178,6 @@ const testConnections = async () => {
 }
 
 const onPairChange = () => {
-  const selectedPair = connectionPairsStore.selectedPair
-  console.log('Changed to pair:', selectedPair?.name)
 }
 
 const openPairSelector = () => {

@@ -81,10 +81,8 @@ export const backup = {
         await storage.saveSettings(data.settings)
       }
 
-      console.log('✅ Backup restored successfully')
       return true
     } catch (error) {
-      console.error('❌ Restore failed:', error)
       return false
     }
   },
@@ -97,7 +95,6 @@ export const backup = {
       const data = JSON.parse(json) as BackupData
       return await this.restore(data)
     } catch (error) {
-      console.error('❌ Import failed:', error)
       return false
     }
   },
@@ -110,11 +107,9 @@ export const backup = {
       const text = await file.text()
       return this.import(text)
     } catch (error) {
-      console.error('❌ File import failed:', error)
       return false
     }
   }
 }
 
 export default backup
-

@@ -58,6 +58,18 @@
                   </div>
                   
                   <div>
+                    <label class="block text-sm font-medium mb-2">Timezone</label>
+                    <select 
+                      v-model="settings.timezone"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                    >
+                      <option v-for="tz in timezones" :key="tz.value" :value="tz.value">
+                        {{ tz.label }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div>
                     <label class="flex items-center">
                       <input type="checkbox" checked class="mr-2" />
                       Auto-save
@@ -87,7 +99,7 @@
               </button>
               
               <div v-if="expandedSections.environment" class="border-t border-gray-200 dark:border-gray-700 p-6">
-                <EnvironmentManager ref="envManager" />
+                <EnvironmentManager />
               </div>
             </div>
             
@@ -122,7 +134,6 @@
               
               <div v-if="expandedSections.pairs" class="border-t border-gray-200 dark:border-gray-700 p-6">
                 <ConnectionPairManager 
-                  ref="pairManager"
                   :enabled-environments="enabledEnvironments"
                 />
               </div>
@@ -156,11 +167,25 @@ import { useSettingsStore } from '@/stores/settings'
 import { setLanguage } from '@/i18n'
 
 const { t: $t } = useI18n()
-const envManager = ref()
-const pairManager = ref()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
 const settingsStore = useSettingsStore()
+
+const timezones = [
+  { label: 'UTC (+00:00)', value: 'UTC' },
+  { label: 'Asia/Ho_Chi_Minh (+07:00)', value: 'Asia/Ho_Chi_Minh' },
+  { label: 'Asia/Shanghai (+08:00)', value: 'Asia/Shanghai' },
+  { label: 'Asia/Tokyo (+09:00)', value: 'Asia/Tokyo' },
+  { label: 'America/New_York (-05:00)', value: 'America/New_York' },
+  { label: 'America/Los_Angeles (-08:00)', value: 'America/Los_Angeles' },
+  { label: 'Europe/London (+00:00)', value: 'Europe/London' },
+  { label: 'Europe/Paris (+01:00)', value: 'Europe/Paris' },
+  { label: 'Australia/Sydney (+11:00)', value: 'Australia/Sydney' },
+  { label: "Singapore (+08:00)", value: "Asia/Singapore" },
+  { label: "Shanghai (+08:00)", value: "Asia/Shanghai" },
+  { label: "Tokyo (+09:00)", value: "Asia/Tokyo" },
+  { label: "Sydney (+11:00)", value: "Australia/Sydney" },
+]
 
 const settings = computed(() => settingsStore.settings)
 
@@ -197,9 +222,11 @@ const resetToDefaults = async () => {
         connectionPairsStore.resetConnectionPairs()
       ])
       alert('All data has been reset to defaults. Please refresh the page if changes are not immediately visible.')
-    } catch (error) {
-      console.error('Reset failed:', error)
-      alert('Failed to reset data. Please check console for details.')
+    } catch (error: any) {
+      if (window.electronAPI) {
+        window.electronAPI.log.send('error', 'Failed to reset data in settings', error.message)
+      }
+      alert('Failed to reset data.')
     }
   }
 }

@@ -78,7 +78,6 @@ class DatabaseManager {
     this.db.pragma('journal_mode = WAL') // Better performance
 
     this.createTables()
-    console.log(`📊 SQLite database initialized: ${this.dbPath}`)
   }
 
   /**
@@ -323,8 +322,6 @@ class DatabaseManager {
     this.db.prepare('DELETE FROM comparison_history WHERE created_at < ?').run(cutoff)
     this.db.prepare('DELETE FROM export_logs WHERE created_at < ?').run(cutoff)
     this.db.prepare('DELETE FROM audit_logs WHERE created_at < ?').run(cutoff)
-
-    console.log(`🧹 Cleaned up records older than ${daysToKeep} days`)
   }
 
   /**
@@ -348,4 +345,3 @@ export const database = new DatabaseManager()
 
 // Export for Electron main process
 export default database
-
