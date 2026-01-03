@@ -1,34 +1,66 @@
 <template>
   <MainLayout>
     <template #toolbar>
-      <div class="flex items-center space-x-4 w-full h-full">
-        <h1 class="text-xl font-bold flex items-center shrink-0">
-          <span class="mr-2">📁</span> Schema Explorer
-        </h1>
-        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2 shrink-0"></div>
-        
-        <div class="flex items-center space-x-2 flex-1 min-w-0">
-          <Database class="w-4 h-4 text-primary-500 shrink-0" />
-          <select 
-            v-model="selectedConnectionId"
-            class="bg-transparent border-none text-sm font-bold text-gray-900 dark:text-white focus:ring-0 cursor-pointer w-full max-w-sm truncate"
-          >
-            <option value="" disabled>Select Database</option>
-            <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id">
-              {{ conn.name }} ({{ conn.database }})
-            </option>
-          </select>
-        </div>
-        
-        <div class="flex items-center space-x-3 shrink-0 ml-auto">
-          <div v-if="error" class="text-red-500 text-sm mr-2 max-w-[200px] truncate" :title="error">{{ error }}</div>
-          
-          <div v-if="selectedDbLastUpdated" class="flex flex-col items-end mr-3">
-            <span class="text-[10px] text-gray-400 uppercase tracking-wider">Last synced</span>
-            <span class="text-xs font-mono text-gray-600 dark:text-gray-300" :title="selectedDbLastUpdated">{{ formatTimeAgo(selectedDbLastUpdated) }}</span>
+      <div class="flex items-center justify-between w-full h-full gap-4">
+        <!-- Title & Connection Selection -->
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col gap-0.5">
+            <h1 class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center">
+              <Folder class="w-5 h-5 mr-2 text-primary-500" />
+              Schema Explorer
+            </h1>
+             <div class="flex items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider gap-2">
+                <Database class="w-3 h-3 opacity-50" />
+                <select 
+                 v-model="selectedConnectionId"
+                 class="bg-transparent border-none p-0 font-bold text-primary-600 dark:text-primary-400 focus:ring-0 cursor-pointer max-w-[200px] truncate"
+                 :style="{ fontSize: appStore.fontSizes.button + 'px' }"
+               >
+                 <option value="" disabled>Select Database</option>
+                 <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id">
+                   {{ conn.name }}
+                 </option>
+               </select>
+               <button 
+                 @click="loadSchema(false)" 
+                 class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-400 hover:text-primary-500 transition-colors"
+                 title="Reload view from local cache"
+               >
+                 <RotateCcw class="w-3 h-3" />
+               </button>
+            </div>
           </div>
-          
+        </div>
 
+        <!-- Action Group -->
+        <div 
+          class="flex items-center gap-3 p-1.5 rounded-2xl transition-all duration-300 shadow-sm"
+          :class="appStore.buttonStyle === 'full' 
+            ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' 
+            : 'bg-transparent border-transparent px-0'"
+        >
+          <div v-if="error" class="text-red-500 text-[10px] font-bold uppercase tracking-wider max-w-[150px] truncate px-2" :title="error">{{ error }}</div>
+          
+          <div v-if="selectedDbLastUpdated" class="hidden sm:flex flex-col items-end px-2 border-r border-gray-200 dark:border-gray-700">
+            <span class="text-[9px] text-gray-400 uppercase tracking-tighter">Last synced</span>
+            <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">{{ formatTimeAgo(selectedDbLastUpdated) }}</span>
+          </div>
+
+          <button 
+            @click="loadSchema(true)" 
+            :disabled="loading || !selectedConnectionId"
+            class="flex items-center justify-center font-bold uppercase transition-all duration-300 disabled:opacity-50 disabled:grayscale"
+            :class="[
+              appStore.buttonStyle === 'full' ? 'px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 gap-2' : '',
+              appStore.buttonStyle === 'minimal' ? 'px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg tracking-wider active:scale-95 shadow-sm gap-2' : '',
+              appStore.buttonStyle === 'icons' ? 'w-10 h-10 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
+            ]"
+            :style="{ fontSize: appStore.fontSizes.button + 'px' }"
+            title="Fetch Fresh Schema from Database (Andb Core)"
+          >
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? 'Fetching' : (appStore.buttonStyle === 'full' ? 'Fetch from DB' : 'Fetch') }}</span>
+          </button>
         </div>
       </div>
     </template>
@@ -65,10 +97,13 @@
                     <component v-else :is="getIconForType(selectedFilterType)" class="w-3.5 h-3.5" />
                   </span>
                   <div class="flex flex-col min-w-0">
-                    <span class="truncate text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300">
+                    <span 
+                      class="truncate font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300"
+                      :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px' }"
+                    >
                       {{ selectedFilterType === 'all' ? 'Database Overview' : selectedFilterType }}
                     </span>
-                    <span v-if="hasResults" class="text-[8px] text-gray-400 uppercase tracking-tighter">
+                    <span v-if="hasResults" :style="{ fontSize: (appStore.fontSizes.schema - 4) + 'px' }" class="text-gray-400 uppercase tracking-tighter">
                       {{ filteredResults.length }} items
                     </span>
                   </div>
@@ -110,8 +145,8 @@
                           <component :is="getIconForType(cat.type)" class="w-4 h-4" />
                         </div>
                         <div>
-                          <div class="font-bold text-gray-900 dark:text-white uppercase text-[10px] tracking-widest">{{ cat.type }}</div>
-                          <div class="text-[10px] text-gray-400">{{ cat.items.length }} items</div>
+                          <div class="font-bold text-gray-900 dark:text-white uppercase tracking-widest" :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }">{{ cat.type }}</div>
+                          <div class="text-gray-400" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }">{{ cat.items.length }} items</div>
                         </div>
                       </div>
                       <ChevronRight class="w-3 h-3 text-gray-300 group-hover:text-primary-500" />
@@ -128,7 +163,7 @@
                   >
                     <div class="min-w-0 pr-2 flex-1">
                       <div class="flex items-center justify-between">
-                        <div class="text-[12px] font-mono truncate text-gray-900 dark:text-gray-100" :class="{ 'font-bold': selectedItem?.name === item.name }">
+                        <div class="font-mono truncate text-gray-900 dark:text-gray-100" :class="{ 'font-bold': selectedItem?.name === item.name }" :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }">
                           {{ item.name }}
                         </div>
                         <span v-if="item.updated_at" class="text-[9px] text-gray-400 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -157,7 +192,7 @@
                       <component :is="getIconForType(selectedItem.type)" class="w-5 h-5" />
                     </div>
                     <div class="min-w-0">
-                      <h2 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ selectedItem.name }}</h2>
+                      <h2 class="font-bold text-gray-900 dark:text-white truncate" :style="{ fontSize: appStore.fontSizes.ddlHeader + 'px' }">{{ selectedItem.name }}</h2>
                       <div class="flex items-center space-x-2 mt-0.5">
                         <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider transition-colors duration-200">{{ selectedItem.type }}</span>
                         <div v-if="selectedItem.updated_at" class="flex items-center text-[10px] text-gray-400 ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
@@ -169,6 +204,14 @@
                   </div>
                   
                   <div class="flex items-center space-x-2">
+                    <button 
+                      @click="takeSnapshot"
+                      :disabled="loading"
+                      class="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all"
+                      title="Take Manual Snapshot"
+                    >
+                      <Camera class="w-4 h-4" />
+                    </button>
                     <button 
                       @click="loadSchema(true)"
                       :disabled="loading"
@@ -202,7 +245,7 @@
                     </div>
                     
                     <!-- Code -->
-                    <pre class="flex-1 py-4 px-4 syntax-highlighter bg-transparent text-gray-800 dark:text-gray-200 !mt-0 !bg-transparent"><code v-html="highlightedDDL" class="block leading-6"></code></pre>
+                    <pre class="flex-1 py-4 px-4 syntax-highlighter bg-transparent text-gray-800 dark:text-gray-200 !mt-0 !bg-transparent" :style="{ fontSize: appStore.fontSizes.code + 'px', fontFamily: appStore.fontFamilies.code }"><code v-html="highlightedDDL" class="block leading-6"></code></pre>
                   </div>
                   
                   <!-- Copy Button (Overlay) -->
@@ -228,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
@@ -237,6 +280,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-sql'
 import { 
   RefreshCw, 
+  Folder,
   ScanSearch, 
   MousePointer2,
   ChevronRight,
@@ -246,9 +290,11 @@ import {
   Hammer,
   Zap,
   ChevronLeft,
-  Search,
-  Copy,
-  Download
+  Search, 
+  Copy, 
+  Download,
+  Camera,
+  RotateCcw
 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -397,6 +443,12 @@ const highlightedDDL = computed(() => {
 const lineCount = computed(() => {
   if (!formattedDDL.value) return 0
   return formattedDDL.value.split('\n').length
+})
+
+watch(selectedConnectionId, (newId) => {
+  if (newId) {
+    loadSchema(false)
+  }
 })
 
 const hasResults = computed(() => allResults.value.length > 0)
@@ -612,6 +664,33 @@ const selectItem = async (item: any) => {
   // Ensure we are showing the correct filter type
   if (item.type && selectedFilterType.value === 'all') {
     selectedFilterType.value = item.type
+  }
+}
+
+const takeSnapshot = async () => {
+  if (!selectedItem.value || !selectedConnectionId.value) return
+  
+  const conn = appStore.connections.find(c => c.id === selectedConnectionId.value)
+  if (!conn) return
+
+  loading.value = true
+  statusMessage.value = 'Taking snapshot...'
+  
+  try {
+    await Andb.createSnapshot(conn, selectedItem.value.type, selectedItem.value.name)
+    notificationStore.add({
+      type: 'success',
+      title: 'Snapshot Created',
+      message: `Manual snapshot of ${selectedItem.value.name} saved to history.`
+    })
+  } catch (err: any) {
+    notificationStore.add({
+      type: 'error',
+      title: 'Snapshot Failed',
+      message: err.message
+    })
+  } finally {
+    loading.value = false
   }
 }
 

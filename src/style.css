@@ -8,8 +8,78 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased transition-colors duration-300;
   }
+}
+
+/* Theme Definitions */
+:root.solarized-dark {
+  --bg-main: #002b36;
+  --bg-sidebar: #073642;
+  --text-main: #93a1a1;
+  --border-color: #586e75;
+}
+
+:root.night-owl-dark {
+  --bg-main: #011627;
+  --bg-sidebar: #01111d;
+  --text-main: #d6deeb;
+  --border-color: #1d3b53;
+}
+
+:root.night-owl-light {
+  --bg-main: #fbfbfb;
+  --bg-sidebar: #f0f0f0;
+  --text-main: #403f53;
+  --border-color: #d3d3d3;
+}
+
+/* Apply variables to core elements when those themes are active */
+.solarized-dark body,
+.solarized-dark .bg-white,
+.solarized-dark .bg-gray-50 {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+.solarized-dark .bg-gray-50\/30,
+.solarized-dark .bg-gray-100 {
+  background-color: var(--bg-sidebar) !important;
+}
+.solarized-dark .border-gray-200,
+.solarized-dark .border-gray-100,
+.solarized-dark .border-gray-800 {
+  border-color: var(--border-color) !important;
+}
+
+.night-owl-dark body,
+.night-owl-dark .bg-white,
+.night-owl-dark .bg-gray-50 {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+.night-owl-dark .bg-gray-50\/30,
+.night-owl-dark .bg-gray-100 {
+  background-color: var(--bg-sidebar) !important;
+}
+.night-owl-dark .border-gray-200,
+.night-owl-dark .border-gray-100,
+.night-owl-dark .border-gray-800 {
+  border-color: var(--border-color) !important;
+}
+
+.night-owl-light body,
+.night-owl-light .bg-white,
+.night-owl-light .bg-gray-50 {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+.night-owl-light .bg-gray-50\/30,
+.night-owl-light .bg-gray-100 {
+  background-color: var(--bg-sidebar) !important;
+}
+.night-owl-light .border-gray-200,
+.night-owl-light .border-gray-100 {
+  border-color: var(--border-color) !important;
 }
 
 @layer components {

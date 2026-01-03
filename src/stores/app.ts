@@ -28,12 +28,35 @@ export interface ConnectionPair {
 export const useAppStore = defineStore('app', () => {
   // State
   const sidebarCollapsed = ref(false)
+  const buttonStyle = ref<'full' | 'minimal' | 'icons'>('full')
+  const navStyle = ref<'vertical-list' | 'horizontal-tabs'>('vertical-list')
+  const fontSizes = ref({
+    main: 13,
+    menu: 12,
+    button: 11,
+    ddlHeader: 16,
+    schema: 12,
+    ddlName: 14,
+    code: 12
+  })
+  const fontFamilies = ref({
+    general: "'Inter', sans-serif",
+    code: "'JetBrains Mono', monospace"
+  })
   const connections = ref<DatabaseConnection[]>([])
 
   // Initialize state
   const init = async () => {
     const savedSettings = await storage.getSettings()
     sidebarCollapsed.value = savedSettings.sidebarCollapsed
+    buttonStyle.value = savedSettings.buttonStyle || 'full'
+    navStyle.value = savedSettings.navStyle || 'vertical-list'
+    if (savedSettings.fontSizes) {
+      fontSizes.value = { ...fontSizes.value, ...savedSettings.fontSizes }
+    }
+    if (savedSettings.fontFamilies) {
+      fontFamilies.value = { ...fontFamilies.value, ...savedSettings.fontFamilies }
+    }
 
     const savedConnections = await storage.getConnections()
     if (savedConnections.length > 0) {
@@ -97,6 +120,9 @@ export const useAppStore = defineStore('app', () => {
     target: null
   })
 
+  // Global selected connection for exploration (Schema view, etc)
+  const selectedConnectionId = ref<string>('')
+
   // Getters
   const getConnectionById = computed(() => {
     return (id: string) => connections.value.find(conn => conn.id === id)
@@ -122,6 +148,22 @@ export const useAppStore = defineStore('app', () => {
   watch(sidebarCollapsed, newValue => {
     storage.updateSettings({ sidebarCollapsed: newValue })
   })
+
+  watch(navStyle, newValue => {
+    storage.updateSettings({ navStyle: newValue })
+  })
+
+  watch(buttonStyle, newValue => {
+    storage.updateSettings({ buttonStyle: newValue })
+  })
+
+  watch(fontSizes, newValue => {
+    storage.updateSettings({ fontSizes: { ...newValue } })
+  }, { deep: true })
+
+  watch(fontFamilies, newValue => {
+    storage.updateSettings({ fontFamilies: { ...newValue } })
+  }, { deep: true })
 
   // Actions
   const toggleSidebar = () => {
@@ -236,8 +278,13 @@ export const useAppStore = defineStore('app', () => {
   return {
     // State
     sidebarCollapsed,
+    buttonStyle,
+    navStyle,
+    fontSizes,
+    fontFamilies,
     connections,
     currentPair,
+    selectedConnectionId,
 
     // Getters
     getConnectionById,

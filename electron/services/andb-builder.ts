@@ -401,6 +401,132 @@ export class AndbBuilder {
   }
 
   /**
+   * Fetch snapshots for an object
+   */
+  static async getSnapshots(environment: string, database: string, type: string, name: string) {
+    const storage = this.getSQLiteStorage()
+    return await storage.getSnapshots(environment, database, type.toUpperCase(), name)
+  }
+
+  /**
+   * Fetch migration history
+   */
+  static async getMigrationHistory(limit: number = 100) {
+    const storage = this.getSQLiteStorage()
+    return await storage.getMigrationHistory(limit)
+  }
+
+  /**
+   * Fetch all snapshots globally
+   */
+  static async getAllSnapshots(limit: number = 200) {
+    const storage = this.getSQLiteStorage()
+    return await storage.getAllSnapshots(limit)
+  }
+
+  /**
+   * Create a manual snapshot of an object
+   */
+  static async createManualSnapshot(connection: DatabaseConnection, type: string, name: string) {
+    if ((global as any).logger) (global as any).logger.info(`Starting manual snapshot for ${type}:${name}`)
+
+    const config = this.buildConfig(connection, null)
+    const container = new Container(config)
+    const services = container.getServices()
+
+    // 1. Fetch current DDL from DB (this saves it into ddl_exports internal table)
+    await this.executeExport(services, { type, environment: connection.environment, name })
+
+    const storage = this.getSQLiteStorage()
+    // 2. Read from our shared storage to get the fresh content
+    const ddl = storage.getDDL(connection.environment, connection.database, type, name)
+
+    if (ddl) {
+      if ((global as any).logger) (global as any).logger.info(`DDL fetched for ${name}, saving snapshot...`)
+      // 3. Save as snapshot in ddl_snapshots table
+      return storage.saveSnapshot({
+        environment: connection.environment,
+        database: connection.database,
+        type: type.toUpperCase(),
+        name: name,
+        content: ddl,
+        versionTag: `manual-${new Date().getTime()}`
+      })
+    }
+
+    if ((global as any).logger) (global as any).logger.error(`Could not find DDL in storage for ${connection.environment}:${connection.database}:${type}:${name}`)
+    throw new Error('Could not fetch DDL for snapshot (empty content in storage)')
+  }
+
+  /**
+   * Restore a historical snapshot to the database
+   */
+  static async restoreSnapshot(connection: DatabaseConnection, snapshot: any) {
+    if ((global as any).logger) (global as any).logger.info(`Starting snapshot restore for ${snapshot.ddl_type}:${snapshot.ddl_name}`)
+
+    const { ddl_type, ddl_name, ddl_content } = snapshot
+    const config = this.buildConfig(connection, null)
+    const container = new Container(config)
+    const services = container.getServices()
+
+    // 1. Take a "pre-restore" snapshot just in case (SAFETY FIRST!)
+    try {
+      await this.createManualSnapshot(connection, ddl_type, ddl_name)
+    } catch (e) {
+      if ((global as any).logger) (global as any).logger.warn('Could not take safety snapshot before restore, continuing anyway...', e)
+    }
+
+    // 2. Prepare queries
+    let dropQuery = ''
+    const type = ddl_type.toUpperCase()
+
+    // SAFETY: Never DROP tables directly because we lose data!
+    if (type === 'TABLES' || type === 'TABLE') {
+      throw new Error('Direct restoration of TABLES is disabled to prevent permanent data loss. Please copy the DDL and run a manual ALTER statement instead.')
+    }
+
+    if (type === 'PROCEDURES' || type === 'PROCEDURE') dropQuery = `DROP PROCEDURE IF EXISTS \`${ddl_name}\`;`
+    else if (type === 'FUNCTIONS' || type === 'FUNCTION') dropQuery = `DROP FUNCTION IF EXISTS \`${ddl_name}\`;`
+    else if (type === 'VIEWS' || type === 'VIEW') dropQuery = `DROP VIEW IF EXISTS \`${ddl_name}\`;`
+    else if (type === 'TRIGGERS' || type === 'TRIGGER') dropQuery = `DROP TRIGGER IF EXISTS \`${ddl_name}\`;`
+
+    // 3. Get connection and execute
+    const mysql = require('mysql2/promise')
+    const conn = await mysql.createConnection({
+      host: connection.host,
+      port: connection.port,
+      user: connection.username,
+      password: connection.password,
+      database: connection.database,
+      multipleStatements: true
+    })
+
+    try {
+      if (dropQuery) {
+        if ((global as any).logger) (global as any).logger.info(`Executing: ${dropQuery}`)
+        await conn.query(dropQuery)
+      }
+
+      if ((global as any).logger) (global as any).logger.info(`Applying DDL content...`)
+      const finalDDL = services.replacer ? services.replacer.replaceWithEnv(ddl_content, connection.environment) : ddl_content
+      await conn.query(finalDDL)
+
+      // 4. Update the ddl_exports table so UI shows the new version
+      this.getSQLiteStorage().saveDDL({
+        environment: connection.environment,
+        database: connection.database,
+        type: type,
+        name: ddl_name,
+        content: finalDDL
+      })
+
+      return { success: true }
+    } finally {
+      await conn.end()
+    }
+  }
+
+  /**
    * Test if andb-core is available and working
    */
   static async test(): Promise<boolean> {

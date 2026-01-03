@@ -117,16 +117,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('andb-get-saved-comparison-results', args)
   },
 
+  getSnapshots: (environment: string, database: string, type: string, name: string) => {
+    return ipcRenderer.invoke('get-snapshots', environment, database, type, name)
+  },
+
+  getAllSnapshots: (limit?: number) => {
+    return ipcRenderer.invoke('get-all-snapshots', limit)
+  },
+
   // Logger
   log: {
     send: (level: 'info' | 'warn' | 'error', message: string, data?: any) => {
       return ipcRenderer.invoke('app-log', { level, message, data })
     },
-    write: (content: string) => {
-      return ipcRenderer.invoke('app-log-write', content)
-    }
   },
-
+  openBackupFolder: () => {
+    return ipcRenderer.invoke('open-backup-folder')
+  },
+  createSnapshot: (connection: any, type: string, name: string) => {
+    return ipcRenderer.invoke('create-snapshot', connection, type, name)
+  },
+  restoreSnapshot: (connection: any, snapshot: any) => {
+    return ipcRenderer.invoke('restore-snapshot', connection, snapshot)
+  },
   // Load mock compare data for testing
   loadMockCompareData: () => ipcRenderer.invoke('load-mock-compare-data')
 })

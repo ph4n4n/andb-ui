@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">
         Connection Pairs
       </h3>
       <button
@@ -18,7 +18,7 @@
       <div
         v-for="pair in connectionPairs"
         :key="pair.id"
-        class="card p-4 border border-gray-200 dark:border-gray-700"
+        class="card p-3 border border-gray-200 dark:border-gray-700"
       >
         <div class="flex items-center space-x-4">
           <!-- Pair Name -->
@@ -26,7 +26,7 @@
             <input
               v-model="pair.name"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none"
               placeholder="Pair name (e.g., DEV to STAGE)"
               @blur="updatePair(pair)"
             />
@@ -37,7 +37,7 @@
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Source:</span>
             <select
               :value="pair.sourceConnectionId"
-              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent max-w-[200px]"
+              class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent max-w-[180px] outline-none"
               @change="updateSource(pair, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">Select Connection</option>
@@ -57,7 +57,7 @@
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Target:</span>
             <select
               :value="pair.targetConnectionId"
-              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent max-w-[200px]"
+              class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent max-w-[180px] outline-none"
               @change="updateTarget(pair, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">Select Target</option>

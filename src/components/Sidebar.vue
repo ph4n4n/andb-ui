@@ -6,23 +6,49 @@
     ]"
   >
     <!-- Navigation Menu (Side Activity Bar style if collapsed, or just top menu) -->
-    <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center px-2 py-1 space-x-1">
+    <!-- Navigation Menu (Dynamic Style) -->
+    <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700 p-2 overflow-hidden">
+      <div 
+        :class="[
+          appStore.navStyle === 'horizontal-tabs' 
+            ? 'flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 -mb-1.5 px-0.5' 
+            : 'space-y-1'
+        ]"
+      >
         <router-link
           v-for="item in navItems" :key="item.path"
           :to="item.path"
-          class="flex items-center justify-center p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          :class="{ 'text-primary-600 dark:text-white bg-white dark:bg-gray-700 shadow-sm ring-1 ring-gray-200 dark:ring-0': $route.path === item.path }"
+          class="flex items-center rounded-lg transition-all duration-200 group relative"
+          :class="[
+            appStore.navStyle === 'horizontal-tabs' ? 'py-2 px-3 flex-shrink-0' : 'px-3 py-2',
+            $route.path === item.path 
+              ? (appStore.navStyle === 'horizontal-tabs' ? 'text-primary-600 dark:text-primary-400' : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700')
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          ]"
+          :style="{ fontSize: appStore.fontSizes.menu + 'px' }"
           :title="item.name"
         >
-          <component :is="item.icon" class="w-4 h-4" />
+          <div 
+            class="rounded-md transition-all duration-300" 
+            :class="[
+               appStore.navStyle === 'horizontal-tabs' ? 'p-0.5' : 'p-1.5',
+               $route.path === item.path && appStore.navStyle !== 'horizontal-tabs' ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+            ]"
+          >
+            <component :is="item.icon" :class="appStore.navStyle === 'horizontal-tabs' ? 'w-5 h-5' : 'w-4 h-4'" />
+          </div>
+          <span v-if="appStore.navStyle !== 'horizontal-tabs'" class="ml-3 font-bold tracking-tight">{{ item.name }}</span>
+          <ChevronRight v-if="$route.path === item.path && appStore.navStyle !== 'horizontal-tabs'" class="ml-auto w-3.5 h-3.5 opacity-50" />
+          
+          <!-- Active Indicator for horizontal mode -->
+          <div v-if="appStore.navStyle === 'horizontal-tabs' && $route.path === item.path" class="absolute -bottom-2 left-2 right-2 h-0.5 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.3)]"></div>
         </router-link>
       </div>
     </nav>
 
     <!-- Explorer Header -->
-    <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
-      <span>{{ route.path === '/compare' ? 'Source Explorer' : 'Schema Explorer' }}</span>
+    <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0" :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px', fontWeight: 'bold' }">
+      <span>{{ route.path === '/compare' ? 'Source Explorer' : (route.path === '/history' ? 'History Explorer' : 'Schema Explorer') }}</span>
       <div class="flex items-center space-x-1">
         <button @click="refreshSchemas" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Refresh">
           <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
@@ -53,6 +79,7 @@
               'border-blue-500 bg-blue-50 dark:bg-gray-800': isSourceEnvironment(env.name)
             }"
             @click="toggleEnvironment(env.name)"
+            :style="{ fontSize: appStore.fontSizes.schema + 'px' }"
           >
             <span class="w-4 flex items-center justify-center mr-1">
               <ChevronRight 
@@ -62,7 +89,7 @@
             </span>
             <component :is="getEnvIcon(env.name)" class="w-4 h-4 mr-2 text-blue-500 dark:text-blue-400" />
             <span class="font-semibold truncate flex-1">{{ env.name }}</span>
-            <span v-if="isSourceEnvironment(env.name)" class="ml-auto text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-400/10 px-1 rounded">SRC</span>
+            <span v-if="isSourceEnvironment(env.name)" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }" class="ml-auto text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-400/10 px-1 rounded uppercase font-bold">SRC</span>
           </div>
 
           <!-- Databases -->
@@ -75,6 +102,7 @@
                 class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
                 :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800': expandedDatabases.has(`${env.name}-${db.name}`) }"
                 @click="selectDatabase(env.name, db.name)"
+                :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
               >
                 <span 
                   class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
@@ -209,6 +237,7 @@ import {
   Home, 
   Database,
   GitCompare, 
+  History,
   Settings, 
   RefreshCw, 
   ChevronRight,
@@ -238,6 +267,7 @@ const navItems = computed(() => [
   { name: t('common.dashboard'), path: '/', icon: Home },
   { name: t('common.schema'), path: '/schema', icon: Database },
   { name: t('common.compare'), path: '/compare', icon: GitCompare },
+  { name: t('common.history'), path: '/history', icon: History },
   { name: t('common.settings'), path: '/settings', icon: Settings },
 ])
 
@@ -291,19 +321,13 @@ const filteredEnvironments = computed(() => {
     envs = environments.value.filter(env => env.name === activePair.value?.sourceEnv)
   }
 
-  // Custom Sort Order: DEV -> STAGE -> UAT -> PROD
+  // Use the order from connectionPairsStore.environments
   return [...envs].sort((a, b) => {
-    const getOrder = (name: string) => {
-      const uName = name.toUpperCase()
-      if (uName.includes('DEV')) return 1
-      if (uName.includes('STAGE')) return 2
-      if (uName.includes('UAT')) return 3
-      if (uName.includes('PROD')) return 4
-      return 99
-    }
-
-    const orderA = getOrder(a.name)
-    const orderB = getOrder(b.name)
+    const envA = connectionPairsStore.environments.find(e => e.name.toUpperCase() === a.name.toUpperCase())
+    const envB = connectionPairsStore.environments.find(e => e.name.toUpperCase() === b.name.toUpperCase())
+    
+    const orderA = envA ? envA.order : 999
+    const orderB = envB ? envB.order : 999
     
     if (orderA !== orderB) return orderA - orderB
     return a.name.localeCompare(b.name)
@@ -333,6 +357,7 @@ const getEnvIcon = (envName: string) => {
 }
 
 const collapseAll = () => {
+  expandedEnvironments.value.clear()
   expandedDatabases.value.clear()
   expandedTypes.value.clear()
 }
@@ -368,7 +393,7 @@ const selectDatabase = async (env: string, db: string) => {
   if (route.path === '/compare') {
     window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type: 'all' } }))
   } else {
-    const isNavigationNeeded = route.path !== '/schema'
+    const isNavigationNeeded = !['/schema', '/history'].includes(route.path)
     if (isNavigationNeeded) {
       await router.push('/schema')
     }
@@ -384,7 +409,7 @@ const selectCategory = async (env: string, db: string, type: string) => {
   if (route.path === '/compare') {
     window.dispatchEvent(new CustomEvent('category-selected', { detail: { env, db, type } }))
   } else {
-    const isNavigationNeeded = route.path !== '/schema'
+    const isNavigationNeeded = !['/schema', '/history'].includes(route.path)
     if (isNavigationNeeded) {
       await router.push('/schema')
     }
@@ -399,7 +424,7 @@ const selectObject = async (env: string, db: string, type: string, item: any) =>
   if (route.path === '/compare') {
     window.dispatchEvent(new CustomEvent('object-selected', { detail: { env, db, name: item.name, type } }))
   } else {
-    const isNavigationNeeded = route.path !== '/schema'
+    const isNavigationNeeded = !['/schema', '/history'].includes(route.path)
     if (isNavigationNeeded) {
       await router.push('/schema')
     }
@@ -533,5 +558,12 @@ defineExpose({
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
   }
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

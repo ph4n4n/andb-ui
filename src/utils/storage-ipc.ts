@@ -14,12 +14,37 @@ interface AppSchema {
   settings: {
     theme: 'light' | 'dark' | 'system'
     language: 'en' | 'vi'
-    sidebarCollapsed: boolean
+    buttonStyle: 'full' | 'minimal' | 'icons'
+    navStyle: 'vertical-list' | 'horizontal-tabs'
+    fontSize: number
+    fontSizes: {
+      main: number
+      menu: number
+      button: number
+      ddlHeader: number
+      schema: number
+      ddlName: number
+      code: number
+    }
+    fontFamilies: {
+      general: string
+      code: string
+    }
   }
 }
 
 // Helper to get storage from window
-const getStorage = () => (window as any).electronAPI.storage
+const getStorage = () => {
+  if (typeof window !== 'undefined' && (window as any).electronAPI) {
+    return (window as any).electronAPI.storage
+  }
+  // Return a dummy object to avoid crash, actual calls will still fail but with better error or just no-op
+  return {
+    get: async () => ({ success: false, error: 'electronAPI not available' }),
+    set: async () => ({ success: false, error: 'electronAPI not available' }),
+    delete: async () => ({ success: false, error: 'electronAPI not available' })
+  }
+}
 
 export const storage = {
   // ==================== Connections ====================
@@ -116,9 +141,24 @@ export const storage = {
   async getSettings() {
     const result = await getStorage().get('settings')
     const defaults = {
-      theme: 'light' as const,
+      theme: 'system' as const,
       language: 'en' as const,
-      sidebarCollapsed: false
+      buttonStyle: 'full' as const,
+      navStyle: 'vertical-list' as const,
+      fontSize: 13,
+      fontSizes: {
+        main: 13,
+        menu: 12,
+        button: 11,
+        ddlHeader: 16,
+        schema: 12,
+        ddlName: 14,
+        code: 12
+      },
+      fontFamilies: {
+        general: "'Inter', sans-serif",
+        code: "'JetBrains Mono', monospace"
+      }
     }
     return result.success ? { ...defaults, ...result.data } : defaults
   },

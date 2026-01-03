@@ -1,5 +1,5 @@
 <template>
-  <div class="mirror-diff-view flex h-full overflow-hidden bg-white dark:bg-gray-900 font-mono text-sm group/view border-t border-gray-200 dark:border-gray-800 relative">
+  <div class="mirror-diff-view flex h-full min-w-0 max-w-full overflow-hidden bg-white dark:bg-gray-900 group/view border-t border-gray-200 dark:border-gray-800 relative" :style="{ fontFamily: appStore.fontFamilies.code, fontSize: appStore.fontSizes.code + 'px' }">
     <!-- SPLIT VIEW MODE -->
     <template v-if="viewType === 'split'">
       <!-- Source Pane (Left) -->
@@ -7,32 +7,33 @@
         ref="sourcePane" 
         :style="{ width: leftPaneWidth + '%' }"
         @scroll="handleScroll('source')"
-        class="shrink-0 flex flex-col overflow-hidden border-r border-gray-200 dark:border-[#30363d]"
+        class="shrink-0 flex flex-col min-w-0 max-w-full overflow-hidden border-r border-gray-200 dark:border-[#30363d] relative"
       >
         <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
           <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">SOURCE: {{ sourceLabel }}</span>
           <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">Deleted</span>
         </div>
         
-        <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
+        <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             [ DELETED OR NOT PRESENT ]
           </div>
-          <div v-else class="ddl-container py-2">
+          <div v-else class="ddl-container py-2" :class="wrapLines ? 'w-full' : 'w-fit min-w-full'">
             <div 
               v-for="(row, idx) in alignedRows" 
               :key="'src-' + idx"
               class="flex line-row group"
               :class="getLineClass(row.source.type)"
             >
-              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
+              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400 bg-gray-50/50 dark:bg-gray-800/30">
                 {{ row.source.line || '' }}
               </div>
               <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
                 {{ row.source.type === 'added' ? '+' : '' }}
               </div>
               <div 
-                class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
+                class="line-content px-2 py-0.5 grow ddl-code"
+                :class="wrapLines ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'"
                 v-html="row.source.highlighted || row.source.content"
               ></div>
             </div>
@@ -50,7 +51,7 @@
       <!-- Target Pane (Right) -->
       <div 
         ref="targetPane" 
-        class="flex-1 flex flex-col overflow-hidden"
+        class="flex-1 flex flex-col min-w-0 max-w-full overflow-hidden relative"
         @scroll="handleScroll('target')"
       >
         <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
@@ -91,6 +92,22 @@
                     </label>
                   </div>
 
+                  <!-- Line Wrapping -->
+                  <div>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Display</h4>
+                    <label class="flex items-start cursor-pointer group">
+                      <div class="relative flex items-center mt-0.5">
+                        <input type="checkbox" v-model="wrapLines" class="sr-only" />
+                        <div class="w-4 h-4 border rounded border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center font-bold" :class="{ 'bg-primary-500 border-primary-500': wrapLines }">
+                          <Check v-show="wrapLines" class="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                      <div class="ml-2">
+                        <div class="text-gray-900 dark:text-white font-medium">Wrap Long Lines</div>
+                      </div>
+                    </label>
+                  </div>
+
                   <!-- Diff display -->
                   <div>
                     <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
@@ -110,25 +127,26 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-auto custom-scrollbar-diff relative">
+        <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             [ NEW DDL HERE ]
           </div>
-          <div v-else class="ddl-container py-2">
+          <div v-else class="ddl-container py-2" :class="wrapLines ? 'w-full' : 'w-fit min-w-full'">
             <div 
               v-for="(row, idx) in alignedRows" 
               :key="'tgt-' + idx"
               class="flex line-row group"
               :class="getLineClass(row.target.type)"
             >
-              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400">
+              <div class="line-number w-12 shrink-0 text-right px-2 py-0.5 text-gray-400 dark:text-gray-600 select-none border-r border-gray-100 dark:border-[#30363d] group-hover:text-gray-600 dark:group-hover:text-gray-400 bg-gray-50/50 dark:bg-gray-800/30">
                 {{ row.target.line || '' }}
               </div>
               <div class="line-marker w-5 shrink-0 flex items-center justify-center opacity-70 select-none font-bold">
                 {{ row.target.type === 'removed' ? '-' : '' }}
               </div>
               <div 
-                class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
+                class="line-content px-2 py-0.5 grow ddl-code"
+                :class="wrapLines ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'"
                 v-html="row.target.highlighted || row.target.content"
               ></div>
             </div>
@@ -175,6 +193,22 @@
                 </label>
               </div>
 
+              <!-- Line Wrapping -->
+              <div>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Display</h4>
+                <label class="flex items-start cursor-pointer group">
+                  <div class="relative flex items-center mt-0.5">
+                    <input type="checkbox" v-model="wrapLines" class="sr-only" />
+                    <div class="w-4 h-4 border rounded border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center font-bold" :class="{ 'bg-primary-500 border-primary-500': wrapLines }">
+                      <Check v-show="wrapLines" class="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                  <div class="ml-2">
+                    <div class="text-gray-900 dark:text-white font-medium">Wrap Long Lines</div>
+                  </div>
+                </label>
+              </div>
+
               <div>
                 <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
                 <div class="space-y-2">
@@ -210,7 +244,8 @@
               {{ row.type === 'added' ? '+' : (row.type === 'removed' ? '-' : '') }}
             </div>
             <div 
-              class="line-content px-2 py-0.5 whitespace-pre min-h-[1.5rem] break-all grow truncate ddl-code"
+              class="line-content px-2 py-0.5 grow ddl-code"
+              :class="wrapLines ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'"
               v-html="row.highlighted || row.content"
             ></div>
           </div>
@@ -225,6 +260,9 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-sql'
 import { Settings, Check } from 'lucide-vue-next'
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
 
 const props = defineProps<{
   sourceDdl: string | null
@@ -245,6 +283,7 @@ const settingsRef = ref<HTMLElement | null>(null)
 const settingsRefUnified = ref<HTMLElement | null>(null)
 const viewType = ref<'split' | 'unified'>('split')
 const hideWhitespace = ref(false)
+const wrapLines = ref(false)
 
 const isEmptySource = computed(() => !props.sourceDdl || props.status === 'missing_in_source')
 const isEmptyTarget = computed(() => !props.targetDdl || props.status === 'missing_in_target' || props.status === 'missing')
@@ -442,12 +481,22 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
+const handleKeydown = (e: KeyboardEvent) => {
+  // Opt + Z (Alt + Z)
+  if (e.altKey && e.code === 'KeyZ') {
+    e.preventDefault()
+    wrapLines.value = !wrapLines.value
+  }
+}
+
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
+  window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside)
+  window.removeEventListener('keydown', handleKeydown)
   stopResize()
 })
 </script>

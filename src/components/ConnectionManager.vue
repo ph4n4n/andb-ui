@@ -7,7 +7,7 @@
           v-for="env in enabledEnvironments"
           :key="env.name"
           @click="selectedEnvironment = env.name"
-          class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2"
+          class="py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2"
           :class="selectedEnvironment === env.name 
             ? 'border-primary-500 text-primary-600 dark:text-primary-400' 
             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
@@ -26,7 +26,7 @@
     <!-- Connection List for Selected Environment -->
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">
           {{ $t('connections.connectionsFor', { environment: $t(`environments.${selectedEnvironment.toLowerCase()}`) }) }}
         </h3>
         <button @click="showAddForm = true"
@@ -41,19 +41,19 @@
           <table class="w-full">
             <thead class="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {{ $t('connections.connectionName') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {{ $t('connections.host') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {{ $t('connections.status') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {{ $t('connections.lastTested') }}
                 </th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {{ $t('common.actions') }}
                 </th>
               </tr>
@@ -62,32 +62,32 @@
               <tr v-for="connection in environmentConnections"
                   :key="connection.id"
                   class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-2 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <div class="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <Database class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <div class="flex-shrink-0 h-8 w-8">
+                      <div class="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                        <Database class="w-4 h-4 text-primary-600 dark:text-primary-400" />
                       </div>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-3">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ connection.name }}
                       </div>
-                      <div class="text-sm text-gray-500 dark:text-gray-400">
+                      <div class="text-[11px] text-gray-500 dark:text-gray-400">
                         {{ connection.database }}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900 dark:text-white truncate max-w-[200px]" :title="`${connection.host}:${connection.port}`">
+                <td class="px-4 py-2 whitespace-nowrap">
+                  <div class="text-sm text-gray-900 dark:text-white truncate max-w-[150px]" :title="`${connection.host}:${connection.port}`">
                     {{ connection.host }}:{{ connection.port }}
                   </div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">
+                  <div class="text-[11px] text-gray-500 dark:text-gray-400">
                     {{ connection.username }}
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-2 whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-2 w-2 rounded-full mr-2"
                          :class="getStatusColor(connection.status)"></div>
@@ -96,10 +96,10 @@
                     </span>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {{ formatLastTested(connection.lastTested) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end gap-2">
                     <button @click="testConnection(connection.id)"
                             :disabled="connection.status === 'testing'"
@@ -147,24 +147,44 @@
       </div>
     </div>
 
-    <!-- Add/Edit Connection Inline Form -->
-    <div v-if="showAddForm || editingConnection" class="mt-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ editingConnection ? $t('connections.editConnection') : $t('connections.addConnection') }}
-          </h3>
-          <button @click="closeForm" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <X class="w-6 h-6" />
-          </button>
+    <!-- Add/Edit Connection Modal (Pro Style) -->
+    <Teleport to="body">
+      <div v-if="showAddForm || editingConnection" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div 
+          class="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-300"
+          @click="closeForm"
+        ></div>
+        
+        <div class="relative bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl max-w-4xl w-full border border-gray-200 dark:border-gray-800 overflow-hidden animate-in zoom-in-95 fade-in duration-300 flex flex-col max-h-[90vh]">
+          <!-- Modal Header -->
+          <div class="px-8 pt-8 pb-4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center shadow-inner">
+                <Database class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  {{ editingConnection ? 'Edit Connection' : 'Add New Connection' }}
+                </h3>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest opacity-60">Database Endpoint Configuration</p>
+              </div>
+            </div>
+            <button @click="closeForm" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-400 transition-colors">
+              <X class="w-6 h-6" />
+            </button>
+          </div>
+          
+          <!-- Modal Body (Scrollable) -->
+          <div class="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+            <ConnectionForm
+              :connection="editingConnection || undefined"
+              @save="handleSaveConnection"
+              @cancel="closeForm"
+            />
+          </div>
         </div>
-        <ConnectionForm
-          :connection="editingConnection || undefined"
-          @save="handleSaveConnection"
-          @cancel="closeForm"
-        />
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 

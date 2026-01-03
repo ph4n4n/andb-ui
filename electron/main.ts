@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { AndbBuilder } from './services/andb-builder'
 import { SQLiteStorageService } from './services/sqlite-storage'
@@ -204,6 +204,50 @@ app.on('web-contents-created', (event, contents) => {
   })
 })
 
+/**
+ * Open backup folder in system explorer
+ */
+ipcMain.handle('open-backup-folder', async () => {
+  const fs = require('fs')
+  const path = require('path')
+  const backupPath = path.join(app.getPath('userData'), 'backups')
+
+  if (!fs.existsSync(backupPath)) {
+    fs.mkdirSync(backupPath, { recursive: true })
+  }
+
+  shell.openPath(backupPath)
+  return { success: true }
+})
+
+/**
+ * Create a manual DDL snapshot
+ */
+ipcMain.handle('create-snapshot', async (event, connection, type, name) => {
+  try {
+    if ((global as any).logger) (global as any).logger.info(`IPC: create-snapshot for ${type}:${name}`)
+    const result = await AndbBuilder.createManualSnapshot(connection, type, name)
+    return { success: true, data: result }
+  } catch (error: any) {
+    if ((global as any).logger) (global as any).logger.error('create-snapshot error:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+/**
+ * Restore a DDL snapshot
+ */
+ipcMain.handle('restore-snapshot', async (event, connection, snapshot) => {
+  try {
+    if ((global as any).logger) (global as any).logger.info(`IPC: restore-snapshot for ${snapshot.ddl_type}:${snapshot.ddl_name}`)
+    const result = await AndbBuilder.restoreSnapshot(connection, snapshot)
+    return { success: true, data: result }
+  } catch (error: any) {
+    if ((global as any).logger) (global as any).logger.error('restore-snapshot error:', error)
+    return { success: false, error: error.message }
+  }
+})
+
 // ========================================
 // IPC Handlers for andb-core CLI
 // ========================================
@@ -277,6 +321,31 @@ ipcMain.handle('get-migration-history', async (event, limit: number = 50) => {
     return { success: false, error: error.message }
   }
 })
+
+/**
+ * Get snapshots for an object
+ */
+ipcMain.handle('get-snapshots', async (event, environment: string, database: string, type: string, name: string) => {
+  try {
+    const data = await AndbBuilder.getSnapshots(environment, database, type, name)
+    return { success: true, data }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+})
+
+/**
+ * Get all snapshots globally
+ */
+ipcMain.handle('get-all-snapshots', async (event, limit: number = 200) => {
+  try {
+    const data = await AndbBuilder.getAllSnapshots(limit)
+    return { success: true, data }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+})
+
 
 /**
  * Get comparison history

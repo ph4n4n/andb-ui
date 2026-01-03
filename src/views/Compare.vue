@@ -1,76 +1,106 @@
 <template>
   <MainLayout>
     <template #toolbar>
-      <div class="flex items-center space-x-4 w-full h-full">
-        <h1 class="text-xl font-bold flex items-center shrink-0">
-          <span class="mr-2">🔄</span> {{ $t('common.compare') }}
-        </h1>
-        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2 shrink-0"></div>
-        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
-          <span v-if="activePair && activePair.source && activePair.target" class="flex items-center">
-            <span class="font-semibold text-blue-600 dark:text-blue-400 truncate max-w-[150px]">{{ activePair.source.name }}</span>
-            <span class="mx-2">→</span>
-            <span class="font-semibold text-green-600 dark:text-green-400 truncate max-w-[150px]">{{ activePair.target.name }}</span>
-            <span v-if="hasResults" class="ml-4 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-xs text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-100 dark:border-indigo-800/50 shadow-sm shrink-0 whitespace-nowrap">
-              {{ countSummary }}
-            </span>
-          </span>
-          <span v-else class="italic">No connection pair selected</span>
+      <div class="flex items-center justify-between w-full h-full gap-4">
+        <!-- Title & Page Status -->
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col gap-0.5">
+            <h1 class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center">
+              <GitMerge class="w-5 h-5 mr-2 text-primary-500" />
+              {{ $t('common.compare') }}
+            </h1>
+            <div v-if="activePair && activePair.source && activePair.target" class="flex items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+               <span class="text-blue-500">{{ activePair.source.name }}</span>
+               <ArrowRightLeft class="w-3 h-3 mx-2 opacity-50 text-gray-400" />
+               <span class="text-green-500">{{ activePair.target.name }}</span>
+               <span v-if="hasResults" class="ml-3 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full border border-indigo-100 dark:border-indigo-800/30">
+                 {{ countSummary }}
+               </span>
+            </div>
+            <p v-else class="text-[10px] text-gray-400 uppercase tracking-widest font-bold italic">No Pair Selected</p>
+          </div>
         </div>
-        
-        <div class="flex items-center space-x-3 shrink-0 ml-auto">
-          <div v-if="error" class="text-red-500 text-sm mr-2 max-w-[200px] truncate" :title="error">{{ error }}</div>
-          
-          <!-- View Mode Toggle -->
-          <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 p-1 rounded-lg mr-2 border border-gray-200 dark:border-gray-700">
-            <button 
-              @click="viewMode = 'list'"
-              class="p-1.5 rounded transition-all"
-              :class="viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'"
-              title="List View"
-            >
-              <List class="w-4 h-4" />
-            </button>
-            <button 
-              @click="viewMode = 'tree'"
-              class="p-1.5 rounded transition-all"
-              :class="viewMode === 'tree' ? 'bg-white dark:bg-gray-600 shadow text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'"
-              title="Mirror Tree View"
-            >
-              <GitMerge class="w-4 h-4 rotate-90" />
-            </button>
+
+        <div 
+          class="flex items-center gap-3 p-1.5 rounded-2xl transition-all duration-300 shadow-sm"
+          :class="appStore.buttonStyle === 'full' 
+            ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' 
+            : 'bg-transparent border-transparent px-0'"
+        >
+          <!-- Segmented Control for View Mode -->
+          <div 
+            class="flex items-center bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl"
+            :class="appStore.buttonStyle === 'minimal' ? 'scale-90' : ''"
+          >
+              <button 
+                @click="viewMode = 'list'" 
+                class="flex items-center gap-2 rounded-lg font-bold uppercase transition-all duration-200"
+                :class="[
+                  viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
+                  appStore.buttonStyle === 'full' ? 'px-3 py-1.5 text-[10px]' : 'px-2 py-1 text-[10px]'
+                ]"
+                title="List View"
+              >
+                <List class="w-3.5 h-3.5" />
+                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">List</span>
+              </button>
+              <button 
+                @click="viewMode = 'tree'" 
+                class="flex items-center gap-2 rounded-lg font-bold uppercase transition-all duration-200"
+                :class="[
+                  viewMode === 'tree' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
+                  appStore.buttonStyle === 'full' ? 'px-3 py-1.5 text-[10px]' : 'px-2 py-1 text-[10px]'
+                ]"
+                title="Tree View"
+              >
+                <GitMerge class="w-3.5 h-3.5 rotate-90" />
+                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">Tree</span>
+              </button>
           </div>
 
-          <div class="flex items-center">
-            <button 
-              @click="runComparison(true)" 
-              :disabled="loading || !activePair"
-              class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center shadow-sm mr-2"
-              title="Fetch fresh data from database and compare"
-            >
-              <RefreshCw class="w-3.5 h-3.5 mr-2" :class="{ 'animate-spin': loading }" />
-              {{ loading ? 'Working...' : 'Fetch from DB' }}
-            </button>
+          <div v-if="appStore.buttonStyle === 'full'" class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-            <button 
-              @click="runComparison(false)" 
-              :disabled="loading || !activePair"
-              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all shadow-md shadow-primary-500/20 flex items-center group"
-            >
-              <GitMerge v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-              <GitMerge v-else class="w-4 h-4 mr-2 fill-current group-hover:scale-110 transition-transform" />
-              {{ loading ? 'Comparing...' : 'Compare' }}
-            </button>
-          </div>
+          <div v-if="error" class="text-red-500 text-[10px] font-bold uppercase tracking-wider max-w-[150px] truncate" :title="error">{{ error }}</div>
+
+          <button 
+            @click="runComparison(true)" 
+            :disabled="loading || !activePair"
+            class="hidden md:flex items-center justify-center font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+            :class="[
+              appStore.buttonStyle === 'full' ? 'px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-xl text-[11px] gap-2' : '',
+              appStore.buttonStyle === 'minimal' ? 'px-3 py-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-[10px] gap-2' : '',
+              appStore.buttonStyle === 'icons' ? 'w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50' : ''
+            ]"
+            title="Fetch Fresh Data & Run Compare"
+          >
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? 'Fetch from DB' : 'Fetch' }}</span>
+          </button>
+
+          <button 
+            @click="runComparison(false)" 
+            :disabled="loading || !activePair"
+            class="flex items-center justify-center font-bold uppercase transition-all duration-300 disabled:opacity-50 disabled:grayscale"
+            :class="[
+              appStore.buttonStyle === 'full' ? 'px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl text-[11px] tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 gap-2' : '',
+              appStore.buttonStyle === 'minimal' ? 'px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-[10px] tracking-wider active:scale-95 shadow-sm gap-2' : '',
+              appStore.buttonStyle === 'icons' ? 'w-11 h-11 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
+            ]"
+            title="Run Comparison"
+          >
+            <Zap v-if="!loading" class="w-4 h-4 fill-current" />
+            <RefreshCw v-else class="w-4 h-4 animate-spin" />
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? 'Comparing' : (appStore.buttonStyle === 'full' ? 'Run Compare' : 'Compare') }}</span>
+          </button>
         </div>
       </div>
     </template>
         
         <!-- Comparison & Console Split -->
-        <div class="flex-1 flex flex-col overflow-hidden relative">
+        <div class="flex-1 flex flex-col overflow-hidden relative min-w-0">
           <!-- Comparison Area (Top) -->
-          <div class="flex-1 flex overflow-hidden relative">
-            <main class="flex-1 flex overflow-hidden relative">
+          <div class="flex-1 flex overflow-hidden relative min-w-0">
+            <main class="flex-1 flex overflow-hidden relative min-w-0">
               <!-- Loading Overlay (Spinner Only) -->
               <div v-if="loading && !hasResults" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 z-20 flex items-center justify-center backdrop-blur-sm">
                 <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
@@ -85,7 +115,7 @@
               </div>
 
           <!-- Vertical Split: Object List vs DDL View -->
-          <div v-if="viewMode === 'list'" class="flex-1 flex overflow-hidden relative">
+          <div v-if="viewMode === 'list'" class="flex-1 flex overflow-hidden relative min-w-0">
             <!-- Left: Comparison Results List (Sub-sidebar style) -->
             <div :style="{ width: resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col shrink-0 relative">
               <!-- Results Header with Breadcrumb-like stack navigation -->
@@ -255,7 +285,7 @@
             </div>
 
             <!-- Right: Split DDL Detail -->
-            <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 relative">
+            <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 relative min-w-0">
               <div v-if="selectedItem" class="h-full flex flex-col">
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
                   <div class="flex items-center text-xs space-x-2 overflow-hidden">
@@ -298,7 +328,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                   <MirrorDiffView 
                     :source-ddl="selectedItem.diff?.source"
                     :target-ddl="selectedItem.diff?.target"
@@ -356,8 +386,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import DDLDetailModal from '@/components/DDLDetailModal.vue'
 import MirrorDiffView from '@/components/MirrorDiffView.vue'
-import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 import Andb from '@/utils/andb'
 import { watch } from 'vue'
@@ -379,7 +409,8 @@ import {
   AlertCircle,
   Search,
   List,
-  GitMerge
+  GitMerge,
+  ArrowRightLeft
 } from 'lucide-vue-next'
 import MigrationConfirmModal from '@/components/MigrationConfirmModal.vue'
 import { useOperationsStore } from '@/stores/operations'
@@ -388,6 +419,7 @@ import { useSidebarStore } from '@/stores/sidebar'
 import CompareTreeMode from '@/components/CompareTreeMode.vue'
 
 const connectionPairsStore = useConnectionPairsStore()
+const appStore = useAppStore()
 const operationsStore = useOperationsStore()
 const consoleStore = useConsoleStore()
 const notificationStore = useNotificationStore()
@@ -417,6 +449,7 @@ const getIconForType = (type: string) => {
 // State
 const loading = ref(false)
 const statusMessage = ref('')
+const resultsWidth = ref(300)
 const error = ref<string | null>(null)
 const tableResults = ref<any[]>([])
 const procedureResults = ref<any[]>([])
@@ -453,11 +486,7 @@ const selectedPath = ref({
   type: ''
 })
 
-const appStore = useAppStore()
-const isCollapsed = computed(() => appStore.sidebarCollapsed)
-
 // View State
-const resultsWidth = ref(256)
 const isResizingResults = ref(false)
 
 const startResultsResize = () => {

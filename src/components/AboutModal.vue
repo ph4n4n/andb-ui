@@ -17,7 +17,7 @@
             class="w-20 h-20 mx-auto mb-4"
           />
           <h2 class="text-3xl font-bold text-white mb-2">Andb</h2>
-          <p class="text-primary-100">Advanced Database Migration Tool</p>
+          <p class="text-primary-100">Simplest Database Migration Tool</p>
         </div>
 
         <!-- Content -->

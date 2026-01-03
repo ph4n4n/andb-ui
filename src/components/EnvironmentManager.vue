@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">
         {{ $t('environments.configuration') }}
       </h3>
       <div class="flex items-center gap-2">
@@ -32,7 +32,7 @@
         handle=".drag-handle"
       >
         <template #item="{ element: env }">
-          <div class="card p-4 border border-gray-200 dark:border-gray-700">
+          <div class="card p-3 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-3">
               <!-- Drag Handle -->
               <div class="drag-handle cursor-move p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
@@ -52,7 +52,7 @@
                 <input
                   v-model="env.name"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none"
                   placeholder="Environment name"
                   @blur="updateEnvironment(env)"
                 />

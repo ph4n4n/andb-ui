@@ -391,6 +391,47 @@ export class SQLiteStorageService {
   }
 
   /**
+   * Save DDL snapshot
+   */
+  saveSnapshot(data: any): boolean {
+    const { environment, database, type, name, content, versionTag } = data
+    const crypto = require('crypto')
+    const checksum = crypto.createHash('md5').update(content || '').digest('hex')
+
+    const stmt = this.db.prepare(`
+      INSERT INTO ddl_snapshots (environment, database_name, ddl_type, ddl_name, ddl_content, checksum, version_tag)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    stmt.run(environment, database, type, name, content, checksum, versionTag || null)
+    return true
+  }
+
+  /**
+   * Get snapshots for an object
+   */
+  getSnapshots(environment: string, database: string, type: string, name: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM ddl_snapshots
+      WHERE environment = ? AND database_name = ? AND ddl_type = ? AND ddl_name = ?
+      ORDER BY created_at DESC
+    `)
+    return stmt.all(environment, database, type, name)
+  }
+
+  /**
+   * Get all snapshots globally
+   */
+  getAllSnapshots(limit: number = 100): any[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM ddl_snapshots
+      ORDER BY created_at DESC
+      LIMIT ?
+    `)
+    return stmt.all(limit)
+  }
+
+  /**
    * Close database connection
    */
   close(): void {

@@ -63,6 +63,9 @@ declare global {
         targetConnection: any
         type: string
       }) => Promise<{ success: boolean; data?: any; error?: string }>
+      andbClearConnectionData: (connection: any) => Promise<{ success: boolean; error?: string }>
+      getSnapshots: (environment: string, database: string, type: string, name: string) => Promise<{ success: boolean; data?: any; error?: string }>
+      getAllSnapshots: (limit?: number) => Promise<{ success: boolean; data?: any; error?: string }>
 
       loadMockCompareData: () => Promise<{ success: boolean; message?: string; error?: string }>
 

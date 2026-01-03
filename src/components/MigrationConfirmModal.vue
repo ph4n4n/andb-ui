@@ -112,15 +112,13 @@
 
                 <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/30 flex items-start mb-6">
                   <AlertTriangle class="w-4 h-4 text-amber-500 mr-2 shrink-0 mt-0.5" />
-                  <p class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    <span v-if="item?.isBatch">
-                      This will apply changes for <strong>{{ item?.items?.length }} objects</strong>. 
-                    </span>
-                    <span v-else>
-                      This will apply the DDL from <strong>{{ sourceName }}</strong> to <strong>{{ targetName }}</strong>.
-                    </span>
-                    Existing structure in target will be modified or replaced. This action cannot be easily undone.
-                  </p>
+                  <div class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                    Existing structure in target will be modified or replaced. 
+                    <div class="mt-1 font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1">
+                      <History class="w-3 h-3" />
+                      A pre-migration DDL snapshot will be saved to history.
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -173,7 +171,8 @@ import {
   Database,
   Trash2,
   PlusCircle,
-  FileEdit
+  FileEdit,
+  History
 } from 'lucide-vue-next'
 
 const props = defineProps<{

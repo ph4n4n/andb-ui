@@ -1,8 +1,26 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
-export type Theme = 'light' | 'dark' | 'system'
+export type Theme = 'light' | 'dark' | 'system' | 'solarized-dark' | 'night-owl-dark' | 'night-owl-light'
 export type Language = 'en' | 'vi'
+
+export interface ThemeOption {
+  id: Theme
+  label: string
+  dark: boolean
+  preview: {
+    main: string
+    sidebar: string
+  }
+}
+
+export const themeOptions: ThemeOption[] = [
+  { id: 'light', label: 'Refined Light', dark: false, preview: { main: '#ffffff', sidebar: '#f9fafb' } },
+  { id: 'night-owl-light', label: 'Night Owl Light', dark: false, preview: { main: '#fbfbfb', sidebar: '#f0f0f0' } },
+  { id: 'dark', label: 'Pro Dark', dark: true, preview: { main: '#111827', sidebar: '#1f2937' } },
+  { id: 'solarized-dark', label: 'Solarized Dark', dark: true, preview: { main: '#002b36', sidebar: '#073642' } },
+  { id: 'night-owl-dark', label: 'Night Owl Dark', dark: true, preview: { main: '#011627', sidebar: '#01111d' } }
+]
 
 interface Settings {
   theme: Theme
@@ -50,11 +68,21 @@ export const useSettingsStore = defineStore('settings', () => {
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement
 
+    // Clean up existing theme classes
+    const themeClasses = ['dark', 'solarized-dark', 'night-owl-dark', 'night-owl-light']
+    root.classList.remove(...themeClasses)
+
     if (theme === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       root.classList.toggle('dark', isDark)
     } else {
-      root.classList.toggle('dark', theme === 'dark')
+      root.classList.add(theme)
+
+      // For 'dark' variants, we should also add 'dark' class if we want to keep using Tailwind's dark: utilities
+      // unless the theme specifically redefines everything.
+      if (theme.includes('dark')) {
+        root.classList.add('dark')
+      }
     }
   }
 

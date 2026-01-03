@@ -274,13 +274,91 @@ export class Andb {
   static async clearConnectionData(connection: DatabaseConnection): Promise<boolean> {
     if (!isElectron) return false
     try {
-      const result = await window.electronAPI.andbClearConnectionData(connection)
+      // Sanitize connection (remove Vue proxies)
+      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
+      const result = await window.electronAPI.andbClearConnectionData(cleanConn)
       return result.success
     } catch (error) {
       return false
     }
   }
 
+  /**
+   * Get snapshots for an object
+   */
+  static async getSnapshots(environment: string, database: string, type: string, name: string): Promise<any> {
+    if (!isElectron) throw new Error('Not in Electron environment')
+    try {
+      const result = await (window as any).electronAPI.getSnapshots(environment, database, type, name)
+      if (result.success) return result.data
+      throw new Error(result.error || 'Failed to fetch snapshots')
+    } catch (error: any) {
+      throw new Error(`Failed to fetch snapshots: ${error.message}`)
+    }
+  }
+
+  /**
+   * Get all snapshots globally
+   */
+  static async getAllSnapshots(limit: number = 200): Promise<any> {
+    if (!isElectron) throw new Error('Not in Electron environment')
+    try {
+      const result = await (window as any).electronAPI.getAllSnapshots(limit)
+      if (result.success) return result.data
+      throw new Error(result.error || 'Failed to fetch all snapshots')
+    } catch (error: any) {
+      throw new Error(`Failed to fetch all snapshots: ${error.message}`)
+    }
+  }
+
+  /**
+   * Create manual snapshot
+   */
+  static async createSnapshot(connection: DatabaseConnection, type: string, name: string): Promise<any> {
+    if (!isElectron) throw new Error('Not in Electron environment')
+    try {
+      // Be extremely specific with sanitization
+      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
+      const cleanType = type ? String(type) : ''
+      const cleanName = name ? String(name) : ''
+
+      const result = await (window as any).electronAPI.createSnapshot(cleanConn, cleanType, cleanName)
+      if (result.success) return result.data
+      throw new Error(result.error || 'Failed to create snapshot')
+    } catch (error: any) {
+      throw new Error(`Failed to create snapshot: ${error.message}`)
+    }
+  }
+
+  /**
+   * Restore a DDL snapshot to a connection
+   */
+  static async restoreSnapshot(connection: DatabaseConnection, snapshot: any): Promise<any> {
+    if (!isElectron) throw new Error('Not in Electron environment')
+    try {
+      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
+      const cleanSnapshot = snapshot ? JSON.parse(JSON.stringify(snapshot)) : null
+
+      const result = await (window as any).electronAPI.restoreSnapshot(cleanConn, cleanSnapshot)
+      if (result.success) return result.data
+      throw new Error(result.error || 'Failed to restore snapshot')
+    } catch (error: any) {
+      throw new Error(`Failed to restore snapshot: ${error.message}`)
+    }
+  }
+
+  /**
+   * Open backup folder in system explorer
+   */
+  static async openBackupFolder(): Promise<boolean> {
+    if (!isElectron) return false
+    try {
+      const result = await (window as any).electronAPI.openBackupFolder()
+      return result.success
+    } catch (error) {
+      return false
+    }
+  }
 }
 
 export default Andb

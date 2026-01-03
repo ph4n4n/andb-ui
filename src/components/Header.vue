@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <!-- Center: Connection Pair Selector & Context Actions -->
+      <!-- Center: Connection Selector (Contextual) -->
       <div v-if="route.path === '/compare'" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center pl-2 space-x-2 border-r border-gray-200 dark:border-gray-700 pr-2">
           <Database class="w-4 h-4 text-primary-500" />
@@ -62,23 +62,44 @@
           >
             <RefreshCw class="w-4 h-4 text-gray-400 group-hover:text-primary-500" :class="{ 'animate-spin': isRefreshing }" />
           </button>
+
+          <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+          <!-- Direct to Pairs Setting -->
+          <button
+            @click="router.push('/settings?cat=pairs')"
+            class="p-2 text-gray-400 hover:text-primary-500 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all group"
+            title="Manage Connection Pairs"
+          >
+            <Settings class="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Single Connection Selector for Schema/Dashboard -->
+      <div v-else-if="route.path === '/schema'" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center px-4 py-1.5 space-x-3">
+          <Database class="w-4 h-4 text-primary-500" />
+          <select
+            v-model="appStore.selectedConnectionId"
+            class="pr-8 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer"
+          >
+            <option value="" disabled>Select Database</option>
+            <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id" class="bg-white dark:bg-gray-800">
+              {{ conn.name }}
+            </option>
+          </select>
         </div>
       </div>
 
       <!-- Right side: System Actions -->
       <div class="flex items-center space-x-1 shrink-0">
-        <div class="flex items-center space-x-1 border-r border-gray-200 dark:border-gray-700 pr-2 mr-1">
+        <div class="flex items-center space-x-1">
           <ThemeToggle />
           <LanguageToggle />
         </div>
         
-        <button
-          @click="openPairSelector"
-          class="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          title="Settings"
-        >
-          <Settings class="w-5 h-5" />
-        </button>
+        <div class="w-px h-6 bg-gray-200 dark:border-gray-700 mx-2"></div>
 
         <button
           @click="showAbout = true"
@@ -137,14 +158,32 @@ onMounted(() => {
   if (connectionPairsStore.selectedPairId) {
     testConnections()
   }
+
+  // Auto-pick source for schema explorer if nothing selected
+  if (route.path === '/schema' && !appStore.selectedConnectionId && connectionPairsStore.activePair) {
+    appStore.selectedConnectionId = connectionPairsStore.activePair.source?.id || ''
+  }
 })
 
-// Auto-test on pair change
+// Watch for route changes to apply auto-pick logic
+watch(() => route.path, (newPath) => {
+  if (newPath === '/schema' && !appStore.selectedConnectionId && connectionPairsStore.activePair) {
+    appStore.selectedConnectionId = connectionPairsStore.activePair.source?.id || ''
+  }
+})
+
+// Watch for pair changes to update auto-pick (optional, but requested "auto pick source in default pair")
 watch(() => connectionPairsStore.selectedPairId, (newId) => {
   if (newId) {
     // Reset status before testing
     const pair = connectionPairsStore.connectionPairs.find(p => p.id === newId)
-    if (pair) pair.status = 'idle'
+    if (pair) {
+      pair.status = 'idle'
+      // If we are in schema view, update the selection to match the new pair's source
+      if (route.path === '/schema' && connectionPairsStore.activePair) {
+        appStore.selectedConnectionId = connectionPairsStore.activePair.source?.id || ''
+      }
+    }
     
     testConnections()
   }
@@ -178,10 +217,6 @@ const testConnections = async () => {
 }
 
 const onPairChange = () => {
-}
-
-const openPairSelector = () => {
-  router.push('/settings')
 }
 
 const refresh = async () => {

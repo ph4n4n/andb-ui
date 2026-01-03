@@ -5,6 +5,7 @@ const messages = {
     common: {
       dashboard: 'Dashboard',
       compare: 'Diff & Sync',
+      history: 'History & Rollback',
       schema: 'Schema',
       migrate: 'Migrate',
       export: 'Export',
@@ -124,6 +125,7 @@ const messages = {
     common: {
       dashboard: 'Bảng điều khiển',
       compare: 'Khác biệt & Đồng bộ',
+      history: 'Lịch sử & Rollback',
       schema: 'Lược đồ',
       migrate: 'Di chuyển',
       export: 'Xuất',
