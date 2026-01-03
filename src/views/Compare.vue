@@ -17,7 +17,7 @@
                  {{ countSummary }}
                </span>
             </div>
-            <p v-else class="text-[10px] text-gray-400 uppercase tracking-widest font-bold italic">No Pair Selected</p>
+            <p v-else class="text-[10px] text-gray-400 uppercase tracking-widest font-bold italic">{{ $t('compare.noPair') }}</p>
           </div>
         </div>
 
@@ -39,10 +39,10 @@
                   viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
                   appStore.buttonStyle === 'full' ? 'px-3 py-1.5 text-[10px]' : 'px-2 py-1 text-[10px]'
                 ]"
-                title="List View"
+                :title="$t('compare.listViewTooltip')"
               >
                 <List class="w-3.5 h-3.5" />
-                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">List</span>
+                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">{{ $t('compare.listView') }}</span>
               </button>
               <button 
                 @click="viewMode = 'tree'" 
@@ -51,10 +51,10 @@
                   viewMode === 'tree' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
                   appStore.buttonStyle === 'full' ? 'px-3 py-1.5 text-[10px]' : 'px-2 py-1 text-[10px]'
                 ]"
-                title="Tree View"
+                :title="$t('compare.treeViewTooltip')"
               >
                 <GitMerge class="w-3.5 h-3.5 rotate-90" />
-                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">Tree</span>
+                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">{{ $t('compare.treeView') }}</span>
               </button>
           </div>
 
@@ -71,10 +71,10 @@
               appStore.buttonStyle === 'minimal' ? 'px-3 py-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-[10px] gap-2' : '',
               appStore.buttonStyle === 'icons' ? 'w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50' : ''
             ]"
-            title="Fetch Fresh Data & Run Compare"
+            title="$t('compare.fetchTooltip')"
           >
             <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
-            <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? 'Fetch from DB' : 'Fetch' }}</span>
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? $t('compare.fetchFromDB') : $t('compare.fetch') }}</span>
           </button>
 
           <button 
@@ -86,11 +86,11 @@
               appStore.buttonStyle === 'minimal' ? 'px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-[10px] tracking-wider active:scale-95 shadow-sm gap-2' : '',
               appStore.buttonStyle === 'icons' ? 'w-11 h-11 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
             ]"
-            title="Run Comparison"
+            :title="$t('compare.runCompareTooltip')"
           >
             <Zap v-if="!loading" class="w-4 h-4 fill-current" />
             <RefreshCw v-else class="w-4 h-4 animate-spin" />
-            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? 'Comparing' : (appStore.buttonStyle === 'full' ? 'Run Compare' : 'Compare') }}</span>
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? $t('compare.comparing') : (appStore.buttonStyle === 'full' ? $t('compare.runCompare') : $t('compare.compare')) }}</span>
           </button>
         </div>
       </div>
@@ -109,8 +109,8 @@
                     <div class="absolute inset-0 border-4 border-t-primary-500 rounded-full animate-spin"></div>
                     <div class="absolute inset-0 flex items-center justify-center text-2xl">🔍</div>
                   </div>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">{{ statusMessage || 'Analyzing schemas...' }}</p>
-                  <div class="mt-2 text-xs text-gray-500 uppercase tracking-tighter animate-pulse">Running commands... Check console</div>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">{{ statusMessage || $t('schema.loading') }}</p>
+                  <div class="mt-2 text-xs text-gray-500 uppercase tracking-tighter animate-pulse">{{ $t('schema.runningCommands') }}</div>
                 </div>
               </div>
 
@@ -135,11 +135,11 @@
                   </span>
                   <div class="flex flex-col min-w-0">
                     <span class="truncate text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300">
-                      <span v-if="selectedFilterType === 'all'">{{ selectedPath.db || 'Database' }} Overview</span>
+                      <span v-if="selectedFilterType === 'all'">{{ selectedPath.db || $t('common.database') }} {{ $t('common.overview') }}</span>
                       <span v-else>{{ selectedFilterType }}</span>
                     </span>
                     <span v-if="hasResults" class="text-[8px] text-gray-400 uppercase tracking-tighter">
-                      {{ filteredResults.length }} items • {{ filteredTotalChanges }} changes
+                      {{ filteredResults.length }} {{ $t('schema.items') }} • {{ filteredTotalChanges }} {{ $t('compare.totalChanges') }}
                     </span>
                   </div>
                 </div>
@@ -163,7 +163,7 @@
                   <input 
                     v-model="searchQuery"
                     type="text" 
-                    placeholder="Search objects..."
+                    :placeholder="$t('history.searchPlaceholder')"
                     class="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
                   />
                 </div>
@@ -184,8 +184,7 @@
               <div class="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden p-2">
                 <div v-if="!hasResults" class="p-8 text-center text-gray-400 h-full flex flex-col justify-center">
                   <ScanSearch class="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p class="text-xs uppercase tracking-widest font-bold">No data found</p>
-                  <p class="text-[10px] opacity-60 mt-1">Select a database to view details</p>
+                  <p class="text-xs uppercase tracking-widest font-bold">{{ $t('history.noHistory') }}</p>
                 </div>
 
                 <!-- OVERVIEW MODE: Stack view of categories -->
@@ -319,11 +318,11 @@
                       :disabled="isMigrating"
                     >
                       <Zap class="w-4 h-4 group-hover:animate-pulse" />
-                      <span class="font-bold">Migrate to {{ targetName }}</span>
+                      <span class="font-bold">{{ $t('compare.migrateTo', { name: targetName }) }}</span>
                       <div class="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 linear skew-x-[-20deg]"></div>
                     </button>
                     <div class="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                    <button @click="openDetailModal(selectedItem)" class="p-2 text-gray-400 hover:text-primary-600 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm" title="View Full Definition">
+                    <button @click="openDetailModal(selectedItem)" class="p-2 text-gray-400 hover:text-primary-600 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm" :title="$t('compare.viewFullDefinition')">
                       <ScanSearch class="w-4.5 h-4.5 font-bold" />
                     </button>
                   </div>
@@ -341,7 +340,7 @@
               <div v-else class="flex-1 flex items-center justify-center text-gray-400 italic">
                 <div class="text-center">
                   <MousePointer2 class="w-12 h-12 mx-auto mb-2 opacity-10" />
-                  <p>Select an object to compare DDL</p>
+                  <p>{{ $t('schema.selectObject') }}</p>
                 </div>
               </div>
             </div>
@@ -391,6 +390,7 @@ import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 import Andb from '@/utils/andb'
 import { watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { 
   RefreshCw, 
   ScanSearch, 
@@ -424,6 +424,7 @@ const operationsStore = useOperationsStore()
 const consoleStore = useConsoleStore()
 const notificationStore = useNotificationStore()
 const sidebarStore = useSidebarStore()
+const { t } = useI18n()
 
 const activePair = computed(() => connectionPairsStore.activePair)
 const sourceName = computed(() => activePair.value?.source?.name || 'Source')
@@ -462,13 +463,13 @@ const selectedFilterType = ref<string>('all')
 const searchQuery = ref('')
 const selectedStatusFilter = ref('all')
 
-const statusFilters = [
-  { label: 'All', value: 'all' },
-  { label: 'Modified', value: 'modified' },
-  { label: 'New', value: 'new' },
-  { label: 'Deprecated', value: 'deprecated' },
-  { label: 'Identical', value: 'equal' }
-]
+const statusFilters = computed(() => [
+  { label: t('common.all'), value: 'all' },
+  { label: t('compare.filters.modified'), value: 'modified' },
+  { label: t('compare.filters.new'), value: 'new' },
+  { label: t('compare.filters.deprecated'), value: 'deprecated' },
+  { label: t('compare.filters.identical'), value: 'equal' }
+])
 
 // Migration State
 const isMigrating = ref(false)
@@ -595,7 +596,7 @@ const runComparison = async (refresh: boolean = false) => {
   
   loading.value = true
   // consoleStore.setVisibility(true) // Only open console on manual run/error, not initial load
-  statusMessage.value = 'Initializing comparison...'
+  statusMessage.value = t('compare.initializing')
   consoleStore.clearLogs()
   error.value = null
 
@@ -611,15 +612,15 @@ const runComparison = async (refresh: boolean = false) => {
       objTypes = [selectedItem.value.type.toLowerCase()] // e.g., 'tables'
       compareName = selectedItem.value.name
       consoleStore.addLog(`Comparing single object: ${selectedItem.value.name} (${selectedItem.value.type})`, 'info')
-      statusMessage.value = `Analyzing ${selectedItem.value.name}...`
+      statusMessage.value = t('compare.analyzingItem', { name: selectedItem.value.name })
     } else if (selectedFilterType.value && selectedFilterType.value !== 'all') {
       // 2. Compare specific category
       objTypes = [selectedFilterType.value.toLowerCase() as any]
       consoleStore.addLog(`Comparing category: ${selectedFilterType.value}`, 'info')
-      statusMessage.value = `Analyzing ${selectedFilterType.value}...`
+      statusMessage.value = t('compare.analyzingItem', { name: selectedFilterType.value })
     } else {
       consoleStore.addLog(`Starting comparison between ${source.name} (${source.host}) and ${target.name} (${target.host})`, 'info')
-      statusMessage.value = 'Analyzing full schema...'
+      statusMessage.value = t('compare.analyzing')
     }
     
     // 1. Export Source and Target DDLs (Only if refreshing)
@@ -629,7 +630,7 @@ const runComparison = async (refresh: boolean = false) => {
       
       // POWERFUL FETCH: Clear cache if doing a full fetch to ensure fresh data
       if (!selectedItem.value && (!selectedFilterType.value || selectedFilterType.value === 'all')) {
-         statusMessage.value = 'Cleaning up local cache...'
+         statusMessage.value = t('compare.cleaning')
          consoleStore.addLog('Cleaning up local cache for fresh fetch...', 'warn')
          await Promise.all([
            Andb.clearConnectionData(source),
@@ -637,7 +638,7 @@ const runComparison = async (refresh: boolean = false) => {
          ])
       }
 
-      statusMessage.value = 'Exporting source and target DDLs...'
+      statusMessage.value = t('compare.exporting')
       
       for (const type of objTypes) {
         const cmdS = `andb export --source ${source.environment} --type ${type}` + (compareName ? ` --name ${compareName}` : '')
@@ -662,7 +663,7 @@ const runComparison = async (refresh: boolean = false) => {
     }
     
     // 2. Compare (Always run to update comparison results from local cache)
-    statusMessage.value = 'Comparing schema objects...'
+    statusMessage.value = t('compare.comparingObjects')
     
     // Start recording operation
     const opId = operationsStore.addOperation({
@@ -799,14 +800,14 @@ const getStatusClass = (status: string) => {
 const getStatusText = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'equal':
-    case 'same': return 'Identical'
+    case 'same': return t('common.status.identical')
     case 'different':
     case 'updated':
-    case 'modified': return 'Modified'
+    case 'modified': return t('common.status.modified')
     case 'missing_in_target':
-    case 'new': return 'New (Source Only)'
+    case 'new': return t('common.status.newSource')
     case 'missing_in_source':
-    case 'deprecated': return 'Deprecated (Target Only)'
+    case 'deprecated': return t('common.status.deprecatedTarget')
     default: return status
   }
 }

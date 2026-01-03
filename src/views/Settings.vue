@@ -15,9 +15,9 @@
           <div class="p-8 pb-4">
             <h1 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 mb-1">
               <SettingsIcon class="w-5 h-5 text-primary-500" />
-              Settings
+              {{ $t('settings.title') }}
             </h1>
-            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest opacity-60">System Configuration</p>
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest opacity-60">{{ $t('settings.subtitle') }}</p>
           </div>
           
           <div class="flex-1 overflow-y-auto p-4 space-y-1">
@@ -39,7 +39,7 @@
           <div class="p-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
             <button @click="resetToDefaults" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-transparent hover:border-red-200/50 dark:hover:border-red-900/50">
               <RotateCcw class="w-3.5 h-3.5" />
-              Reset All Data
+              {{ $t('settings.reset') }}
             </button>
           </div>
         </div>
@@ -55,16 +55,16 @@
                   <MonitorSmartphone class="w-6 h-6 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Interface & Aesthetics</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Personalize your workspace experience</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.interface.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.interface.subtitle') }}</p>
                 </div>
               </div>
 
               <!-- Main UI Settings -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="md:col-span-2 space-y-6">
-                  <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Theme selection</label>
+                    <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.theme.label') }}</label>
                     <div class="flex items-center gap-6 bg-gray-50/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-800">
                       <button 
                         @click="settingsStore.setTheme('system')"
@@ -74,7 +74,7 @@
                          <div class="w-3 h-3 rounded-full border-2 flex items-center justify-center" :class="settings.theme === 'system' ? 'border-primary-500' : 'border-gray-300'">
                            <div v-if="settings.theme === 'system'" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
                          </div>
-                         Sync with system
+                         {{ $t('settings.interface.theme.sync') }}
                       </button>
                       <button 
                         @click="settingsStore.setTheme(settings.theme === 'system' ? 'dark' : settings.theme)"
@@ -84,7 +84,7 @@
                          <div class="w-3 h-3 rounded-full border-2 flex items-center justify-center" :class="settings.theme !== 'system' ? 'border-primary-500' : 'border-gray-300'">
                            <div v-if="settings.theme !== 'system'" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
                          </div>
-                         Manual
+                         {{ $t('settings.interface.theme.manual') }}
                       </button>
                     </div>
                   </div>
@@ -136,14 +136,14 @@
                         <div class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors" :class="settings.theme === t.id ? 'border-primary-500' : 'border-gray-300 dark:border-gray-700'">
                            <div v-if="settings.theme === t.id" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
                         </div>
-                        <span class="text-[10px] font-black uppercase tracking-widest transition-colors" :class="settings.theme === t.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-gray-600'">{{ t.label }}</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest transition-colors" :class="settings.theme === t.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-gray-600'">{{ $t('settings.themes.' + t.id) }}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="space-y-2">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Language</label>
+                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.language.label') }}</label>
                   <div class="relative group">
                     <select v-model="settings.language" @change="updateLanguage" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold appearance-none outline-none focus:ring-2 focus:ring-primary-500/20 group-hover:border-primary-500 transition-all">
                       <option value="en">English (Global)</option>
@@ -155,7 +155,7 @@
 
                 <!-- Timezone Select -->
                 <div class="md:col-span-2 space-y-2 pt-2">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Application Timezone</label>
+                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.timezone.label') }}</label>
                   <div class="relative group">
                     <select v-model="settings.timezone" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold appearance-none outline-none focus:ring-2 focus:ring-primary-500/20 group-hover:border-primary-500 transition-all">
                       <option v-for="tz in timezones" :key="tz.value" :value="tz.value">{{ tz.label }}</option>
@@ -166,7 +166,7 @@
 
                 <!-- Navigation Style -->
                 <div class="md:col-span-2 space-y-4 pt-4">
-                   <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Navigation Architecture</label>
+                   <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.navigation.label') }}</label>
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <button 
                        @click="appStore.navStyle = 'vertical-list'"
@@ -179,8 +179,8 @@
                         <LayoutList class="w-5 h-5" />
                       </div>
                        <div class="text-left">
-                         <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">Vertical List</div>
-                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">Professional enterprise sidebar</div>
+                         <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">{{ $t('settings.interface.navigation.vertical') }}</div>
+                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.verticalDesc') }}</div>
                        </div>
                      </button>
 
@@ -195,8 +195,8 @@
                          <ColumnsIcon class="w-5 h-5" />
                        </div>
                        <div class="text-left">
-                         <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">Horizontal Tabs</div>
-                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">Modern minimalist top-bar</div>
+                         <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">{{ $t('settings.interface.navigation.horizontal') }}</div>
+                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.horizontalDesc') }}</div>
                        </div>
                      </button>
                    </div>
@@ -206,13 +206,29 @@
               <!-- Typography Matrix -->
               <div class="pt-8 border-t border-gray-100 dark:border-gray-800">
                 <div class="mb-8">
-                  <h3 class="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">Typography Architecture</h3>
-                  <p class="text-[10px] text-gray-400 uppercase tracking-tighter">Fine-tune typeface families and granular scaling</p>
+                  <h3 class="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">{{ $t('settings.interface.typography.title') }}</h3>
+                  <p class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.typography.subtitle') }}</p>
+                </div>
+
+                <div class="mb-6 grid grid-cols-4 gap-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <button 
+                    v-for="profile in ['small', 'medium', 'large', 'custom']" 
+                    :key="profile"
+                    @click="appStore.applyFontSizeProfile(profile as any)"
+                    class="py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                    :class="appStore.fontSizeProfile === profile 
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
+                  >
+                    <Type v-if="profile !== 'custom'" class="w-3.5 h-3.5" :class="{'w-3 h-3': profile === 'small', 'w-4 h-4': profile === 'large'}" />
+                    <SettingsIcon v-else class="w-3.5 h-3.5" />
+                    <span class="hidden sm:inline">{{ $t('settings.interface.typography.profiles.' + profile) }}</span>
+                  </button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">Main UI Font</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.mainFont') }}</label>
                     <select v-model="appStore.fontFamilies.general" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500/10 outline-none shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-900">
                       <option value="'Inter', sans-serif">Inter (Modern)</option>
                       <option value="'Roboto', sans-serif">Roboto (Legacy)</option>
@@ -222,7 +238,7 @@
                   </div>
 
                   <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">Monospace Code Font</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.codeFont') }}</label>
                     <select v-model="appStore.fontFamilies.code" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold font-mono focus:ring-2 focus:ring-primary-500/10 outline-none shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-900">
                       <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
                       <option value="'Fira Code', monospace">Fira Code</option>
@@ -231,11 +247,11 @@
                     </select>
                   </div>
 
-                  <div class="md:col-span-2 mt-4">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Granular Size Matrix</label>
+                  <div v-if="appStore.fontSizeProfile === 'custom'" class="md:col-span-2 mt-4 animate-in fade-in slide-in-from-top-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{{ $t('settings.interface.typography.granularMatrix') }}</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      <div v-for="(size, key) in appStore.fontSizes" :key="key" class="p-3 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-2 truncate">{{ formatFontSizeKey(key) }}</label>
+                      <div v-for="(_, key) in appStore.fontSizes" :key="key" class="p-3 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-2 truncate">{{ $t('settings.interface.typography.sizeLabels.' + key) }}</label>
                         <select v-model.number="appStore.fontSizes[key]" class="w-full px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg text-xs font-black outline-none focus:ring-1 focus:ring-primary-500">
                           <option v-for="s in getFontSizeRange(key)" :key="s" :value="s">{{ s }}px</option>
                         </select>
@@ -248,8 +264,8 @@
               <!-- Button Style / Visual Density -->
               <div class="pt-8 border-t border-gray-100 dark:border-gray-800">
                 <div class="mb-8">
-                  <h3 class="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">Visual Density & Button Styling</h3>
-                  <p class="text-[10px] text-gray-400 uppercase tracking-tighter">Choose the aesthetic weight of active elements</p>
+                  <h3 class="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">{{ $t('settings.interface.buttons.title') }}</h3>
+                  <p class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.buttons.subtitle') }}</p>
                 </div>
 
                 <div class="flex flex-col lg:flex-row gap-8">
@@ -280,11 +296,11 @@
                   <!-- Live Preview -->
                   <div class="lg:w-2/3 bg-gray-50/50 dark:bg-gray-950/50 rounded-2xl p-8 border border-gray-100/50 dark:border-gray-800/50 flex flex-col items-center justify-center relative overflow-hidden group">
                     <div class="absolute inset-0 bg-primary-500/[0.02] dark:bg-primary-500/[0.01] pointer-events-none group-hover:bg-primary-500/[0.04] transition-all"></div>
-                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500 mb-10 bg-primary-50 dark:bg-primary-950/30 px-4 py-2 rounded-full border border-primary-100 dark:border-primary-900/50 shadow-sm">Interactive Preview</span>
+                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-primary-500 mb-10 bg-primary-50 dark:bg-primary-950/30 px-4 py-2 rounded-full border border-primary-100 dark:border-primary-900/50 shadow-sm">{{ $t('settings.interface.preview.label') }}</span>
                     
                     <div class="flex flex-col items-center gap-10 w-full max-w-sm">
                       <div class="w-full flex flex-col items-center">
-                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">Primary Trigger</span>
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">{{ $t('settings.interface.preview.primary') }}</span>
                         <button 
                           class="flex items-center justify-center font-black uppercase transition-all duration-300 active:scale-95"
                           :class="[
@@ -294,24 +310,24 @@
                           ]"
                         >
                           <Zap class="w-5 h-5" :class="appStore.buttonStyle !== 'icons' ? 'mr-3' : ''" :fill="appStore.buttonStyle === 'full' ? 'currentColor' : 'none'" />
-                          <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? 'Initialize Analysis' : 'Analyze' }}</span>
+                          <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? $t('settings.interface.preview.initialize') : $t('settings.interface.preview.analyze') }}</span>
                         </button>
                       </div>
 
                       <div class="flex items-center gap-16">
                         <div class="flex flex-col items-center">
-                          <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">Secondary</span>
+                          <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">{{ $t('settings.interface.preview.secondary') }}</span>
                           <button class="transition-all duration-300 active:scale-95 hover:scale-105" :class="[
                             appStore.buttonStyle === 'full' ? 'flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-2xl text-[11px] font-black shadow-md' : '',
                             appStore.buttonStyle === 'minimal' ? 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl text-[10px] font-black' : '',
                             appStore.buttonStyle === 'icons' ? 'w-11 h-11 flex items-center justify-center bg-white dark:bg-gray-800 text-gray-500 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm' : ''
                           ]">
                             <HistoryIcon class="w-4 h-4" />
-                            <span v-if="appStore.buttonStyle !== 'icons'">Check History</span>
+                            <span v-if="appStore.buttonStyle !== 'icons'">{{ $t('settings.interface.preview.checkHistory') }}</span>
                           </button>
                         </div>
                         <div class="flex flex-col items-center">
-                          <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">Utility</span>
+                          <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">{{ $t('settings.interface.preview.utility') }}</span>
                           <button class="transition-all duration-300 active:scale-95 group/u" :class="[
                             appStore.buttonStyle === 'full' ? 'flex items-center justify-center w-12 h-12 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl shadow-inner hover:bg-indigo-100 transition-colors' : '',
                             appStore.buttonStyle === 'minimal' ? 'flex items-center justify-center w-10 h-10 bg-gray-50 dark:bg-gray-800/80 text-gray-400 rounded-xl' : '',
@@ -334,8 +350,8 @@
                   <Globe2 class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Database Environment Matrix</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Infrastructure hierarchy and lifecycle tiers</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.environment.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.environment.subtitle') }}</p>
                 </div>
               </div>
               <EnvironmentManager />
@@ -348,8 +364,8 @@
                   <Link2 class="w-6 h-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Access Control & Credentials</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Manage server endpoints and secure database entry</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.connections.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.connections.subtitle') }}</p>
                 </div>
               </div>
               <ConnectionManager />
@@ -362,8 +378,8 @@
                   <GitCompare class="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Synchronization Pairings</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Define logical flow between source and target environments</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.pairs.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.pairs.subtitle') }}</p>
                 </div>
               </div>
               <ConnectionPairManager :enabled-environments="enabledEnvironments" />
@@ -376,8 +392,8 @@
                   <Database class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Data Integrity & Portability</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Master configuration backups and recovery snapshots</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.backup.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.backup.subtitle') }}</p>
                 </div>
               </div>
               <BackupManager />
@@ -403,8 +419,8 @@
               <Trash2 class="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Reset Application Data</h3>
-              <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest opacity-60">Critical System Action</p>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.resetModal.title') }}</h3>
+              <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest opacity-60">{{ $t('settings.resetModal.subtitle') }}</p>
             </div>
           </div>
           <button @click="showResetModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-400 transition-colors">
@@ -415,35 +431,35 @@
         <!-- Modal Body -->
         <div class="px-8 py-6">
           <p class="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-            Are you sure you want to completely purge the local application cache? This action is <span class="font-black text-red-500 underline decoration-2 underline-offset-2">irreversible</span>.
+            {{ $t('settings.resetModal.warning').split('{irreversible}')[0] }}<span class="font-black text-red-500 underline decoration-2 underline-offset-2">{{ $t('settings.resetModal.irreversible') }}</span>.
           </p>
           
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 mb-6">
-            <h4 class="text-[9px] font-black text-red-700 dark:text-red-400 uppercase tracking-[0.2em] mb-4">The following will be purged:</h4>
+            <h4 class="text-[9px] font-black text-red-700 dark:text-red-400 uppercase tracking-[0.2em] mb-4">{{ $t('settings.resetModal.purgedListTitle') }}</h4>
             <div class="grid grid-cols-1 gap-3">
               <div class="flex items-center gap-3">
                 <div class="w-7 h-7 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-gray-400">
                    <Database class="w-4 h-4" />
                 </div>
-                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">Cached Schemas (DDL Exports)</span>
+                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('settings.resetModal.cachedSchemas') }}</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="w-7 h-7 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-gray-400">
                    <GitCompare class="w-4 h-4" />
                 </div>
-                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">Comparison Results & Diffs</span>
+                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('settings.resetModal.comparisonResults') }}</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="w-7 h-7 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-gray-400">
                    <FileCode class="w-4 h-4" />
                 </div>
-                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">Generated Alter Statements</span>
+                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('settings.resetModal.generatedAlters') }}</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="w-7 h-7 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-gray-400">
                    <Activity class="w-4 h-4" />
                 </div>
-                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">Migration History & Logs</span>
+                <span class="text-[11px] font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('settings.resetModal.migrationHistory') }}</span>
               </div>
             </div>
           </div>
@@ -453,7 +469,7 @@
                <RotateCcw class="w-3 h-3" />
              </div>
              <p class="text-[10px] text-primary-700 dark:text-primary-300 font-bold uppercase leading-relaxed tracking-tight">
-               * Your connection credentials and environmental tiers will be preserved.
+               {{ $t('settings.resetModal.preservationNote') }}
              </p>
            </div>
         </div>
@@ -464,7 +480,7 @@
             @click="showResetModal = false" 
             class="flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           >
-            Cancel
+            {{ $t('settings.resetModal.cancel') }}
           </button>
           <button 
             @click="confirmResetData" 
@@ -472,8 +488,8 @@
             :disabled="isResetting"
           >
             <RotateCcw v-if="isResetting" class="w-3.5 h-3.5 animate-spin" />
-            <span v-if="isResetting">Purging...</span>
-            <span v-else>Yes, Delete All</span>
+            <span v-if="isResetting">{{ $t('settings.resetModal.purging') }}</span>
+            <span v-else>{{ $t('settings.resetModal.confirm') }}</span>
           </button>
         </div>
       </div>
@@ -500,7 +516,8 @@ import {
   Trash2,
   X,
   FileCode,
-  Activity
+  Activity,
+  Type
 } from 'lucide-vue-next'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
@@ -515,31 +532,34 @@ import { useOperationsStore } from '@/stores/operations'
 import { setLanguage } from '@/i18n'
 
 
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
 const settingsStore = useSettingsStore()
 const operationsStore = useOperationsStore()
 const route = useRoute()
 
-const categories = [
-  { id: 'interface', label: 'Interface', icon: MonitorSmartphone },
-  { id: 'environment', label: 'Environments', icon: Globe2 },
-  { id: 'connections', label: 'Connections', icon: Link2 },
-  { id: 'pairs', label: 'Sync Pairs', icon: GitCompare },
-  { id: 'backup', label: 'Backups', icon: Database }
-]
+const categories = computed(() => [
+  { id: 'interface', label: t('settings.categories.interface'), icon: MonitorSmartphone },
+  { id: 'environment', label: t('settings.categories.environment'), icon: Globe2 },
+  { id: 'connections', label: t('settings.categories.connections'), icon: Link2 },
+  { id: 'pairs', label: t('settings.categories.pairs'), icon: GitCompare },
+  { id: 'backup', label: t('settings.categories.backup'), icon: Database }
+])
 
 const activeCategory = ref('interface')
 
 // Handle deep linking from query params
 onMounted(() => {
-  if (route.query.cat && categories.find(c => c.id === route.query.cat)) {
+  if (route.query.cat && categories.value.find(c => c.id === route.query.cat)) {
     activeCategory.value = route.query.cat as string
   }
 })
 
 watch(() => route.query.cat, (newCat) => {
-  if (newCat && categories.find(c => c.id === newCat)) {
+  if (newCat && categories.value.find(c => c.id === newCat)) {
     activeCategory.value = newCat as string
   }
 })
@@ -560,25 +580,9 @@ const enabledEnvironments = computed(() => {
   return connectionPairsStore.enabledEnvironments
 })
 
-const updateTheme = () => {
-  // Theme is automatically updated via watcher in store
-}
 
 const updateLanguage = () => {
   setLanguage(settings.value.language)
-}
-
-const formatFontSizeKey = (key: string) => {
-  const mapping: Record<string, string> = {
-    main: 'Global Base',
-    menu: 'Nav Menu',
-    button: 'Buttons',
-    ddlHeader: 'Headers',
-    schema: 'Tree',
-    ddlName: 'Titles',
-    code: 'Code'
-  }
-  return mapping[key] || key
 }
 
 const getFontSizeRange = (key: string) => {
@@ -587,11 +591,11 @@ const getFontSizeRange = (key: string) => {
   return [9,10,11,12,13,14,15,16,17,18,20]
 }
 
-const buttonStyles = [
-  { id: 'full', label: 'Premium', icon: Zap, desc: 'Rich Gradients' },
-  { id: 'minimal', label: 'Minimal', icon: MousePointer2, desc: 'Sleek Lines' },
-  { id: 'icons', label: 'Icon Only', icon: Layers, desc: 'Extreme Density' }
-]
+const buttonStyles = computed<{ id: 'full' | 'minimal' | 'icons', label: string, icon: any, desc: string }[]>(() => [
+  { id: 'full', label: t('settings.interface.buttons.premium'), icon: Zap, desc: t('settings.interface.buttons.premiumDesc') },
+  { id: 'minimal', label: t('settings.interface.buttons.minimal'), icon: MousePointer2, desc: t('settings.interface.buttons.minimalDesc') },
+  { id: 'icons', label: t('settings.interface.buttons.iconOnly'), icon: Layers, desc: t('settings.interface.buttons.iconOnlyDesc') }
+])
 
 
 const showResetModal = ref(false)

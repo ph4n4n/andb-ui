@@ -23,33 +23,54 @@
         </div>
       </div>
 
-      <!-- Center: Connection Selector (Contextual) -->
-      <div v-if="route.path === '/compare'" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+      <!-- Central Toolbar (Contextual Pair or Single Selector) -->
+      <div v-if="['/compare', '/schema', '/history'].includes(route.path)" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+        <!-- Dropdown Portion -->
         <div class="flex items-center pl-2 space-x-2 border-r border-gray-200 dark:border-gray-700 pr-2">
-          <Database class="w-4 h-4 text-primary-500" />
-          <select
-            v-model="selectedPairId"
-            @change="onPairChange"
-            class="pr-8 py-1.5 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer"
-          >
-            <option v-for="pair in availablePairs" :key="pair.id" :value="pair.id" class="bg-white dark:bg-gray-800">
-              {{ pair.name }}
-            </option>
-          </select>
+          <!-- PAIR SELECTOR (Available in Compare, Schema, History) -->
+          <div class="flex items-center space-x-2" :class="{ 'pr-2 border-r border-gray-200 dark:border-gray-700 mr-2': route.path !== '/compare' }">
+             <GitCompare class="w-4 h-4 text-indigo-500" />
+             <select
+              v-model="selectedPairId"
+              @change="onPairChange"
+              class="py-1.5 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer max-w-[140px] truncate"
+              :title="$t('header.pairContext')"
+            >
+              <option value="" disabled>{{ $t('header.selectPair') }}</option>
+              <option v-for="pair in availablePairs" :key="pair.id" :value="pair.id" class="bg-white dark:bg-gray-800">
+                {{ pair.name }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- SINGLE DB SELECTOR (Available in Schema, History) -->
+          <div v-if="route.path !== '/compare'" class="flex items-center space-x-2">
+             <Database class="w-4 h-4 text-primary-500" />
+             <select
+              v-model="appStore.selectedConnectionId"
+              class="pr-8 py-1.5 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer"
+            >
+              <option value="" disabled>{{ $t('header.selectDatabase') }}</option>
+              <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id" class="bg-white dark:bg-gray-800">
+                {{ conn.environment }}: {{ conn.database }}
+              </option>
+            </select>
+          </div>
         </div>
 
+        <!-- Unified Action Group -->
         <div class="flex items-center space-x-1 px-1">
-          <!-- Verify Action -->
+          <!-- Verify Action (Contextual) -->
           <button
-            @click="testConnections"
+            @click="handleContextualTest"
             class="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all flex items-center group relative"
-            :class="{ 'opacity-50 cursor-not-allowed': isTesting }"
-            :disabled="isTesting"
-            title="Verify connectivity now"
+            :class="{ 'opacity-50 cursor-not-allowed': isContextTesting }"
+            :disabled="isContextTesting"
+            :title="route.path === '/compare' ? $t('header.verifyPair') : $t('header.verifyConnection')"
           >
-            <Loader2 v-if="isTesting" class="w-4 h-4 animate-spin text-primary-500" />
-            <Check v-else-if="testResult === 'success'" class="w-4 h-4 text-green-500" />
-            <AlertCircle v-else-if="testResult === 'failed'" class="w-4 h-4 text-red-500" />
+            <Loader2 v-if="isContextTesting" class="w-4 h-4 animate-spin text-primary-500" />
+            <Check v-else-if="contextTestResult === 'success'" class="w-4 h-4 text-green-500" />
+            <AlertCircle v-else-if="contextTestResult === 'failed'" class="w-4 h-4 text-red-500" />
             <ShieldCheck v-else class="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
           </button>
 
@@ -58,37 +79,21 @@
             @click="refresh"
             class="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all group"
             :disabled="isRefreshing"
-            title="Reload configuration from storage"
+            :title="$t('header.reload')"
           >
             <RefreshCw class="w-4 h-4 text-gray-400 group-hover:text-primary-500" :class="{ 'animate-spin': isRefreshing }" />
           </button>
 
           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-          <!-- Direct to Pairs Setting -->
+          <!-- Settings Shortcut -->
           <button
-            @click="router.push('/settings?cat=pairs')"
+            @click="router.push(route.path === '/compare' ? '/settings?cat=pairs' : '/settings?cat=connections')"
             class="p-2 text-gray-400 hover:text-primary-500 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all group"
-            title="Manage Connection Pairs"
+            :title="route.path === '/compare' ? $t('header.managePairs') : $t('header.manageConnections')"
           >
             <Settings class="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
           </button>
-        </div>
-      </div>
-
-      <!-- Single Connection Selector for Schema/Dashboard -->
-      <div v-else-if="route.path === '/schema'" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div class="flex items-center px-4 py-1.5 space-x-3">
-          <Database class="w-4 h-4 text-primary-500" />
-          <select
-            v-model="appStore.selectedConnectionId"
-            class="pr-8 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer"
-          >
-            <option value="" disabled>Select Database</option>
-            <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id" class="bg-white dark:bg-gray-800">
-              {{ conn.name }}
-            </option>
-          </select>
         </div>
       </div>
 
@@ -104,7 +109,7 @@
         <button
           @click="showAbout = true"
           class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          title="About"
+          :title="$t('header.about')"
         >
           <Info class="w-5 h-5" />
         </button>
@@ -135,6 +140,7 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  GitCompare,
   Database
 } from 'lucide-vue-next'
 
@@ -148,8 +154,39 @@ const connectionPairsStore = useConnectionPairsStore()
 const showAbout = ref(false)
 const isRefreshing = ref(false)
 
-const isTesting = computed(() => connectionPairsStore.selectedPair?.status === 'testing')
-const testResult = computed(() => connectionPairsStore.selectedPair?.status)
+const isContextTesting = computed(() => {
+  if (route.path === '/compare') {
+    return connectionPairsStore.selectedPair?.status === 'testing'
+  } else {
+    const conn = appStore.connections.find(c => c.id === appStore.selectedConnectionId)
+    return (conn?.status as string) === 'testing'
+  }
+})
+
+const contextTestResult = computed(() => {
+  if (route.path === '/compare') {
+    return connectionPairsStore.selectedPair?.status
+  } else {
+    const conn = appStore.connections.find(c => c.id === appStore.selectedConnectionId)
+    // Map internal status to UI status
+    if (conn?.status === 'connected') return 'success'
+    if (conn?.status === 'failed') return 'failed'
+    return 'idle'
+  }
+})
+
+const handleContextualTest = async () => {
+  if (route.path === '/compare') {
+    const selectedPair = connectionPairsStore.selectedPair
+    if (selectedPair) {
+      await connectionPairsStore.testConnectionPair(selectedPair.id)
+    }
+  } else {
+    if (appStore.selectedConnectionId) {
+      await appStore.testConnection(appStore.selectedConnectionId)
+    }
+  }
+}
 
 // Initialize store
 onMounted(() => {
@@ -167,7 +204,7 @@ onMounted(() => {
 
 // Watch for route changes to apply auto-pick logic
 watch(() => route.path, (newPath) => {
-  if (newPath === '/schema' && !appStore.selectedConnectionId && connectionPairsStore.activePair) {
+  if (['/schema', '/history'].includes(newPath) && !appStore.selectedConnectionId && connectionPairsStore.activePair) {
     appStore.selectedConnectionId = connectionPairsStore.activePair.source?.id || ''
   }
 })
@@ -179,8 +216,8 @@ watch(() => connectionPairsStore.selectedPairId, (newId) => {
     const pair = connectionPairsStore.connectionPairs.find(p => p.id === newId)
     if (pair) {
       pair.status = 'idle'
-      // If we are in schema view, update the selection to match the new pair's source
-      if (route.path === '/schema' && connectionPairsStore.activePair) {
+      // If we are in schema/history view, update the selection to match the new pair's source
+      if (['/schema', '/history'].includes(route.path) && connectionPairsStore.activePair) {
         appStore.selectedConnectionId = connectionPairsStore.activePair.source?.id || ''
       }
     }

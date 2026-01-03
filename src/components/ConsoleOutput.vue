@@ -4,13 +4,13 @@
     <div class="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center gap-2">
         <Terminal class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-        <span class="font-semibold text-gray-700 dark:text-gray-200">Execution Log</span>
+        <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $t('console.title') }}</span>
       </div>
       <div class="flex items-center gap-2">
         <button 
           @click="$emit('clear')" 
           class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          title="Clear logs"
+          :title="$t('console.clear')"
         >
           <Eraser class="w-3.5 h-3.5" />
         </button>
@@ -18,14 +18,14 @@
           @click="autoScroll = !autoScroll" 
           class="p-1 rounded transition-colors"
           :class="autoScroll ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-          title="Auto-scroll"
+          :title="$t('console.autoScroll')"
         >
           <ArrowDownCircle class="w-3.5 h-3.5" />
         </button>
         <button 
           @click="$emit('close')" 
           class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors ml-1"
-          title="Close Console"
+          :title="$t('console.close')"
         >
           <X class="w-3.5 h-3.5" />
         </button>
@@ -38,7 +38,7 @@
       class="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar scroll-smooth"
     >
       <div v-if="logs.length === 0" class="text-gray-400 dark:text-gray-600 italic select-none">
-        Waiting for commands...
+        {{ $t('console.waiting') }}
       </div>
       <div 
         v-for="(log, index) in logs" 
@@ -63,6 +63,9 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { Terminal, Eraser, ArrowDownCircle, X } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+useI18n()
 
 export interface LogEntry {
   message: string

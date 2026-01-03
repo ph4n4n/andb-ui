@@ -48,12 +48,15 @@
 
     <!-- Explorer Header -->
     <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0" :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px', fontWeight: 'bold' }">
-      <span>{{ route.path === '/compare' ? 'Source Explorer' : (route.path === '/history' ? 'History Explorer' : 'Schema Explorer') }}</span>
+      <span>{{ route.path === '/compare' ? $t('navigation.explorer.source') : (route.path === '/history' ? $t('navigation.explorer.history') : $t('navigation.explorer.schema')) }}</span>
       <div class="flex items-center space-x-1">
-        <button @click="refreshSchemas" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Refresh">
+        <button @click="refreshSchemas" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.refresh')">
           <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
         </button>
-        <button @click="collapseAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Collapse All">
+        <button @click="expandAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.expandAll')">
+          <PlusSquare class="w-3.5 h-3.5" />
+        </button>
+        <button @click="collapseAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.collapseAll')">
           <MinusSquare class="w-3.5 h-3.5" />
         </button>
       </div>
@@ -99,8 +102,13 @@
               <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700"></div>
               
               <div 
-                class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
-                :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800': expandedDatabases.has(`${env.name}-${db.name}`) }"
+                class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer transition-colors border-l-2"
+                :class="[
+                  isActiveDatabase(db) 
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-500 font-bold' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent',
+                  expandedDatabases.has(`${env.name}-${db.name}`) && !isActiveDatabase(db) ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : ''
+                ]"
                 @click="selectDatabase(env.name, db.name)"
                 :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
               >
@@ -120,7 +128,7 @@
                 <button 
                   @click.stop="refreshDatabase(env.name, db.name)"
                   class="p-1 opacity-0 group-hover/db:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 mx-1"
-                  title="Force Refresh Schema"
+                  :title="$t('common.tooltips.refreshSchema')"
                 >
                   <RefreshCw class="w-3 h-3" />
                 </button>
@@ -161,7 +169,7 @@
                        <button 
                          @click.stop="refreshCategory(env.name, db.name, type.key)"
                          class="p-0.5 opacity-0 group-hover/cat:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-1.5"
-                         title="Refresh this category"
+                         :title="$t('common.tooltips.refreshCategory')"
                        >
                          <RefreshCw class="w-3 h-3" />
                        </button>
@@ -201,7 +209,7 @@
                         <button 
                           @click.stop="refreshObject(env.name, db.name, type.key, item.name)"
                           class="p-0.5 opacity-0 group-hover/obj:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-2"
-                          title="Refresh this object"
+                          :title="$t('common.tooltips.refreshObject')"
                         >
                           <RefreshCw class="w-2.5 h-2.5" />
                         </button>
@@ -249,7 +257,8 @@ import {
   Server,
   Folder,
   FolderOpen,
-  MinusSquare
+  MinusSquare,
+  PlusSquare
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -335,13 +344,13 @@ const filteredEnvironments = computed(() => {
 })
 
 // DDL Types Mapping
-const ddlTypes = [
-  { key: 'tables', label: 'Tables', icon: Table, colorClass: 'text-blue-600 dark:text-blue-400' },
-  { key: 'views', label: 'Views', icon: Layers, colorClass: 'text-indigo-600 dark:text-indigo-400' },
-  { key: 'procedures', label: 'Procedures', icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
-  { key: 'functions', label: 'Functions', icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
-  { key: 'triggers', label: 'Triggers', icon: Zap, colorClass: 'text-amber-600 dark:text-amber-400' }
-]
+const ddlTypes = computed(() => [
+  { key: 'tables', label: t('navigation.ddl.tables'), icon: Table, colorClass: 'text-blue-600 dark:text-blue-400' },
+  { key: 'views', label: t('navigation.ddl.views'), icon: Layers, colorClass: 'text-indigo-600 dark:text-indigo-400' },
+  { key: 'procedures', label: t('navigation.ddl.procedures'), icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
+  { key: 'functions', label: t('navigation.ddl.functions'), icon: Hammer, colorClass: 'text-purple-600 dark:text-purple-400' },
+  { key: 'triggers', label: t('navigation.ddl.triggers'), icon: Zap, colorClass: 'text-amber-600 dark:text-amber-400' }
+])
 
 // Actions
 const isSourceEnvironment = (envName: string) => {
@@ -360,6 +369,24 @@ const collapseAll = () => {
   expandedEnvironments.value.clear()
   expandedDatabases.value.clear()
   expandedTypes.value.clear()
+}
+
+const expandAll = () => {
+  filteredEnvironments.value.forEach(env => {
+    expandedEnvironments.value.add(env.name)
+    env.databases.forEach((db: any) => {
+      expandedDatabases.value.add(`${env.name}-${db.name}`)
+      ddlTypes.value.forEach(type => {
+        if (db[type.key]?.length > 0) {
+          expandedTypes.value.add(`${env.name}-${db.name}-${type.key}`)
+        }
+      })
+    })
+  })
+}
+
+const isActiveDatabase = (db: any) => {
+  return db.connectionId === appStore.selectedConnectionId
 }
 
 const toggleEnvironment = (envName: string) => {

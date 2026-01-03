@@ -25,6 +25,36 @@ export interface ConnectionPair {
   target: DatabaseConnection | null
 }
 
+export const FONT_SIZE_PROFILES = {
+  small: {
+    main: 12,
+    menu: 11,
+    button: 10,
+    ddlHeader: 14,
+    schema: 11,
+    ddlName: 13,
+    code: 11
+  },
+  medium: {
+    main: 13,
+    menu: 12,
+    button: 11,
+    ddlHeader: 16,
+    schema: 12,
+    ddlName: 14,
+    code: 12
+  },
+  large: {
+    main: 15,
+    menu: 14,
+    button: 13,
+    ddlHeader: 20,
+    schema: 14,
+    ddlName: 16,
+    code: 14
+  }
+}
+
 export const useAppStore = defineStore('app', () => {
   // State
   const sidebarCollapsed = ref(false)
@@ -43,6 +73,11 @@ export const useAppStore = defineStore('app', () => {
     general: "'Inter', sans-serif",
     code: "'JetBrains Mono', monospace"
   })
+  const fontSizeProfile = ref<'small' | 'medium' | 'large' | 'custom'>('medium')
+
+  // Store the last custom configuration to restore it when switching back to Custom
+  const lastCustomFontSizes = ref({ ...FONT_SIZE_PROFILES.medium })
+
   const connections = ref<DatabaseConnection[]>([])
 
   // Initialize state
@@ -57,6 +92,18 @@ export const useAppStore = defineStore('app', () => {
     if (savedSettings.fontFamilies) {
       fontFamilies.value = { ...fontFamilies.value, ...savedSettings.fontFamilies }
     }
+    if (savedSettings.lastCustomFontSizes) {
+      lastCustomFontSizes.value = { ...lastCustomFontSizes.value, ...savedSettings.lastCustomFontSizes }
+    }
+
+    fontSizeProfile.value = savedSettings.fontSizeProfile || 'medium'
+
+    // If we loaded 'custom', we should ensure fontSizes reflects the loaded values (already done by fontSizes loading)
+    // If we loaded a profile, apply it to ensure consistency, UNLESS we want to respect the exact saved numbers 
+    // which might differ if the profile definition changed in code. 
+    // For now, let's respect savedSettings.fontSizes as the truth.
+
+    selectedConnectionId.value = savedSettings.lastSelectedConnectionId || '1' // Fallback to DEV (id 1) if none
 
     const savedConnections = await storage.getConnections()
     if (savedConnections.length > 0) {
@@ -159,11 +206,46 @@ export const useAppStore = defineStore('app', () => {
 
   watch(fontSizes, newValue => {
     storage.updateSettings({ fontSizes: { ...newValue } })
+
+    // If we make Manual changes while in 'custom' mode, update our lastCustomFontSizes
+    if (fontSizeProfile.value === 'custom') {
+      lastCustomFontSizes.value = { ...newValue }
+      storage.updateSettings({ lastCustomFontSizes: { ...newValue } })
+    } else {
+      // If we make changes while NOT in custom mode, we should auto-switch to custom
+      // But checking for deep equality is tricky because of the circular update nature.
+      // Instead, we rely on the UI to call applyFontSizeProfile('custom') if needed, 
+      // OR we accept that any manual change in UI (which v-models directly into fontSizes) 
+      // implicitly means we are diverging.
+
+      // Ideally the UI inputs should trigger a "switchToCustom" first, OR we detect deviation here.
+      const currentProfileTarget = FONT_SIZE_PROFILES[fontSizeProfile.value]
+      if (currentProfileTarget) {
+        const isMatch = Object.keys(newValue).every(k => {
+          const key = k as keyof typeof newValue
+          return newValue[key] === currentProfileTarget[key]
+        })
+        if (!isMatch) {
+          fontSizeProfile.value = 'custom'
+          // And now that we are custom, save this new state as the custom preference
+          lastCustomFontSizes.value = { ...newValue }
+          storage.updateSettings({ lastCustomFontSizes: { ...newValue } })
+        }
+      }
+    }
   }, { deep: true })
+
+  watch(fontSizeProfile, newValue => {
+    storage.updateSettings({ fontSizeProfile: newValue })
+  })
 
   watch(fontFamilies, newValue => {
     storage.updateSettings({ fontFamilies: { ...newValue } })
   }, { deep: true })
+
+  watch(selectedConnectionId, newValue => {
+    storage.updateSettings({ lastSelectedConnectionId: newValue })
+  })
 
   // Actions
   const toggleSidebar = () => {
@@ -275,6 +357,16 @@ export const useAppStore = defineStore('app', () => {
     await storage.saveConnections(connections.value)
   }
 
+  const applyFontSizeProfile = (profileKey: 'small' | 'medium' | 'large' | 'custom') => {
+    fontSizeProfile.value = profileKey
+    if (profileKey === 'custom') {
+      // Restore last custom configuration
+      fontSizes.value = { ...lastCustomFontSizes.value }
+    } else if (FONT_SIZE_PROFILES[profileKey]) {
+      fontSizes.value = { ...FONT_SIZE_PROFILES[profileKey] }
+    }
+  }
+
   return {
     // State
     sidebarCollapsed,
@@ -282,6 +374,7 @@ export const useAppStore = defineStore('app', () => {
     navStyle,
     fontSizes,
     fontFamilies,
+    fontSizeProfile,
     connections,
     currentPair,
     selectedConnectionId,
@@ -299,6 +392,7 @@ export const useAppStore = defineStore('app', () => {
     removeConnection,
     testConnection,
     resetConnections,
+    applyFontSizeProfile,
     reloadData: init
   }
 })

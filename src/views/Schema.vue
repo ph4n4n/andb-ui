@@ -7,20 +7,11 @@
           <div class="flex flex-col gap-0.5">
             <h1 class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center">
               <Folder class="w-5 h-5 mr-2 text-primary-500" />
-              Schema Explorer
+              {{ $t('schema.title') }}
             </h1>
              <div class="flex items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider gap-2">
                 <Database class="w-3 h-3 opacity-50" />
-                <select 
-                 v-model="selectedConnectionId"
-                 class="bg-transparent border-none p-0 font-bold text-primary-600 dark:text-primary-400 focus:ring-0 cursor-pointer max-w-[200px] truncate"
-                 :style="{ fontSize: appStore.fontSizes.button + 'px' }"
-               >
-                 <option value="" disabled>Select Database</option>
-                 <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id">
-                   {{ conn.name }}
-                 </option>
-               </select>
+                <span class="text-primary-600 dark:text-primary-400 font-black tracking-widest">{{ activeConnectionName }}</span>
                <button 
                  @click="loadSchema(false)" 
                  class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-400 hover:text-primary-500 transition-colors"
@@ -42,7 +33,7 @@
           <div v-if="error" class="text-red-500 text-[10px] font-bold uppercase tracking-wider max-w-[150px] truncate px-2" :title="error">{{ error }}</div>
           
           <div v-if="selectedDbLastUpdated" class="hidden sm:flex flex-col items-end px-2 border-r border-gray-200 dark:border-gray-700">
-            <span class="text-[9px] text-gray-400 uppercase tracking-tighter">Last synced</span>
+            <span class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ $t('schema.lastSynced') }}</span>
             <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">{{ formatTimeAgo(selectedDbLastUpdated) }}</span>
           </div>
 
@@ -56,10 +47,10 @@
               appStore.buttonStyle === 'icons' ? 'w-10 h-10 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
             ]"
             :style="{ fontSize: appStore.fontSizes.button + 'px' }"
-            title="Fetch Fresh Schema from Database (Andb Core)"
+            :title="$t('schema.fetchTooltip')"
           >
             <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
-            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? 'Fetching' : (appStore.buttonStyle === 'full' ? 'Fetch from DB' : 'Fetch') }}</span>
+            <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? $t('schema.fetching') : (appStore.buttonStyle === 'full' ? $t('schema.fetchFromDB') : $t('schema.fetch')) }}</span>
           </button>
         </div>
       </div>
@@ -75,8 +66,8 @@
               <div class="absolute inset-0 border-4 border-t-primary-500 rounded-full animate-spin"></div>
               <div class="absolute inset-0 flex items-center justify-center text-2xl">🔍</div>
             </div>
-            <p class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">{{ statusMessage || 'Loading schema...' }}</p>
-            <div class="mt-2 text-xs text-gray-500 uppercase tracking-tighter animate-pulse">Running commands... Check console</div>
+            <p class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">{{ statusMessage || $t('schema.loading') }}</p>
+            <div class="mt-2 text-xs text-gray-500 uppercase tracking-tighter animate-pulse">{{ $t('schema.runningCommands') }}</div>
           </div>
         </div>
 
@@ -101,10 +92,10 @@
                       class="truncate font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300"
                       :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px' }"
                     >
-                      {{ selectedFilterType === 'all' ? 'Database Overview' : selectedFilterType }}
+                      {{ selectedFilterType === 'all' ? $t('schema.overview') : translateDDLType(selectedFilterType) }}
                     </span>
                     <span v-if="hasResults" :style="{ fontSize: (appStore.fontSizes.schema - 4) + 'px' }" class="text-gray-400 uppercase tracking-tighter">
-                      {{ filteredResults.length }} items
+                      {{ filteredResults.length }} {{ $t('schema.items') }}
                     </span>
                   </div>
                 </div>
@@ -119,7 +110,7 @@
                   <input 
                     v-model="searchQuery"
                     type="text" 
-                    placeholder="Search objects..."
+                    :placeholder="$t('history.searchPlaceholder')"
                     class="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
                   />
                 </div>
@@ -128,8 +119,8 @@
               <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
                 <div v-if="!hasResults" class="p-8 text-center text-gray-400 h-full flex flex-col justify-center">
                   <ScanSearch class="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p class="text-xs uppercase tracking-widest font-bold">No schema loaded</p>
-                  <p class="text-[10px] opacity-60 mt-1">Select a database and click Fetch</p>
+                  <p class="text-xs uppercase tracking-widest font-bold">{{ $t('schema.noSchema') }}</p>
+                  <p class="text-[10px] opacity-60 mt-1">{{ $t('schema.selectDbFetch') }}</p>
                 </div>
 
                 <!-- OVERVIEW MODE -->
@@ -146,7 +137,7 @@
                         </div>
                         <div>
                           <div class="font-bold text-gray-900 dark:text-white uppercase tracking-widest" :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }">{{ cat.type }}</div>
-                          <div class="text-gray-400" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }">{{ cat.items.length }} items</div>
+                          <div class="text-gray-400" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }">{{ cat.items.length }} {{ $t('schema.items') }}</div>
                         </div>
                       </div>
                       <ChevronRight class="w-3 h-3 text-gray-300 group-hover:text-primary-500" />
@@ -196,7 +187,7 @@
                       <div class="flex items-center space-x-2 mt-0.5">
                         <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider transition-colors duration-200">{{ selectedItem.type }}</span>
                         <div v-if="selectedItem.updated_at" class="flex items-center text-[10px] text-gray-400 ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-                          <span class="mr-1 opacity-70">Synced:</span>
+                          <span class="mr-1 opacity-70">{{ $t('schema.lastSynced') }}:</span>
                           <span class="font-mono text-gray-500 dark:text-gray-300">{{ formatTimeAgo(selectedItem.updated_at) }}</span>
                         </div>
                       </div>
@@ -211,6 +202,13 @@
                       title="Take Manual Snapshot"
                     >
                       <Camera class="w-4 h-4" />
+                    </button>
+                    <button 
+                      @click="viewHistory"
+                      class="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all"
+                      title="View Snapshots History"
+                    >
+                      <History class="w-4 h-4" />
                     </button>
                     <button 
                       @click="loadSchema(true)"
@@ -237,22 +235,11 @@
                   </div>
                 </div>
 
-                <div class="flex-1 overflow-hidden relative group">
-                  <div class="absolute inset-0 flex overflow-auto custom-scrollbar bg-gray-50 dark:bg-gray-900/50 text-sm font-mono">
-                    <!-- Line Numbers -->
-                    <div class="flex-none py-4 px-2 text-right text-gray-400 dark:text-gray-600 select-none bg-gray-100/50 dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 min-w-[3rem]">
-                      <div v-for="n in lineCount" :key="n" class="leading-6">{{ n }}</div>
-                    </div>
-                    
-                    <!-- Code -->
-                    <pre class="flex-1 py-4 px-4 syntax-highlighter bg-transparent text-gray-800 dark:text-gray-200 !mt-0 !bg-transparent" :style="{ fontSize: appStore.fontSizes.code + 'px', fontFamily: appStore.fontFamilies.code }"><code v-html="highlightedDDL" class="block leading-6"></code></pre>
-                  </div>
-                  
-                  <!-- Copy Button (Overlay) -->
-                  <div class="absolute top-2 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <!-- Existing copy button logic can go here or be kept if we want -->
-                  </div>
-                </div>
+                <DDLViewer 
+                  :content="formattedDDL" 
+                  :font-size="appStore.fontSizes.code" 
+                  :font-family="appStore.fontFamilies.code"
+                />
               </div>
               
               <div v-else class="flex-1 flex flex-col items-center justify-center p-12 text-center text-gray-400 grayscale opacity-40">
@@ -260,8 +247,8 @@
                   <div class="absolute -inset-4 bg-primary-500/10 rounded-full blur-2xl animate-pulse"></div>
                   <MousePointer2 class="w-16 h-16 text-primary-500/50" />
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-widest">Select an item</h3>
-                <p class="text-sm max-w-xs leading-relaxed">Choose an object from the left list to view its DDL definition and properties.</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-widest">{{ $t('schema.selectObject') }}</h3>
+                <p class="text-sm max-w-xs leading-relaxed">{{ $t('schema.selectObjectDesc') }}</p>
               </div>
             </div>
           </div>
@@ -272,12 +259,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 import Andb from '@/utils/andb'
-import Prism from 'prismjs'
-import 'prismjs/components/prism-sql'
+import DDLViewer from '@/components/DDLViewer.vue'
 import { 
   RefreshCw, 
   Folder,
@@ -294,15 +282,18 @@ import {
   Copy, 
   Download,
   Camera,
-  RotateCcw
+  RotateCcw,
+  History
 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
 
 const appStore = useAppStore()
+const { t } = useI18n()
 const consoleStore = useConsoleStore()
 const notificationStore = useNotificationStore()
 const sidebarStore = useSidebarStore()
+const router = useRouter()
 
 
 const typeIcons = {
@@ -322,7 +313,15 @@ const getIconForType = (type: string) => {
 const loading = ref(false)
 const statusMessage = ref('')
 const error = ref<string | null>(null)
-const selectedConnectionId = ref('')
+const selectedConnectionId = computed({
+  get: () => appStore.selectedConnectionId,
+  set: (val) => appStore.selectedConnectionId = val
+})
+
+const activeConnectionName = computed(() => {
+  const conn = appStore.connections.find(c => c.id === appStore.selectedConnectionId)
+  return conn ? `${conn.environment}: ${conn.database}` : t('schema.noConnection')
+})
 const selectedFilterType = ref('all')
 const searchQuery = ref('')
 const selectedItem = ref<any>(null)
@@ -405,51 +404,11 @@ const formattedDDL = computed(() => {
   return ddl
 })
 
-const highlightedDDL = computed(() => {
-  if (!formattedDDL.value) return ''
-  
-  // 1. Basic Highlight with Prism
-  let html = Prism.highlight(formattedDDL.value, Prism.languages.sql, 'sql')
-
-  // 2. Custom Post-processing for "Rainbow" brackets and distinct punctuation
-  // Prism usually wraps punctuation in <span class="token punctuation">...</span>
-  // We regex replace to add specific classes for ( ) , ;
-  
-  // Handle Parentheses (Rainbow effect placeholder - typically needs depth level, but we'll stick to a nice Gold/Purple for now)
-  html = html.replace(
-    /<span class="token punctuation">(\()<\/span>/g, 
-    '<span class="token punctuation paren-open text-yellow-500 dark:text-yellow-400 font-bold">(</span>'
-  )
-  html = html.replace(
-    /<span class="token punctuation">(\))<\/span>/g, 
-    '<span class="token punctuation paren-close text-yellow-500 dark:text-yellow-400 font-bold">)</span>'
-  )
-
-  // Handle Commas (Bright contrast)
-  html = html.replace(
-    /<span class="token punctuation">(,)<\/span>/g, 
-    '<span class="token punctuation comma text-gray-500 dark:text-gray-100 font-bold">,</span>'
-  )
-
-  // Handle Semicolons
-  html = html.replace(
-    /<span class="token punctuation">(;)<\/span>/g, 
-    '<span class="token punctuation semicolon text-red-500 dark:text-pink-400 font-bold">;</span>'
-  )
-  
-  return html
-})
-
-const lineCount = computed(() => {
-  if (!formattedDDL.value) return 0
-  return formattedDDL.value.split('\n').length
-})
-
-watch(selectedConnectionId, (newId) => {
+watch(() => appStore.selectedConnectionId, (newId) => {
   if (newId) {
     loadSchema(false)
   }
-})
+}, { immediate: true })
 
 const hasResults = computed(() => allResults.value.length > 0)
 
@@ -495,11 +454,11 @@ const loadSchema = async (forceRefresh = false) => {
   loading.value = true
   if (forceRefresh) {
     consoleStore.setVisibility(true) // Open console only on manual refresh
-    statusMessage.value = 'Fetching from database...'
+    statusMessage.value = t('schema.fetchingFromDb')
     consoleStore.clearLogs()
   } else {
     // Silent load from cache
-    statusMessage.value = 'Loading from cache...'
+    statusMessage.value = t('schema.loadingCache')
   }
   
   error.value = null
@@ -512,7 +471,7 @@ const loadSchema = async (forceRefresh = false) => {
   try {
     if (forceRefresh) {
       // REAL FETCH: Hit the database
-      consoleStore.addLog(`Connecting to database: ${conn.name}...`, 'info')
+      consoleStore.addLog(t('schema.connecting'), 'info')
       
       // Atomic Refresh Logic
       if (selectedItem.value) {
@@ -575,10 +534,10 @@ const loadSchema = async (forceRefresh = false) => {
       } else {
         // 3. FULL REFRESH
         // POWERFUL CLEANUP HERE
-        consoleStore.addLog(`Cleaning local cache for ${conn.name}...`, 'warn')
+        consoleStore.addLog(t('schema.cleaningCache'), 'warn')
         await Andb.clearConnectionData(conn)
         
-        consoleStore.addLog(`Refreshing full schema...`, 'info')
+        consoleStore.addLog(t('schema.refreshed'), 'info')
         let objTypes: any[] = ['tables', 'procedures', 'functions', 'triggers', 'views']
         
         for (const type of objTypes) {
@@ -604,11 +563,11 @@ const loadSchema = async (forceRefresh = false) => {
       
       notificationStore.add({
         type: 'success',
-        title: 'Schema Refreshed',
-        message: `Successfully refreshed schema for ${conn.name} from source.`
+        title: t('schema.refreshed'),
+        message: t('schema.refreshedDesc', { name: conn.name })
       })
       
-      consoleStore.addLog(`Schema refresh completed successfully.`, 'success')
+      consoleStore.addLog(t('schema.refreshSuccess'), 'success')
       
       // Trigger sidebar update to reflect new cache
       sidebarStore.triggerRefresh()
@@ -650,7 +609,7 @@ const loadSchema = async (forceRefresh = false) => {
     consoleStore.addLog(`Error loading schema: ${err.message}`, 'error')
     notificationStore.add({
       type: 'error',
-      title: 'Failed to load schema',
+      title: t('schema.errorLoading'),
       message: err.message
     })
   } finally {
@@ -674,19 +633,19 @@ const takeSnapshot = async () => {
   if (!conn) return
 
   loading.value = true
-  statusMessage.value = 'Taking snapshot...'
+  statusMessage.value = t('schema.takingSnapshot')
   
   try {
     await Andb.createSnapshot(conn, selectedItem.value.type, selectedItem.value.name)
     notificationStore.add({
       type: 'success',
-      title: 'Snapshot Created',
-      message: `Manual snapshot of ${selectedItem.value.name} saved to history.`
+      title: t('schema.snapshotCreated'),
+      message: t('schema.snapshotSuccess', { name: selectedItem.value.name })
     })
   } catch (err: any) {
     notificationStore.add({
       type: 'error',
-      title: 'Snapshot Failed',
+      title: t('schema.snapshotFailed'),
       message: err.message
     })
   } finally {
@@ -694,13 +653,28 @@ const takeSnapshot = async () => {
   }
 }
 
+const viewHistory = () => {
+  if (!selectedItem.value || !selectedConnectionId.value) return
+  
+  const conn = appStore.connections.find(c => c.id === selectedConnectionId.value)
+  if (!conn) return
+
+  router.push({
+    path: '/history',
+    query: {
+      env: conn.environment,
+      name: selectedItem.value.name
+    }
+  })
+}
+
 const copyDDL = () => {
   if (!formattedDDL.value) return
   navigator.clipboard.writeText(formattedDDL.value)
   notificationStore.add({
     type: 'success',
-    title: 'Copied',
-    message: 'DDL script copied to clipboard.'
+    title: t('schema.copied'),
+    message: t('schema.copiedDesc')
   })
 }
 
@@ -831,6 +805,17 @@ onUnmounted(() => {
   window.removeEventListener('category-refresh-requested', handleCategoryRefreshRequested)
   window.removeEventListener('object-refresh-requested', handleObjectRefreshRequested)
 })
+
+const translateDDLType = (type: string) => {
+  const map: Record<string, string> = {
+    'tables': t('navigation.ddl.tables'),
+    'views': t('navigation.ddl.views'),
+    'procedures': t('navigation.ddl.procedures'),
+    'functions': t('navigation.ddl.functions'),
+    'triggers': t('navigation.ddl.triggers')
+  }
+  return map[type.toLowerCase()] || type
+}
 </script>
 
 <style scoped>
@@ -853,23 +838,4 @@ onUnmounted(() => {
 }
 </style>
 
-<style>
-/* Syntax Highlighting - Standard (Light Mode) */
-.syntax-highlighter .token.keyword { color: #0000FF; font-weight: bold; }
-.syntax-highlighter .token.string { color: #A31515; }
-.syntax-highlighter .token.comment { color: #008000; font-style: italic; }
-.syntax-highlighter .token.function { color: #795E26; }
-.syntax-highlighter .token.number { color: #098658; }
-.syntax-highlighter .token.operator { color: #000000; }
-.syntax-highlighter .token.punctuation { color: #000000; }
-
-/* Dark Mode Overrides (Explicit specificity) */
-html.dark .syntax-highlighter .token.keyword { color: #569cd6 !important; }
-html.dark .syntax-highlighter .token.string { color: #ce9178 !important; }
-html.dark .syntax-highlighter .token.comment { color: #6a9955 !important; }
-html.dark .syntax-highlighter .token.function { color: #dcdcaa !important; }
-html.dark .syntax-highlighter .token.number { color: #b5cea8 !important; }
-html.dark .syntax-highlighter .token.operator,
-html.dark .syntax-highlighter .token.punctuation { color: #d4d4d4 !important; }
-</style>
 

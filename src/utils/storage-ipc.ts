@@ -12,6 +12,8 @@ interface AppSchema {
   connectionPairs: ConnectionPair[]
   environments: Environment[]
   settings: {
+    sidebarCollapsed: boolean
+    lastSelectedConnectionId: string
     theme: 'light' | 'dark' | 'system'
     language: 'en' | 'vi'
     buttonStyle: 'full' | 'minimal' | 'icons'
@@ -29,6 +31,16 @@ interface AppSchema {
     fontFamilies: {
       general: string
       code: string
+    }
+    fontSizeProfile?: 'small' | 'medium' | 'large' | 'custom'
+    lastCustomFontSizes?: {
+      main: number
+      menu: number
+      button: number
+      ddlHeader: number
+      schema: number
+      ddlName: number
+      code: number
     }
   }
 }
@@ -141,6 +153,8 @@ export const storage = {
   async getSettings() {
     const result = await getStorage().get('settings')
     const defaults = {
+      sidebarCollapsed: false,
+      lastSelectedConnectionId: '',
       theme: 'system' as const,
       language: 'en' as const,
       buttonStyle: 'full' as const,
@@ -158,7 +172,8 @@ export const storage = {
       fontFamilies: {
         general: "'Inter', sans-serif",
         code: "'JetBrains Mono', monospace"
-      }
+      },
+      fontSizeProfile: 'medium' as 'small' | 'medium' | 'large' | 'custom'
     }
     return result.success ? { ...defaults, ...result.data } : defaults
   },

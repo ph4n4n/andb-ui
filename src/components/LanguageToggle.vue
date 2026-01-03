@@ -2,10 +2,11 @@
   <div class="relative">
     <button
       @click="toggleDropdown"
-      class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative group"
       :title="$t('navigation.language')"
     >
-      <Globe class="w-5 h-5" />
+      <Globe class="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
+      <span class="absolute bottom-0 right-0 text-[8px] font-black bg-white dark:bg-gray-800 px-1 rounded-md leading-tight shadow-sm ring-2 ring-white dark:ring-gray-800 text-primary-600 dark:text-primary-400">{{ currentCode }}</span>
     </button>
 
     <div
@@ -38,10 +39,14 @@ const settingsStore = useSettingsStore()
 const settings = computed(() => settingsStore.settings)
 const isDropdownOpen = ref(false)
 
-const languages = [
-  { value: 'en' as Language, label: 'english', flag: '🇺🇸' },
-  { value: 'vi' as Language, label: 'vietnamese', flag: '🇻🇳' }
+const languages: { value: Language; label: string; flag: string }[] = [
+  { value: 'en', label: 'english', flag: '🇺🇸' },
+  { value: 'vi', label: 'vietnamese', flag: '🇻🇳' }
 ]
+
+const currentCode = computed(() => {
+  return settings.value.language.toUpperCase()
+})
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
@@ -62,5 +67,7 @@ const handleClickOutside = (event: Event) => {
 }
 
 // Add click outside listener
-document.addEventListener('click', handleClickOutside)
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', handleClickOutside)
+}
 </script>

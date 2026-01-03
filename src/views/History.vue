@@ -7,34 +7,23 @@
           <div class="flex flex-col gap-0.5">
             <h1 class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center">
               <History class="w-5 h-5 mr-2 text-primary-500" />
-              Backup & History
+              {{ $t('history.title') }}
             </h1>
-            <div class="flex items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider gap-3">
-              <div class="flex items-center gap-1.5">
-                 <span class="opacity-50 text-[9px]">Environment:</span>
-                 <select 
-                  v-model="filters.environment"
-                  class="bg-transparent border-none p-0 text-[10px] font-bold text-primary-600 dark:text-primary-400 focus:ring-0 cursor-pointer"
-                >
-                  <option value="">All</option>
-                  <option v-for="env in availableEnvironments" :key="env" :value="env">{{ env }}</option>
-                </select>
-              </div>
-              <div class="w-px h-3 bg-gray-200 dark:bg-gray-700"></div>
-              <div class="flex items-center gap-1.5">
-                 <span class="opacity-50 text-[9px]">Type:</span>
-                 <select 
-                  v-model="filters.type"
-                  class="bg-transparent border-none p-0 text-[10px] font-bold text-primary-600 dark:text-primary-400 focus:ring-0 cursor-pointer"
-                >
-                  <option value="">All</option>
-                  <option value="TABLES">TABLES</option>
-                  <option value="PROCEDURES">PROCEDURES</option>
-                  <option value="FUNCTIONS">FUNCTIONS</option>
-                  <option value="VIEWS">VIEWS</option>
-                  <option value="TRIGGERS">TRIGGERS</option>
-                </select>
-              </div>
+            <div class="flex items-center gap-2">
+               <!-- Pill Type Selectors -->
+               <div class="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
+                  <button 
+                    v-for="type in historyTypes" 
+                    :key="type"
+                    @click="filters.type = type"
+                    class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-md transition-all"
+                    :class="filters.type === type 
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
+                  >
+                    {{ type ? $t(`navigation.ddl.${type.toLowerCase()}`) : $t('common.all') }}
+                  </button>
+               </div>
             </div>
           </div>
         </div>
@@ -55,7 +44,7 @@
             :disabled="loading"
           >
             <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
-            <span>{{ appStore.buttonStyle === 'full' ? 'Refresh History' : 'Refresh' }}</span>
+            <span>{{ appStore.buttonStyle === 'full' ? $t('history.refreshHistory') : $t('common.refresh') }}</span>
           </button>
         </div>
       </div>
@@ -66,15 +55,15 @@
       <div class="w-1/3 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
         <div class="p-3 border-b border-gray-200 dark:border-gray-800 flex flex-col shrink-0 bg-gray-50 dark:bg-gray-800/50">
           <div class="flex items-center justify-between mb-2">
-            <h2 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white">Snapshots List</h2>
-            <span class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ filteredSnapshots.length }} records</span>
+            <h2 class="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white">{{ $t('history.snapshotsList') }}</h2>
+            <span class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ filteredSnapshots.length }} {{ $t('history.records') }}</span>
           </div>
           <div class="relative">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               v-model="filters.query"
               type="text"
-              placeholder="Search by name..."
+              :placeholder="$t('history.searchPlaceholder')"
               class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white"
             />
           </div>
@@ -83,12 +72,12 @@
         <div class="flex-1 overflow-y-auto custom-scrollbar">
           <div v-if="loading" class="p-8 text-center text-gray-400">
             <RefreshCw class="w-8 h-8 mx-auto mb-2 animate-spin opacity-20" />
-            <p class="text-xs uppercase tracking-widest">Loading records...</p>
+            <p class="text-xs uppercase tracking-widest">{{ $t('history.loading') }}</p>
           </div>
           
           <div v-else-if="filteredSnapshots.length === 0" class="p-8 text-center text-gray-400">
             <ScanSearch class="w-12 h-12 mx-auto mb-2 opacity-10" />
-            <p class="text-xs uppercase tracking-widest">No history found</p>
+            <p class="text-xs uppercase tracking-widest">{{ $t('history.noHistory') }}</p>
           </div>
 
           <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -134,9 +123,9 @@
            <div class="w-48 h-48 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-8 opacity-50">
              <History class="w-24 h-24" />
            </div>
-           <h3 class="text-sm font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-2">Select a version</h3>
+           <h3 class="text-sm font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-2">{{ $t('history.selectVersion') }}</h3>
            <p class="text-[10px] text-center max-w-xs uppercase tracking-tighter leading-relaxed">
-             Pick any snapshot from the list to view its contents and compare versions.
+             {{ $t('history.selectVersionDesc') }}
            </p>
         </div>
 
@@ -171,7 +160,7 @@
                   : 'px-3 py-1.5 text-primary-500 bg-primary-50 dark:bg-primary-900/10 rounded-lg text-[10px] tracking-wider'"
               >
                 <Copy class="w-3.5 h-3.5" />
-                <span>Copy Script</span>
+                <span>{{ $t('history.copyScript') }}</span>
               </button>
               
               <button
@@ -183,27 +172,22 @@
                   : 'px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[10px] tracking-wider shadow-sm shadow-red-500/10'"
               >
                 <RotateCcw class="w-3.5 h-3.5" />
-                <span>Restore Version</span>
+                <span>{{ $t('history.restoreVersion') }}</span>
               </button>
               
               <div v-if="selectedSnapshot.ddl_type.toUpperCase() === 'TABLES'" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg">
                 <AlertTriangle class="w-3 h-3 text-amber-500" />
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-tighter">Manual Update Required for Tables</span>
+                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-tighter">{{ $t('history.manualUpdateWarning') }}</span>
               </div>
             </div>
           </div>
 
           <!-- Code Viewer -->
-          <div class="flex-1 flex flex-col overflow-hidden">
-            <div class="flex-1 relative overflow-auto custom-scrollbar bg-gray-50 dark:bg-gray-950">
-              <pre class="p-6 font-mono leading-relaxed text-gray-700 dark:text-gray-300 tab-size-2" :style="{ fontSize: appStore.fontSizes.code + 'px', fontFamily: appStore.fontFamilies.code }"><code class="language-sql">{{ selectedSnapshot.ddl_content }}</code></pre>
-              
-              <!-- Copy Success Tooltip -->
-              <div v-if="copySuccess" class="absolute top-4 right-4 bg-green-500 text-white text-[10px] px-2 py-1 rounded shadow-lg animate-bounce uppercase font-bold tracking-widest font-mono">
-                Copied to clipboard!
-              </div>
-            </div>
-          </div>
+          <DDLViewer 
+            :content="selectedSnapshot.ddl_content" 
+            :font-size="appStore.fontSizes.code" 
+            :font-family="appStore.fontFamilies.code"
+          />
         </template>
       </div>
     </div>
@@ -212,7 +196,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import MainLayout from '@/layouts/MainLayout.vue'
+import DDLViewer from '@/components/DDLViewer.vue'
 import Andb from '@/utils/andb'
 import { useAppStore } from '@/stores/app'
 import { useNotificationStore } from '@/stores/notification'
@@ -240,6 +227,8 @@ const selectedSnapshot = ref<any>(null)
 const copySuccess = ref(false)
 const appStore = useAppStore()
 const notificationStore = useNotificationStore()
+const route = useRoute()
+const { t } = useI18n()
 
 const filters = ref({
   environment: '',
@@ -247,18 +236,27 @@ const filters = ref({
   query: ''
 })
 
-const availableEnvironments = computed(() => {
-  const envs = new Set(snapshots.value.map(s => s.environment))
-  return Array.from(envs).sort()
+const historyTypes = ['', 'TABLES', 'VIEWS', 'PROCEDURES', 'FUNCTIONS', 'TRIGGERS']
+
+const currentConnection = computed(() => {
+  return appStore.connections.find(c => c.id === appStore.selectedConnectionId)
 })
 
 const filteredSnapshots = computed(() => {
   return snapshots.value.filter(s => {
-    const matchesEnv = !filters.value.environment || s.environment === filters.value.environment
+    // 1. Filter by Globally Selected Connection (Environment & Database)
+    // If no connection selected, show nothing or all? 
+    // "Mission Control" implies we follow the selection.
+    if (currentConnection.value) {
+       if (s.environment !== currentConnection.value.environment) return false
+       if (s.database_name !== currentConnection.value.database) return false
+    }
+
+    // 2. Local Filters (Type & Query)
     const matchesType = !filters.value.type || s.ddl_type === filters.value.type
     const matchesQuery = !filters.value.query || 
                          s.ddl_name.toLowerCase().includes(filters.value.query.toLowerCase())
-    return matchesEnv && matchesType && matchesQuery
+    return matchesType && matchesQuery
   })
 })
 
@@ -293,7 +291,7 @@ const loadSnapshots = async () => {
   } catch (err: any) {
     notificationStore.add({
       type: 'error',
-      title: 'Failed to load history',
+      title: t('history.notifications.loadError'),
       message: err.message
     })
   } finally {
@@ -324,13 +322,17 @@ const restoreVersion = async () => {
   if (!conn) {
     notificationStore.add({
       type: 'error',
-      title: 'Target Connection Not Found',
-      message: `Could not find a configured connection for ${snapshot.environment}:${snapshot.database_name}. Please check your connections in Settings.`
+      title: t('history.notifications.connNotFound'),
+      message: t('history.notifications.connNotFoundDesc', { target: `${snapshot.environment}:${snapshot.database_name}` })
     })
     return
   }
 
-  const confirmed = confirm(`CRITICAL ACTION: Are you sure you want to restore "${snapshot.ddl_name}" to version from ${formatDate(snapshot.created_at)}?\n\nThis will DROP the current version in ${snapshot.environment} and replace it.`)
+  const confirmed = confirm(t('history.notifications.confirmRestore', { 
+    name: snapshot.ddl_name, 
+    date: formatDate(snapshot.created_at), 
+    env: snapshot.environment 
+  }))
   if (!confirmed) return
 
   loading.value = true
@@ -338,13 +340,13 @@ const restoreVersion = async () => {
     await Andb.restoreSnapshot(conn, snapshot)
     notificationStore.add({
       type: 'success',
-      title: 'Restore Success',
-      message: `Successfully restored ${snapshot.ddl_name} to database.`
+      title: t('history.notifications.restoreSuccess'),
+      message: t('history.notifications.restoreDesc', { name: snapshot.ddl_name })
     })
   } catch (err: any) {
     notificationStore.add({
       type: 'error',
-      title: 'Restore Failed',
+      title: t('history.notifications.restoreFailed'),
       message: err.message
     })
   } finally {
@@ -352,13 +354,32 @@ const restoreVersion = async () => {
   }
 }
 
-onMounted(() => {
-  loadSnapshots()
+onMounted(async () => {
+  await loadSnapshots()
 
-  // Listen for sidebar selection events to filter history
+  // Apply filters from query params if present
+  if (route.query.env) {
+    filters.value.environment = route.query.env as string
+  }
+  if (route.query.name) {
+    filters.value.query = route.query.name as string
+    
+    // Auto-select if there is exactly one match or first one matches name
+    // (Wait for reactivity or computed update?)
+    // Actually filteredSnapshots is computed from snapshots.value.
+    // So subsequent render/tick will have it.
+  }
+
+  // Listen for sidebar selection events to filter history AND update Global Connection
   window.addEventListener('category-selected', (e: any) => {
-    const { env, type } = e.detail
-    filters.value.environment = env
+    const { env, type, db } = e.detail
+    
+    // Update global store if needed
+    const conn = appStore.connections.find(c => c.environment === env && c.database === db)
+    if (conn) {
+      appStore.selectedConnectionId = conn.id
+    }
+
     if (type && type !== 'all') {
       filters.value.type = type.toUpperCase()
     } else {
@@ -367,8 +388,14 @@ onMounted(() => {
   })
 
   window.addEventListener('object-selected', (e: any) => {
-    const { env, name, type } = e.detail
-    filters.value.environment = env
+    const { env, name, type, db } = e.detail
+    
+    // Update global store if needed
+    const conn = appStore.connections.find(c => c.environment === env && c.database === db)
+    if (conn) {
+      appStore.selectedConnectionId = conn.id
+    }
+
     filters.value.query = name
     if (type) {
       filters.value.type = type.toUpperCase()
@@ -392,8 +419,4 @@ onMounted(() => {
   background: rgba(156, 163, 175, 0.4);
 }
 
-pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
 </style>
