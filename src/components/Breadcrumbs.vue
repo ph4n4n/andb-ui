@@ -22,14 +22,16 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 
 const breadcrumbs = computed(() => {
   const crumbs = [
-    { label: 'Home', action: () => router.push('/') }
+    { label: t('common.dashboard'), action: () => router.push('/') }
   ]
 
   const activePair = connectionPairsStore.activePair
@@ -41,11 +43,11 @@ const breadcrumbs = computed(() => {
   }
 
   if (route.path === '/compare') {
-    crumbs.push({ label: 'Compare View', action: async () => {} })
+    crumbs.push({ label: t('common.compare'), action: async () => {} })
   } else if (route.path === '/migrate') {
-    crumbs.push({ label: 'Migration', action: async () => {} })
+    crumbs.push({ label: t('migration.titleSingle'), action: async () => {} }) // Or a generic migration title
   } else if (route.path === '/settings') {
-    crumbs.push({ label: 'Settings', action: async () => {} })
+    crumbs.push({ label: t('common.settings'), action: async () => {} })
   }
 
   return crumbs

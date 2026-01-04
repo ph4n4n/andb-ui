@@ -2,14 +2,14 @@
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-        Connection Pairs
+        {{ $t('connectionPairs.title') }}
       </h3>
       <button
         @click="addConnectionPair"
         class="btn btn-primary flex items-center"
       >
         <Plus class="w-4 h-4 mr-2" />
-        Add Pair
+        {{ $t('connectionPairs.addPair') }}
       </button>
     </div>
 
@@ -27,20 +27,20 @@
               v-model="pair.name"
               type="text"
               class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none"
-              placeholder="Pair name (e.g., DEV to STAGE)"
+              :placeholder="$t('connectionPairs.pairNamePlaceholder')"
               @blur="updatePair(pair)"
             />
           </div>
 
           <!-- Source Environment -->
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Source:</span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('connectionPairs.source') }}</span>
             <select
               :value="pair.sourceConnectionId"
               class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent max-w-[180px] outline-none"
               @change="updateSource(pair, ($event.target as HTMLSelectElement).value)"
             >
-              <option value="">Select Connection</option>
+              <option value="">{{ $t('connectionPairs.selectConnection') }}</option>
               <optgroup v-for="env in enabledEnvironments" :key="env.id" :label="env.name">
                 <option v-for="conn in getConnectionsByEnv(env.name)" :key="conn.id" :value="conn.id">
                   {{ conn.name }}
@@ -54,13 +54,13 @@
 
           <!-- Target Environment -->
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Target:</span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('connectionPairs.target') }}</span>
             <select
               :value="pair.targetConnectionId"
               class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent max-w-[180px] outline-none"
               @change="updateTarget(pair, ($event.target as HTMLSelectElement).value)"
             >
-              <option value="">Select Target</option>
+              <option value="">{{ $t('connectionPairs.selectTarget') }}</option>
               <optgroup v-for="env in enabledEnvironments" :key="env.id" :label="env.name">
                 <option v-for="conn in getConnectionsByEnv(env.name)" :key="conn.id" :value="conn.id">
                   {{ conn.name }}
@@ -85,7 +85,7 @@
             <button
               @click="testPair(pair)"
               class="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-              title="Test Connection"
+              :title="$t('connectionPairs.testConnection')"
               :disabled="!pair.sourceEnv || !pair.targetEnv"
             >
               <ShieldQuestion class="w-4 h-4" />
@@ -93,7 +93,7 @@
             <button
               @click="setAsDefault(pair)"
               class="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-              title="Set as Default"
+              :title="$t('connectionPairs.setAsDefault')"
               :class="{ 'text-green-600 dark:text-green-400': pair.isDefault }"
             >
               <Star class="w-4 h-4" />
@@ -101,14 +101,14 @@
             <button
               @click="duplicatePair(pair)"
               class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              title="Duplicate"
+              :title="$t('connectionPairs.duplicate')"
             >
               <Copy class="w-4 h-4" />
             </button>
             <button
               @click="removePair(pair)"
               class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-              title="Remove"
+              :title="$t('connectionPairs.remove')"
             >
               <Trash2 class="w-4 h-4" />
             </button>
@@ -121,7 +121,7 @@
             v-model="pair.description"
             type="text"
             class="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Description (optional)"
+            :placeholder="$t('connectionPairs.descPlaceholder')"
             @blur="updatePair(pair)"
           />
         </div>
@@ -130,10 +130,10 @@
 
     <!-- Help Text -->
     <div class="text-sm text-gray-500 dark:text-gray-400">
-      <p>• Source → Target: One-way migration direction</p>
-      <p>• Set a pair as default to auto-select in workflows</p>
-      <p>• Test connections to verify accessibility</p>
-      <p>• Only enabled environments are available for selection</p>
+      <p>• {{ $t('connectionPairs.help.direction') }}</p>
+      <p>• {{ $t('connectionPairs.help.default') }}</p>
+      <p>• {{ $t('connectionPairs.help.test') }}</p>
+      <p>• {{ $t('connectionPairs.help.enabledOnly') }}</p>
     </div>
 
     <!-- Default Pair Display -->
@@ -141,7 +141,7 @@
       <div class="flex items-center space-x-2">
         <Star class="w-4 h-4 text-primary-600 dark:text-primary-400" />
         <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
-          Default Pair: {{ defaultPair.name }}
+          {{ $t('connectionPairs.defaultPairLabel') }} {{ defaultPair.name }}
         </span>
         <span class="text-sm text-primary-600 dark:text-primary-400">
           ({{ defaultPair.sourceEnv }} → {{ defaultPair.targetEnv }})
@@ -153,10 +153,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus, ArrowRight, ShieldQuestion, Star, Copy, Trash2 } from 'lucide-vue-next'
 import { useConnectionPairsStore, type ConnectionPair } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
 
+const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 const appStore = useAppStore()
 
@@ -268,13 +270,13 @@ const getPairStatusClass = (pair: ConnectionPair) => {
 const getPairStatusText = (pair: ConnectionPair) => {
   switch (pair.status) {
     case 'testing':
-      return 'Testing...'
+      return t('connectionPairs.status.testing')
     case 'success':
-      return 'Connected'
+      return t('connectionPairs.status.connected')
     case 'failed':
-      return 'Failed'
+      return t('connectionPairs.status.failed')
     default:
-      return 'Not tested'
+      return t('connectionPairs.status.notTested')
   }
 }
 

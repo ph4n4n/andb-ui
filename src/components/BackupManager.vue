@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">
-        Application Data Backup
+        {{ $t('backup.appData') }}
       </p>
     </div>
 
@@ -16,8 +16,8 @@
             <Download class="w-6 h-6" />
           </div>
           <div>
-            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Export Backup</h3>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">Save all data to a JSON file.</p>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ $t('backup.export.title') }}</h3>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">{{ $t('backup.export.desc') }}</p>
           </div>
         </div>
         <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500 group-hover:text-white transition-colors">
@@ -31,8 +31,8 @@
             <Upload class="w-6 h-6" />
           </div>
           <div>
-            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Import Backup</h3>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">Restore data from backup file.</p>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ $t('backup.import.title') }}</h3>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">{{ $t('backup.import.desc') }}</p>
           </div>
         </div>
         <input type="file" @change="handleImport" class="hidden" accept=".json" />
@@ -46,14 +46,14 @@
     <div class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg flex items-start gap-3">
       <AlertTriangle class="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
       <div class="text-[11px] text-red-700 dark:text-red-300">
-        <p class="font-bold uppercase tracking-tight mb-1">Warning: Import overwrites everything</p>
-        <p>Restoring from a backup will replace ALL your current connections, environment configurations, and connection pairs. This action cannot be undone.</p>
+        <p class="font-bold uppercase tracking-tight mb-1">{{ $t('backup.import.warningTitle') }}</p>
+        <p>{{ $t('backup.import.warningMsg') }}</p>
       </div>
     </div>
 
     <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
       <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold mb-4">
-        Database DDL Snapshots (Auto-Backup)
+        {{ $t('backup.ddlSnapshots') }}
       </p>
       
       <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -63,12 +63,12 @@
               <HistoryIcon class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-sm font-bold text-gray-900 dark:text-white">DDL History & Snapshots</h3>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">The app automatically takes snapshots of DDL before every migration.</p>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ $t('backup.history.title') }}</h3>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $t('backup.history.desc') }}</p>
             </div>
           </div>
           <router-link to="/history" class="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1">
-            View History
+            {{ $t('backup.history.view') }}
             <ArrowRight class="w-3.5 h-3.5" />
           </router-link>
         </div>
@@ -79,7 +79,7 @@
               <Folder class="w-5 h-5" />
             </div>
             <div>
-              <span class="text-[10px] block font-bold text-gray-400 uppercase tracking-tighter mb-0.5">Physical Path</span>
+              <span class="text-[10px] block font-bold text-gray-400 uppercase tracking-tighter mb-0.5">{{ $t('backup.physicalPath') }}</span>
               <span class="text-[11px] text-gray-600 dark:text-gray-400 font-mono bg-gray-100/50 dark:bg-gray-800/50 px-1.5 py-0.5 rounded">/backups/*.sql</span>
             </div>
           </div>
@@ -90,7 +90,7 @@
               ? 'px-5 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white rounded-xl text-[11px] shadow-lg shadow-gray-900/10'
               : 'px-4 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-[10px]'"
           >
-            Explore Files
+            {{ $t('backup.exploreFiles') }}
           </button>
         </div>
       </div>
@@ -99,12 +99,14 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { Download, Upload, AlertTriangle, History as HistoryIcon, Folder, ArrowRight } from 'lucide-vue-next'
 import backup from '@/utils/backup'
 import Andb from '@/utils/andb'
 import { useNotificationStore } from '@/stores/notification'
 import { useAppStore } from '@/stores/app'
 
+const { t } = useI18n()
 const appStore = useAppStore()
 
 const notificationStore = useNotificationStore()
@@ -114,14 +116,14 @@ const handleExport = async () => {
     await backup.download()
     notificationStore.add({
       type: 'success',
-      title: 'Export Success',
-      message: 'Backup file exported successfully'
+      title: t('backup.export.successTitle'),
+      message: t('backup.export.successMsg')
     })
   } catch (error: any) {
     notificationStore.add({
       type: 'error',
-      title: 'Export Failed',
-      message: `Export failed: ${error.message}`
+      title: t('backup.export.failedTitle'),
+      message: `${t('backup.export.failedTitle')}: ${error.message}`
     })
   }
 }
@@ -131,7 +133,7 @@ const handleImport = async (event: Event) => {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!confirm('Are you sure you want to restore data from this file? This will OVERWRITE all current data.')) {
+  if (!confirm(t('backup.import.confirm'))) {
     target.value = ''
     return
   }
@@ -141,21 +143,21 @@ const handleImport = async (event: Event) => {
     if (success) {
       notificationStore.add({
         type: 'success',
-        title: 'Restore Success',
-        message: 'Data restored successfully. Please reload the application to apply all changes.'
+        title: t('backup.import.successTitle'),
+        message: t('backup.import.successMsg')
       })
       // Optional: force reload
       setTimeout(() => {
         window.location.reload()
       }, 2000)
     } else {
-      throw new Error('Invalid backup file or version mismatch')
+      throw new Error(t('backup.import.failedTitle'))
     }
   } catch (error: any) {
     notificationStore.add({
       type: 'error',
-      title: 'Restore Failed',
-      message: `Restore failed: ${error.message}`
+      title: t('backup.import.failedTitle'),
+      message: `${t('backup.import.failedTitle')}: ${error.message}`
     })
   } finally {
     target.value = ''
@@ -167,8 +169,8 @@ const handleOpenFolder = async () => {
   if (!success) {
     notificationStore.add({
       type: 'error',
-      title: 'Failed',
-      message: 'Could not open backup folder'
+      title: t('common.error'),
+      message: t('backup.openFolderFailed')
     })
   }
 }

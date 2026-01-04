@@ -9,7 +9,7 @@
           </div>
           <div>
             <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ item?.name }}</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ item?.type || 'Table' }} Details</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('ddlDetail.details', { type: item?.type ? $t(`navigation.ddl.${item.type.toLowerCase()}`) : $t('navigation.ddl.tables') }) }}</p>
           </div>
         </div>
         <button @click="close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -23,7 +23,7 @@
         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Status</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{{ $t('ddlDetail.status') }}</p>
               <div class="flex items-center gap-2">
                 <span class="text-2xl">{{ getStatusIcon(item?.status) }}</span>
                 <span class="font-semibold" :class="getStatusColorClass(item?.status)">
@@ -32,11 +32,11 @@
               </div>
             </div>
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Type</p>
-              <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ item?.type || 'Table' }}</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{{ $t('ddlDetail.type') }}</p>
+              <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ item?.type ? $t(`navigation.ddl.${item.type.toLowerCase()}`) : $t('navigation.ddl.tables') }}</p>
             </div>
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Action Required</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{{ $t('ddlDetail.actionRequired') }}</p>
               <p class="text-lg font-semibold" :class="getActionColorClass(item?.status)">
                 {{ getActionText(item?.status) }}
               </p>
@@ -47,15 +47,15 @@
         <!-- DDL Statements -->
         <div v-if="ddlStatements.length > 0" class="p-6 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">DDL Statements</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('ddlDetail.ddlStatements') }}</h3>
             <div class="flex gap-2">
               <button @click="copyAllDDL" class="btn btn-secondary btn-sm flex items-center gap-2">
                 <Copy class="w-4 h-4" />
-                Copy All
+                {{ $t('ddlDetail.copyAll') }}
               </button>
               <button @click="downloadDDL" class="btn btn-secondary btn-sm flex items-center gap-2">
                 <Download class="w-4 h-4" />
-                Download
+                {{ $t('ddlDetail.download') }}
               </button>
             </div>
           </div>
@@ -63,7 +63,7 @@
           <div class="space-y-3">
             <div v-for="(stmt, index) in ddlStatements" :key="index" class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Statement {{ index + 1 }}</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('ddlDetail.statement', { index: index + 1 }) }}</span>
                 <button @click="copyDDL(stmt)" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                   <Copy class="w-4 h-4" />
                 </button>
@@ -75,14 +75,14 @@
 
         <!-- Schema Diff (if different) -->
         <div v-if="item?.status === 'different' && schemaDiff" class="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Schema Differences</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('ddlDetail.schemaDiff') }}</h3>
           
           <div class="grid grid-cols-2 gap-4">
             <!-- Source Schema -->
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Source</h4>
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $t('common.source') }}</h4>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <pre class="text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto">{{ formatSchema(schemaDiff.source) }}</pre>
@@ -93,7 +93,7 @@
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Target</h4>
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $t('common.target') }}</h4>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <pre class="text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto">{{ formatSchema(schemaDiff.target) }}</pre>
@@ -104,7 +104,7 @@
 
         <!-- Metadata -->
         <div v-if="item?.metadata" class="p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Information</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('ddlDetail.additionalInfo') }}</h3>
           <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <pre class="text-xs font-mono text-gray-800 dark:text-gray-200">{{ JSON.stringify(item.metadata, null, 2) }}</pre>
           </div>
@@ -113,10 +113,10 @@
 
       <!-- Footer -->
       <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-        <button @click="close" class="btn btn-secondary">Close</button>
+        <button @click="close" class="btn btn-secondary">{{ $t('about.close') }}</button>
         <button v-if="ddlStatements.length > 0" @click="applyChanges" class="btn btn-primary flex items-center gap-2">
           <CheckCircle class="w-4 h-4" />
-          Apply Changes
+          {{ $t('ddlDetail.applyChanges') }}
         </button>
       </div>
     </div>
@@ -125,7 +125,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { X, FileCode, Copy, Download, CheckCircle } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 interface DDLItem {
   name: string
@@ -223,15 +226,15 @@ const getStatusIcon = (status?: string) => {
 }
 
 const getStatusText = (status?: string) => {
-  if (!status) return 'Unknown'
+  if (!status) return t('ddlDetail.actions.unknown')
   switch (status.toLowerCase()) {
     case 'equal':
-    case 'same': return 'Identical'
+    case 'same': return t('common.status.identical')
     case 'different':
-    case 'modified': return 'Different'
+    case 'modified': return t('common.status.modified')
     case 'missing_in_target':
-    case 'missing': return 'Missing in Target'
-    case 'missing_in_source': return 'Extra in Target'
+    case 'missing': return t('common.status.newSource')
+    case 'missing_in_source': return t('common.status.deprecatedTarget')
     default: return status
   }
 }
@@ -279,16 +282,16 @@ const getIconColorClass = (status?: string) => {
 }
 
 const getActionText = (status?: string) => {
-  if (!status) return 'Unknown'
+  if (!status) return t('ddlDetail.actions.unknown')
   switch (status.toLowerCase()) {
     case 'equal':
-    case 'same': return 'None'
+    case 'same': return t('ddlDetail.actions.none')
     case 'different':
-    case 'modified': return 'Alter'
+    case 'modified': return t('ddlDetail.actions.alter')
     case 'missing_in_target':
-    case 'missing': return 'Create'
-    case 'missing_in_source': return 'Review'
-    default: return 'Unknown'
+    case 'missing': return t('ddlDetail.actions.create')
+    case 'missing_in_source': return t('ddlDetail.actions.review')
+    default: return t('ddlDetail.actions.unknown')
   }
 }
 

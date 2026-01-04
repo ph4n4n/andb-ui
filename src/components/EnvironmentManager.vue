@@ -53,7 +53,7 @@
                   v-model="env.name"
                   type="text"
                   class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none"
-                  placeholder="Environment name"
+                  :placeholder="$t('environments.manager.namePlaceholder')"
                   @blur="updateEnvironment(env)"
                 />
               </div>
@@ -81,14 +81,14 @@
                 <button
                   @click="duplicateEnvironment(env)"
                   class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  title="Duplicate"
+                  :title="$t('environments.manager.duplicate')"
                 >
                   <Copy class="w-4 h-4" />
                 </button>
                 <button
                   @click="removeEnvironment(env)"
                   class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                  title="Remove"
+                  :title="$t('environments.manager.remove')"
                   :disabled="isDefaultEnvironment(env.name)"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -102,7 +102,7 @@
                 v-model="env.description"
                 type="text"
                 class="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Description (optional)"
+                :placeholder="$t('environments.manager.descPlaceholder')"
                 @blur="updateEnvironment(env)"
               />
             </div>
@@ -113,10 +113,10 @@
 
     <!-- Help Text -->
     <div class="text-sm text-gray-500 dark:text-gray-400">
-      <p>• Drag and drop to reorder environments</p>
-      <p>• Check/uncheck to enable/disable environments</p>
-      <p>• Default environments (DEV, STAGE, UAT, PROD) cannot be deleted</p>
-      <p>• Order determines the sequence in migration workflows</p>
+      <p>• {{ $t('environments.manager.help.dragDrop') }}</p>
+      <p>• {{ $t('environments.manager.help.enableDisable') }}</p>
+      <p>• {{ $t('environments.manager.help.defaults') }}</p>
+      <p>• {{ $t('environments.manager.help.sequence') }}</p>
     </div>
   </div>
 </template>

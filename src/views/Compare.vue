@@ -54,7 +54,7 @@
                 :title="$t('compare.treeViewTooltip')"
               >
                 <GitMerge class="w-3.5 h-3.5 rotate-90" />
-                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">{{ $t('compare.treeView') }}</span>
+                <span v-if="appStore.buttonStyle !== 'icons' && appStore.buttonStyle === 'full'">{{ $t('compare.treeViewLabel') }}</span>
               </button>
           </div>
 

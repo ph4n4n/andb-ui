@@ -182,7 +182,7 @@
                   v-model="form.charset"
                   class="w-full px-4 py-2 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 appearance-none outline-none focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-bold"
                 >
-                  <option value="utf8mb4">utf8mb4 (Recommended)</option>
+                  <option value="utf8mb4">{{ $t('connections.utf8mb4Recommended') }}</option>
                   <option value="utf8">utf8</option>
                   <option value="latin1">latin1</option>
                 </select>
@@ -197,9 +197,9 @@
                   v-model="form.timezone"
                   class="w-full px-4 py-2 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 appearance-none outline-none focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-bold"
                 >
-                  <option value="+00:00">UTC (+00:00)</option>
-                  <option value="+07:00">Ho Chi Minh (+07:00)</option>
-                  <option value="+08:00">Singapore/Shanghai (+08:00)</option>
+                  <option value="+00:00">{{ $t('connections.utc') }}</option>
+                  <option value="+07:00">{{ $t('connections.ho_chi_minh') }}</option>
+                  <option value="+08:00">{{ $t('connections.singapore') }}</option>
                 </select>
                 <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
               </div>

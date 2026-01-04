@@ -6,9 +6,9 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div class="flex flex-col gap-1">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Dashboard
+              {{ $t('dashboard.title') }}
             </h1>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">Operational Overview</p>
+            <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">{{ $t('dashboard.subtitle') }}</p>
           </div>
           
           <div 
@@ -30,10 +30,10 @@
               ]"
               :style="{ fontSize: appStore.fontSizes.button + 'px' }"
               :disabled="isLoadingSample"
-              title="Load Sample Connections & Clusters"
+              :title="$t('dashboard.loadSamples')"
             >
               <Database class="w-4 h-4" />
-              <span v-if="appStore.buttonStyle !== 'icons'">{{ isLoadingSample ? 'Loading' : (appStore.buttonStyle === 'full' ? 'Load Samples' : 'Samples') }}</span>
+              <span v-if="appStore.buttonStyle !== 'icons'">{{ isLoadingSample ? $t('dashboard.loading') : (appStore.buttonStyle === 'full' ? $t('dashboard.loadSamples') : $t('dashboard.samples')) }}</span>
             </button>
 
             <!-- Refresh Button -->
@@ -46,10 +46,10 @@
                 appStore.buttonStyle === 'icons' ? 'w-10 h-10 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
               ]"
               :style="{ fontSize: appStore.fontSizes.button + 'px' }"
-              title="Refresh All Dashboard Statistics"
+              :title="$t('dashboard.refreshDashboard')"
             >
               <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" />
-              <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? 'Refresh Dashboard' : 'Refresh' }}</span>
+              <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? $t('dashboard.refreshDashboard') : $t('dashboard.refresh') }}</span>
             </button>
           </div>
         </div>
@@ -63,12 +63,12 @@
                 <Database class="w-6 h-6" />
               </div>
               <div class="flex flex-col items-end">
-                <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active</div>
+              <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.active') }}</div>
                 <div class="text-xs font-bold text-green-500">{{ connectedCount }} / {{ totalConnections }}</div>
               </div>
             </div>
             <div class="space-y-1">
-              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Connections</p>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('dashboard.connections') }}</p>
               <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ totalConnections }}</p>
             </div>
             <div class="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50">
@@ -84,10 +84,10 @@
               <div class="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl group-hover:scale-110 transition-transform duration-300">
                 <Layers class="w-6 h-6" />
               </div>
-              <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Configured</div>
+              <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.configured') }}</div>
             </div>
             <div class="space-y-1">
-              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Environments</p>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('dashboard.environments') }}</p>
               <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ enabledEnvironments.length }}</p>
             </div>
             <div class="mt-4 flex flex-wrap gap-1.5">
@@ -104,16 +104,16 @@
                 <GitCompare class="w-6 h-6" />
               </div>
               <div class="flex flex-col items-end">
-                <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sync Pairs</div>
+                <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.syncPairs') }}</div>
                 <div class="text-xs font-bold text-purple-500">{{ activePairs }} / {{ totalPairs }}</div>
               </div>
             </div>
             <div class="space-y-1">
-              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Mappings</p>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('dashboard.mappings') }}</p>
               <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ totalPairs }}</p>
             </div>
             <div class="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
-              <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Ready for Sync</span>
+              <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ $t('dashboard.readyForSync') }}</span>
               <CheckCircle class="w-3.5 h-3.5 text-purple-500" />
             </div>
           </div>
@@ -124,10 +124,10 @@
               <div class="p-3 bg-orange-500/10 text-orange-500 rounded-xl group-hover:scale-110 transition-transform duration-300">
                 <Activity class="w-6 h-6" />
               </div>
-              <div class="text-[10px] font-black text-orange-500 uppercase tracking-widest">Live Feed</div>
+              <div class="text-[10px] font-black text-orange-500 uppercase tracking-widest">{{ $t('dashboard.liveFeed') }}</div>
             </div>
             <div class="space-y-1">
-              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Ops Today</p>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('dashboard.opsToday') }}</p>
               <div class="flex items-baseline gap-2">
                 <p class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ operationsToday }}</p>
                 <span class="text-xs font-bold text-orange-500">+{{ operationsToday }}</span>
@@ -136,7 +136,7 @@
             <div class="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50">
               <div class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                 <Clock class="w-3.5 h-3.5" />
-                Last: {{ lastOperationTime }}
+                {{ $t('dashboard.last', { time: lastOperationTime }) }}
               </div>
             </div>
           </div>
@@ -146,10 +146,10 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
            <div 
              v-for="stat in [
-               { label: 'Total Changes', val: totalDDLCount, unit: 'Objects', icon: FileCode, col: 'indigo' },
-               { label: 'Migrations', val: totalMigrations, unit: 'Records', icon: ArrowRightLeft, col: 'cyan' },
-               { label: 'Avg Speed', val: formatDuration(averageDuration), unit: 'ms', icon: Clock, col: 'pink' },
-               { label: 'Success Rate', val: successRate + '%', unit: 'Relative', icon: TrendingUp, col: 'emerald' }
+               { label: $t('dashboard.totalChanges'), val: totalDDLCount, unit: $t('dashboard.units.objects'), icon: FileCode, col: 'indigo' },
+               { label: $t('dashboard.migrations'), val: totalMigrations, unit: $t('dashboard.units.records'), icon: ArrowRightLeft, col: 'cyan' },
+               { label: $t('dashboard.avgSpeed'), val: formatDuration(averageDuration), unit: $t('dashboard.units.ms'), icon: Clock, col: 'pink' },
+               { label: $t('dashboard.successRate'), val: successRate + '%', unit: $t('dashboard.units.relative'), icon: TrendingUp, col: 'emerald' }
              ]" 
              :key="stat.label"
              class="bg-white/40 dark:bg-gray-800/20 backdrop-blur-xl rounded-2xl p-4 border border-gray-200/50 dark:border-gray-700/50 flex items-center gap-4 group"
@@ -180,7 +180,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <!-- DDL Count by Connection -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">DDL Changes by Connection</h2>
+            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{{ $t('dashboard.ddlByConnection') }}</h2>
             <div class="space-y-3">
               <div v-for="(count, connId) in ddlByConnection" :key="connId" class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -193,14 +193,14 @@
                 </div>
               </div>
               <div v-if="Object.keys(ddlByConnection).length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                No DDL changes tracked yet
+                {{ $t('dashboard.noDDLChanges') }}
               </div>
             </div>
           </div>
 
           <!-- Migration Stats by Pair -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Migration Statistics</h2>
+            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{{ $t('dashboard.migrationStats') }}</h2>
             <div class="space-y-3">
               <div v-for="(stats, pair) in migratesByPair" :key="pair" class="border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0">
                 <div class="flex items-center justify-between mb-1">
@@ -215,7 +215,7 @@
                 </div>
               </div>
               <div v-if="Object.keys(migratesByPair).length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                No migrations performed yet
+                {{ $t('dashboard.noMigrations') }}
               </div>
             </div>
           </div>
@@ -227,18 +227,18 @@
             <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
               <h2 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                 <GitCompare class="w-4 h-4 text-primary-500" />
-                Sync Mappings
+                {{ $t('dashboard.syncMappings') }}
               </h2>
-              <button @click="navigateTo('/settings')" class="text-[10px] font-black text-primary-500 uppercase tracking-widest hover:underline">Manage Pairs</button>
+              <button @click="navigateTo('/settings')" class="text-[10px] font-black text-primary-500 uppercase tracking-widest hover:underline">{{ $t('dashboard.managePairs') }}</button>
             </div>
             <div class="overflow-x-auto">
               <table class="min-w-full">
                 <thead>
                   <tr class="bg-gray-50/50 dark:bg-gray-900/20">
-                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Mapping Pair</th>
-                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Topology</th>
-                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Condition</th>
-                    <th class="text-right py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.mappingPair') }}</th>
+                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.topology') }}</th>
+                    <th class="text-left py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.condition') }}</th>
+                    <th class="text-right py-3 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -267,14 +267,14 @@
                         @click="comparePair(pair)" 
                         class="px-4 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-primary-500 hover:text-white text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
                       >
-                        Compare
+                        {{ $t('dashboard.compare') }}
                       </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
               <div v-if="connectionPairs.length === 0" class="p-12 text-center text-gray-400 uppercase tracking-widest text-xs font-black italic">
-                No active sync mappings
+                {{ $t('dashboard.noSyncMappings') }}
               </div>
             </div>
           </div>
@@ -284,9 +284,9 @@
             <div class="px-6 py-4 border-b border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
               <h2 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                 <Activity class="w-4 h-4 text-orange-500" />
-                Operational Feed
+                {{ $t('dashboard.operationalFeed') }}
               </h2>
-              <button @click="navigateTo('/history')" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-primary-500 transition-colors">Clear Feed</button>
+              <button @click="navigateTo('/history')" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-primary-500 transition-colors">{{ $t('dashboard.clearFeed') }}</button>
             </div>
             <div class="p-6">
               <div class="space-y-6 relative">
@@ -316,7 +316,7 @@
                    <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-700">
                      <Activity class="w-8 h-8 text-gray-200" />
                    </div>
-                   <p class="text-xs font-black text-gray-400 uppercase tracking-widest">No Operational History</p>
+                   <p class="text-xs font-black text-gray-400 uppercase tracking-widest">{{ $t('dashboard.noOpsHistory') }}</p>
                 </div>
               </div>
             </div>

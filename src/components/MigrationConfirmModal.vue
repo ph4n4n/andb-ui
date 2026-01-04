@@ -33,14 +33,14 @@
                   </div>
                   <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
                     <DialogTitle as="h3" class="text-base font-bold leading-6 text-gray-900 dark:text-white uppercase tracking-widest">
-                      {{ item?.isBatch ? 'Batch Migration' : 'Migrate DDL Item' }}
+                      {{ item?.isBatch ? $t('migration.titleBatch') : $t('migration.titleSingle') }}
                     </DialogTitle>
                     
                     <!-- Single Item Card (for non-batch) -->
                     <div v-if="!item?.isBatch" class="mt-4">
                       <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 transition-all">
                         <div class="flex items-center justify-between text-xs mb-3">
-                          <span class="text-gray-500 uppercase tracking-tighter">Object to Migrate</span>
+                          <span class="text-gray-500 uppercase tracking-tighter">{{ $t('migration.objectLabel') }}</span>
                           <span class="px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 font-bold uppercase text-[10px]">
                             {{ item?.type }}
                           </span>
@@ -58,19 +58,26 @@
               <div class="px-4 sm:px-6 flex-1 overflow-y-auto custom-scrollbar">
                 
                 <!-- SUMMARY STATS (Batch Mode) -->
-                <div v-if="item?.isBatch && item?.items?.length" class="mb-4">
-                  <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    Start batch migration from <strong class="text-blue-600 dark:text-blue-400">{{ sourceName }}</strong> to <strong class="text-green-600 dark:text-green-400">{{ targetName }}</strong>?
-                  </div>
+                  <div v-if="item?.isBatch && item?.items?.length" class="mb-4">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                       <i18n-t keypath="migration.confirmBatch" tag="span">
+                          <template #source>
+                            <strong class="text-blue-600 dark:text-blue-400">{{ sourceName }}</strong>
+                          </template>
+                          <template #target>
+                            <strong class="text-green-600 dark:text-green-400">{{ targetName }}</strong>
+                          </template>
+                       </i18n-t>
+                    </div>
                   
                   <div class="grid grid-cols-2 gap-2 mb-4">
                      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 text-center border border-gray-100 dark:border-gray-700">
                        <div class="text-xl font-bold text-gray-900 dark:text-white">{{ item.items.length }}</div>
-                       <div class="text-[10px] uppercase text-gray-500 tracking-wider">Total Items</div>
+                       <div class="text-[10px] uppercase text-gray-500 tracking-wider">{{ $t('migration.totalItems') }}</div>
                      </div>
                      <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 text-center border border-amber-100 dark:border-amber-800/30">
                        <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ Object.keys(groupedItems).length }}</div>
-                       <div class="text-[10px] uppercase text-amber-600 dark:text-amber-400 tracking-wider">Types Changed</div>
+                       <div class="text-[10px] uppercase text-amber-600 dark:text-amber-400 tracking-wider">{{ $t('migration.typesChanged') }}</div>
                      </div>
                   </div>
                   
@@ -98,14 +105,14 @@
 
                 <div v-if="!item?.isBatch" class="flex items-center justify-between px-2 mb-4">
                   <div class="text-center flex-1">
-                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Source</div>
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{{ $t('common.source') }}</div>
                     <div class="font-bold text-blue-600 dark:text-blue-400 truncate">{{ sourceName }}</div>
                   </div>
                   <div class="px-4">
                     <ArrowRight class="w-4 h-4 text-gray-300" />
                   </div>
                   <div class="text-center flex-1">
-                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Target</div>
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{{ $t('common.target') }}</div>
                     <div class="font-bold text-green-600 dark:text-green-400 truncate">{{ targetName }}</div>
                   </div>
                 </div>
@@ -113,10 +120,10 @@
                 <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/30 flex items-start mb-6">
                   <AlertTriangle class="w-4 h-4 text-amber-500 mr-2 shrink-0 mt-0.5" />
                   <div class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    Existing structure in target will be modified or replaced. 
+                    {{ $t('migration.warning') }}
                     <div class="mt-1 font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1">
                       <History class="w-3 h-3" />
-                      A pre-migration DDL snapshot will be saved to history.
+                      {{ $t('migration.snapshotNote') }}
                     </div>
                   </div>
                 </div>
@@ -132,7 +139,7 @@
                 >
                   <RefreshCw v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
                   <Zap v-else class="w-4 h-4 mr-2" />
-                  {{ loading ? 'Migrating...' : (item?.isBatch ? `Migrate ${item?.items?.length} Items` : 'Confirm Migration') }}
+                  {{ loading ? $t('migration.migrating') : (item?.isBatch ? $t('migration.confirmBtnBatch', { count: item?.items?.length }) : $t('migration.confirmBtnSingle')) }}
                 </button>
                 <button
                   type="button"
@@ -140,7 +147,7 @@
                   :disabled="loading"
                   @click="$emit('close')"
                 >
-                  Cancel
+                  {{ $t('common.cancel') }}
                 </button>
               </div>
             </DialogPanel>
@@ -153,6 +160,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Dialog,
   DialogPanel,
@@ -174,6 +182,8 @@ import {
   FileEdit,
   History
 } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   isOpen: boolean
@@ -241,12 +251,12 @@ const getStatusText = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'different':
     case 'updated':
-    case 'modified': return 'MODIFIED'
+    case 'modified': return t('common.status.modified').toUpperCase()
     case 'missing_in_target':
-    case 'new': return 'NEW'
+    case 'new': return t('common.status.newSource').toUpperCase() // Or maybe just "NEW" short? I'll use common.
     case 'missing_in_source':
-    case 'deprecated': return 'DEPRECATED'
-    default: return status
+    case 'deprecated': return t('common.status.deprecatedTarget').toUpperCase()
+    default: return status.toUpperCase()
   }
 }
 </script>

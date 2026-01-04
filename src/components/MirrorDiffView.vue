@@ -10,13 +10,13 @@
         class="shrink-0 flex flex-col min-w-0 max-w-full overflow-hidden border-r border-gray-200 dark:border-[#30363d] relative"
       >
         <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
-          <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">SOURCE: {{ sourceLabel }}</span>
-          <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">Deleted</span>
+          <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.source', { label: sourceLabel }) }}</span>
+          <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">{{ $t('compare.diffView.deleted') }}</span>
         </div>
         
         <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
-            [ DELETED OR NOT PRESENT ]
+            {{ $t('compare.diffView.sourceEmpty') }}
           </div>
           <div v-else class="ddl-container py-2" :class="wrapLines ? 'w-full' : 'w-fit min-w-full'">
             <div 
@@ -55,10 +55,10 @@
         @scroll="handleScroll('target')"
       >
         <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
-          <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">TARGET: {{ targetLabel }}</span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.target', { label: targetLabel }) }}</span>
           
           <div class="flex items-center gap-3">
-            <span v-if="isEmptyTarget" class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 font-bold uppercase">New</span>
+            <span v-if="isEmptyTarget" class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 font-bold uppercase">{{ $t('compare.diffView.new') }}</span>
             
             <!-- Settings inside header for perfect alignment -->
             <div class="relative" ref="settingsRef">
@@ -72,12 +72,12 @@
 
               <!-- Dropdown -->
               <div v-if="showSettings" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 z-50 text-xs text-gray-600 dark:text-gray-300 pointer-events-auto">
-                <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">Diff Settings</h3>
+                <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.settings') }}</h3>
                 
                 <div class="space-y-4 text-left">
                   <!-- Whitespace -->
                   <div>
-                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Whitespace</h4>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.whitespace') }}</h4>
                     <label class="flex items-start cursor-pointer group">
                       <div class="relative flex items-center mt-0.5">
                         <input type="checkbox" v-model="hideWhitespace" class="sr-only" />
@@ -86,15 +86,15 @@
                         </div>
                       </div>
                       <div class="ml-2">
-                        <div class="text-gray-900 dark:text-white font-medium">Hide Whitespace Changes</div>
-                        <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">Interacting with individual lines or hunks will be disabled while hiding whitespace.</div>
+                        <div class="text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.hideWhitespace') }}</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">{{ $t('compare.diffView.hideWhitespaceDesc') }}</div>
                       </div>
                     </label>
                   </div>
 
                   <!-- Line Wrapping -->
                   <div>
-                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Display</h4>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.display') }}</h4>
                     <label class="flex items-start cursor-pointer group">
                       <div class="relative flex items-center mt-0.5">
                         <input type="checkbox" v-model="wrapLines" class="sr-only" />
@@ -103,21 +103,21 @@
                         </div>
                       </div>
                       <div class="ml-2">
-                        <div class="text-gray-900 dark:text-white font-medium">Wrap Long Lines</div>
+                        <div class="text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.wrapLines') }}</div>
                       </div>
                     </label>
                   </div>
 
                   <!-- Diff display -->
                   <div>
-                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
+                    <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.diffDisplay') }}</h4>
                     <div class="space-y-2">
                       <label v-for="mode in ['Unified', 'Split']" :key="mode" class="flex items-center cursor-pointer group">
                         <input type="radio" :value="mode.toLowerCase()" v-model="viewType" class="sr-only" />
                         <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center p-1" :class="{ 'border-primary-500': viewType === mode.toLowerCase() }">
                           <div v-show="viewType === mode.toLowerCase()" class="w-2 h-2 rounded-full bg-primary-500"></div>
                         </div>
-                        <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ mode }}</span>
+                        <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.' + mode.toLowerCase() + 'Mode') }}</span>
                       </label>
                     </div>
                   </div>
@@ -129,7 +129,7 @@
 
         <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
-            [ NEW DDL HERE ]
+            {{ $t('compare.diffView.targetEmpty') }}
           </div>
           <div v-else class="ddl-container py-2" :class="wrapLines ? 'w-full' : 'w-fit min-w-full'">
             <div 
@@ -161,7 +161,7 @@
       class="flex-1 flex flex-col overflow-hidden"
     >
       <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
-        <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">UNIFIED VIEW: {{ sourceLabel }} &rarr; {{ targetLabel }}</span>
+        <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.unified', { source: sourceLabel, target: targetLabel }) }}</span>
         
         <!-- Settings inside header -->
         <div class="relative" ref="settingsRefUnified">
@@ -175,10 +175,10 @@
 
           <!-- Dropdown (same logic as above) -->
           <div v-if="showSettings" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 z-50 text-xs text-gray-600 dark:text-gray-300 pointer-events-auto">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">Diff Settings</h3>
+            <h3 class="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.settings') }}</h3>
             <div class="space-y-4 text-left">
               <div>
-                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Whitespace</h4>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.whitespace') }}</h4>
                 <label class="flex items-start cursor-pointer group">
                   <div class="relative flex items-center mt-0.5">
                     <input type="checkbox" v-model="hideWhitespace" class="sr-only" />
@@ -187,15 +187,15 @@
                     </div>
                   </div>
                   <div class="ml-2">
-                    <div class="text-gray-900 dark:text-white font-medium">Hide Whitespace Changes</div>
-                    <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">Interacting with individual lines or hunks will be disabled while hiding whitespace.</div>
+                    <div class="text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.hideWhitespace') }}</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5 leading-tight">{{ $t('compare.diffView.hideWhitespaceDesc') }}</div>
                   </div>
                 </label>
               </div>
 
               <!-- Line Wrapping -->
               <div>
-                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Display</h4>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.display') }}</h4>
                 <label class="flex items-start cursor-pointer group">
                   <div class="relative flex items-center mt-0.5">
                     <input type="checkbox" v-model="wrapLines" class="sr-only" />
@@ -204,20 +204,20 @@
                     </div>
                   </div>
                   <div class="ml-2">
-                    <div class="text-gray-900 dark:text-white font-medium">Wrap Long Lines</div>
+                    <div class="text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.wrapLines') }}</div>
                   </div>
                 </label>
               </div>
 
               <div>
-                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">Diff display</h4>
+                <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-2">{{ $t('compare.diffView.diffDisplay') }}</h4>
                 <div class="space-y-2">
                   <label v-for="mode in ['Unified', 'Split']" :key="mode" class="flex items-center cursor-pointer group">
                     <input type="radio" :value="mode.toLowerCase()" v-model="viewType" class="sr-only" />
                     <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-primary-500 transition-colors flex items-center justify-center p-1" :class="{ 'border-primary-500': viewType === mode.toLowerCase() }">
                       <div v-show="viewType === mode.toLowerCase()" class="w-2 h-2 rounded-full bg-primary-500"></div>
                     </div>
-                    <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ mode }}</span>
+                    <span class="ml-2 text-gray-900 dark:text-white font-medium">{{ $t('compare.diffView.' + mode.toLowerCase() + 'Mode') }}</span>
                   </label>
                 </div>
               </div>
@@ -227,8 +227,9 @@
       </div>
 
       <div class="flex-1 overflow-auto custom-scrollbar-diff relative ddl-container py-2">
-        <template v-for="(row, idx) in unifiedRows" :key="idx">
           <div 
+            v-for="(row, index) in unifiedRows" 
+            :key="index"
             class="flex line-row group"
             :class="getLineClass(row.type)"
           >
@@ -249,7 +250,6 @@
               v-html="row.highlighted || row.content"
             ></div>
           </div>
-        </template>
       </div>
     </div>
   </div>

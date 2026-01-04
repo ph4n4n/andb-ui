@@ -5,7 +5,7 @@
       <div :style="{ width: leftColWidth + '%' }" class="px-4 flex items-center border-r border-gray-200 dark:border-gray-700 overflow-hidden relative" :class="{ 'pr-8': isResizing }">
         <Server class="w-3.5 h-3.5 mr-2 shrink-0" />
         <span class="truncate">{{ sourceName }}</span>
-        <div class="absolute right-2 text-[10px] text-gray-400 font-normal">Source</div>
+        <div class="absolute right-2 text-[10px] text-gray-400 font-normal">{{ $t('common.source') }}</div>
       </div>
 
       <!-- Resizer Handle Header Zone -->
@@ -19,7 +19,7 @@
       <div class="flex-1 px-4 flex items-center relative overflow-hidden">
         <Server class="w-3.5 h-3.5 mr-2 text-green-600 dark:text-green-400 opacity-75 shrink-0" />
         <span class="truncate">{{ targetName }}</span>
-        <div class="absolute right-4 text-[10px] text-gray-400 font-normal">Target</div>
+        <div class="absolute right-4 text-[10px] text-gray-400 font-normal">{{ $t('common.target') }}</div>
       </div>
     </div>
     <!-- Filter Bar -->
@@ -42,7 +42,7 @@
     <!-- Tree Content -->
     <div class="flex-1 overflow-auto custom-scrollbar p-4 relative" @mousemove="handleResize">
       <div v-if="!hasData" class="text-center text-gray-400 py-10 italic">
-        No comparison data available
+        {{ $t('compare.treeViewData.noData') }}
       </div>
 
       <div v-else class="space-y-6">
@@ -64,7 +64,7 @@
             <!-- Diff Count Badge -->
             <div v-if="category.diffCount > 0" class="ml-auto flex items-center space-x-2">
                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
-                 {{ category.diffCount }} differences
+                 {{ $t('compare.treeViewData.differences', { count: category.diffCount }) }}
                </span>
             </div>
           </div>
@@ -89,7 +89,7 @@
                         <span class="truncate font-mono text-sm" :class="getSourceClass(item)">{{ item.name }}</span>
                      </template>
                      <template v-else>
-                        <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-6">-- Missing in Source --</span>
+                        <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-6">{{ $t('compare.treeViewData.missingSource') }}</span>
                      </template>
                   </div>
                </div>
@@ -132,7 +132,7 @@
                         <span class="truncate font-mono text-sm" :class="getTargetClass(item)">{{ item.name }}</span>
                      </template>
                      <template v-else>
-                        <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-4">-- Missing in Target --</span>
+                        <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-4">{{ $t('compare.treeViewData.missingTarget') }}</span>
                      </template>
                   </div>
                </div>
@@ -146,6 +146,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { 
   ChevronRight, 
   Table, 
@@ -159,6 +160,8 @@ import {
   CheckCircle2,
   ArrowRight
 } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   results: any[]
@@ -175,13 +178,13 @@ const leftColWidth = ref(45) // Percentage
 const isResizing = ref(false)
 
 const currentFilter = ref('all')
-const filterOptions = [
-  { id: 'all', label: 'All', activeClass: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200', icon: Database },
-  { id: 'new', label: 'New', activeClass: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400', icon: ArrowRight },
-  { id: 'modified', label: 'Modified', activeClass: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400', icon: AlertCircle },
-  { id: 'identical', label: 'Identical', activeClass: 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400', icon: CheckCircle2 },
-  { id: 'deprecated', label: 'Deprecated', activeClass: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400', icon: XCircle }
-]
+const filterOptions = computed(() => [
+  { id: 'all', label: t('compare.treeViewData.filter.all'), activeClass: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200', icon: Database },
+  { id: 'new', label: t('compare.treeViewData.filter.new'), activeClass: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400', icon: ArrowRight },
+  { id: 'modified', label: t('compare.treeViewData.filter.modified'), activeClass: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400', icon: AlertCircle },
+  { id: 'identical', label: t('compare.treeViewData.filter.identical'), activeClass: 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400', icon: CheckCircle2 },
+  { id: 'deprecated', label: t('compare.treeViewData.filter.deprecated'), activeClass: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400', icon: XCircle }
+])
 
 const startResize = () => {
   isResizing.value = true

@@ -404,11 +404,6 @@ const formattedDDL = computed(() => {
   return ddl
 })
 
-watch(() => appStore.selectedConnectionId, (newId) => {
-  if (newId) {
-    loadSchema(false)
-  }
-}, { immediate: true })
 
 const hasResults = computed(() => allResults.value.length > 0)
 
@@ -616,6 +611,12 @@ const loadSchema = async (forceRefresh = false) => {
     loading.value = false
   }
 }
+
+watch(() => appStore.selectedConnectionId, (newId) => {
+  if (newId) {
+    loadSchema(false)
+  }
+}, { immediate: true })
 
 const selectItem = async (item: any) => {
   selectedItem.value = item

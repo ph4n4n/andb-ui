@@ -15,7 +15,7 @@
       <button 
         @click="copyToClipboard"
         class="p-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-lg text-gray-400 hover:text-white transition-all shadow-sm border border-white/5"
-        title="Copy to Clipboard"
+        :title="$t('common.copyScript')"
       >
         <Copy v-if="!copied" class="w-4 h-4" />
         <Check v-else class="w-4 h-4 text-green-400" />

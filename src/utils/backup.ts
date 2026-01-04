@@ -21,7 +21,7 @@ export const backup = {
    */
   async create(): Promise<BackupData> {
     return {
-      version: '1.0.0',
+      version: '2.0.0',
       timestamp: new Date().toISOString(),
       connections: await storage.getConnections(),
       connectionPairs: await storage.getConnectionPairs(),

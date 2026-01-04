@@ -15,7 +15,7 @@
         Andb
       </h1>
       <p class="text-xl text-primary-100 mb-8 font-light">
-        The Simplest Database Migration Tool
+        {{ $t('splash.tagline') }}
       </p>
 
       <!-- Loading Bar -->
@@ -40,7 +40,7 @@
           © 2024 {{ author }} | Licensed under {{ license }}
         </p>
         <p class="text-xs text-primary-400">
-          Built with ❤️ for backend developers
+          {{ $t('splash.builtWith') }}
         </p>
       </div>
     </div>
@@ -50,24 +50,26 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 
 // App metadata from package.json
-const version = '1.0.0'
+const version = '2.0.0'
 const author = 'ph4n4n'
 const license = 'MIT'
 
 // Loading state
 const progress = ref(0)
-const statusText = ref('Initializing application...')
+const statusText = ref(t('splash.status.init'))
 
 const statusMessages = [
-  'Initializing application...',
-  'Loading database drivers...',
-  'Checking connections...',
-  'Preparing workspace...',
-  'Ready to migrate!'
+  t('splash.status.init'),
+  t('splash.status.loadingDrivers'),
+  t('splash.status.checkingConnections'),
+  t('splash.status.preparingWorkspace'),
+  t('splash.status.ready')
 ]
 
 onMounted(() => {

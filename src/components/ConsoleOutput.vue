@@ -77,7 +77,7 @@ const props = defineProps<{
   logs: LogEntry[]
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   clear: []
   close: []
 }>()
