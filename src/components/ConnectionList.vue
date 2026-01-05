@@ -179,14 +179,8 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
-                      <img 
-                        v-if="getDbIcon(connection.type)" 
-                        :src="getDbIcon(connection.type)" 
-                        :alt="connection.type"
-                        class="w-6 h-6 object-contain"
-                      />
-                      <Database v-else class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <div class="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                      <Database class="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                   </div>
                   <div class="ml-4">
@@ -435,19 +429,6 @@ const getStatusColor = (status: string) => {
     failed: 'bg-red-400'
   }
   return colors[status as keyof typeof colors] || 'bg-gray-400'
-}
-
-const getDbIcon = (type?: string) => {
-  switch (type) {
-    case 'mysql':
-      return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg'
-    case 'postgres':
-      return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg'
-    case 'sqlite':
-      return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg'
-    default:
-      return undefined
-  }
 }
 
 const formatLastTested = (lastTested?: string | Date) => {

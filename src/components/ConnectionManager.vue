@@ -206,7 +206,6 @@ const selectedEnvironment = ref('DEV')
 const showAddForm = ref(false)
 const editingConnection = ref<DatabaseConnection | null>(null)
 
-
 // Computed
 const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
 
@@ -260,58 +259,15 @@ const deleteConnection = (id: string) => {
 }
 
 const handleSaveConnection = (connectionData: Omit<DatabaseConnection, 'id'>) => {
-  const isNew = !editingConnection.value
-
   if (editingConnection.value) {
     appStore.updateConnection(editingConnection.value.id, connectionData)
   } else {
-    // Override environment with selected tab if adding new, or trust form?
-    // Actually form has environment field. Let's use form's environment.
-    // If form env differs from tab, we might want to switch tab?
-    // For now, trust the form data.
-    appStore.addConnection(connectionData)
-    // Switch tab to the new connection's environment
-    if (connectionData.environment && enabledEnvironments.value.find(e => e.name === connectionData.environment)) {
-        selectedEnvironment.value = connectionData.environment
-    }
+    appStore.addConnection({ 
+      ...connectionData, 
+      environment: selectedEnvironment.value as 'DEV' | 'STAGE' | 'UAT' | 'PROD' 
+    })
   }
-  
   closeForm()
-
-  // Onboarding Logic
-  if (isNew) {
-    const totalConns = appStore.connections.length
-    if (totalConns === 1) {
-      // User just added their FIRST connection ever.
-      // Suggest adding a second one.
-      if (confirm($t('onboarding.firstConnectionSuccess'))) {
-         // Open form again, maybe pre-select a different environment?
-         // E.g. if they added DEV, switch tab to STAGE and open form?
-         const currentEnv = connectionData.environment
-         const nextEnv = enabledEnvironments.value.find(e => e.name !== currentEnv)
-         if (nextEnv) {
-            selectedEnvironment.value = nextEnv.name
-         }
-         setTimeout(() => {
-             showAddForm.value = true
-         }, 300)
-      }
-    } else if (totalConns === 2) {
-      // User has 2 connections. Suggest Pairing?
-      // Check if they are in different environments
-      const envs = new Set(appStore.connections.map(c => c.environment))
-      if (envs.size > 1) {
-           if (confirm($t('onboarding.readyToPair'))) {
-             // Navigate to Pairs tab
-             // We can't easily emit event to parent to switch tab, 
-             // but we can use router or update query param if supported,
-             // or just let user discover it.
-             // Ideally we should emit an event to parent Settings.vue to switch activeCategory.
-             // But for now, let's just show a nice alert/toast or nothing to avoid complexity if "cook thôi".
-           }
-      }
-    }
-  }
 }
 
 const closeForm = () => {
