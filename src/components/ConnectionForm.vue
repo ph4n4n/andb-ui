@@ -58,8 +58,8 @@
               class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none outline-none"
             >
               <option value="mysql">MySQL / MariaDB</option>
-              <option value="postgres">PostgreSQL</option>
-              <option value="sqlite">SQLite</option>
+              <option value="postgres" disabled>PostgreSQL {{ $t('connections.comingSoon') }}</option>
+              <option value="sqlite">SQLite {{ $t('connections.beta') }}</option>
             </select>
             <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-primary-500 transition-colors" />
           </div>
