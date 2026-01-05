@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ph4n4n/andb-ui.git"
+    "url": "git+https://github.com/The-Andb/andb-ui.git"
   },
   "keywords": [
     "electron",
@@ -34,9 +34,9 @@
   "private": true,
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/ph4n4n/andb-ui/issues"
+    "url": "https://github.com/The-Andb/andb-ui/issues"
   },
-  "homepage": "https://github.com/ph4n4n/andb-ui#readme",
+  "homepage": "https://github.com/The-Andb/andb-ui#readme",
   "devDependencies": {
     "@modyfi/vite-plugin-yaml": "^1.1.1",
     "@tailwindcss/typography": "^0.5.10",
