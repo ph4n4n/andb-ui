@@ -5,8 +5,8 @@ const fs = require('fs');
 async function capture() {
     await app.whenReady();
     const win = new BrowserWindow({
-        width: 1440,
-        height: 900,
+        width: 1920,
+        height: 1200,
         show: false,
         webPreferences: {
             nodeIntegration: true,
@@ -63,6 +63,7 @@ async function capture() {
             try {
                 console.log(`Navigating to ${view.name}...`);
                 await win.loadURL(view.url);
+                win.webContents.setZoomFactor(0.85);
 
                 console.log(`Loaded ${view.url}, waiting for render...`);
                 // Wait for connection to settle and animations
