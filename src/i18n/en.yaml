@@ -60,6 +60,12 @@ navigation:
     source: 'Source Explorer'
     history: 'History Explorer'
     schema: 'Schema Explorer'
+  ddl:
+    tables: 'Tables'
+    views: 'Views'
+    procedures: 'Procedures'
+    functions: 'Functions'
+    triggers: 'Triggers'
 
 dashboard:
   title: 'Dashboard'
@@ -71,6 +77,10 @@ dashboard:
   refreshDashboard: 'Refresh Dashboard'
   active: 'Active'
   configured: 'Configured'
+  quickActions: 'Quick Actions'
+  quickActionsDesc: 'Common tasks & shortcuts'
+  newComparison: 'New Comparison'
+  pairMapping: 'Pair Mapping'
   syncPairs: 'Sync Pairs'
   liveFeed: 'Live Feed'
   connections: 'Connections'
@@ -318,6 +328,8 @@ connections:
   confirmDelete: 'Are you sure you want to delete this connection?'
   confirmBulkDelete: 'Are you sure you want to delete {count} connections?'
   searchPlaceholder: 'Search connections...'
+  beta: '(Beta)'
+  comingSoon: '(Coming Soon)'
   allEnvironments: 'All Environments'
   allStatuses: 'All Statuses'
   noConnections: 'No connections found'
@@ -363,6 +375,10 @@ environments:
       enableDisable: 'Check/uncheck to enable/disable environments'
       defaults: 'Default environments (DEV, STAGE, UAT, PROD) cannot be deleted'
       sequence: 'Order determines the sequence in migration workflows'
+
+  onboarding:
+    firstConnectionSuccess: 'Awesome! You added your first connection. Do you want to add a second one (e.g. Staging or Prod) to start comparing?'
+    readyToPair: 'Great! You have multiple connections now. Go to "Sync Pairs" tab to link them together?'
 
 validation:
   required: '{field} is required'
