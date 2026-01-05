@@ -9,7 +9,7 @@ export interface LogEntry {
 
 export const useConsoleStore = defineStore('console', () => {
   const logs = ref<LogEntry[]>([])
-  const isVisible = ref(true)
+  const isVisible = ref(false)
   const height = ref(200)
 
   function addLog(message: string, type: LogEntry['type'] = 'info') {
