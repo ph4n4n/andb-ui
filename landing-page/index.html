@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andb - Simplest Database Migration Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      overflow-x: hidden;
+      transition: background-color 0.5s ease;
+    }
+
+    body.light-mode {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+
+    .blob {
+      position: absolute;
+      background: linear-gradient(180deg, rgba(79, 70, 229, 0.4) 0%, rgba(124, 58, 237, 0.4) 100%);
+      filter: blur(80px);
+      border-radius: 50%;
+      z-index: 0;
+      transition: opacity 0.5s;
+    }
+
+    /* Light mode blobs */
+    body.light-mode .blob {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    body.light-mode .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      color: #0f172a;
+    }
+
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+
+      100% {
+        transform: translateY(0px);
+      }
+    }
+
+    /* 3D Carousel Styles */
+    .perspective-container {
+      perspective: 2500px;
+      overflow: visible;
+    }
+
+    .carousel-track {
+      position: relative;
+      transform-style: preserve-3d;
+      height: 600px;
+      /* Increased height for bigger images */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .carousel-item {
+      position: absolute;
+      width: 80%;
+      /* Increased width */
+      max-width: 1200px;
+      aspect-ratio: 16/10;
+      transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.5);
+      background: #1e293b;
+      cursor: pointer;
+    }
+
+    body.light-mode .carousel-item {
+      background: #e2e8f0;
+      box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Active (Center) */
+    .carousel-item.active {
+      z-index: 50;
+      opacity: 1;
+      transform: translateX(0) scale(1) translateZ(0);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);
+    }
+
+    body.light-mode .carousel-item.active {
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 0 60px rgba(99, 102, 241, 0.15);
+    }
+
+
+    /* Prev (Left) */
+    .carousel-item.prev {
+      z-index: 40;
+      opacity: 0.6;
+      transform: translateX(-55%) scale(0.8) rotateY(25deg) translateZ(-200px);
+      filter: brightness(0.5);
+    }
+
+    body.light-mode .carousel-item.prev {
+      filter: brightness(0.95);
+      opacity: 0.7;
+    }
+
+    .carousel-item.prev:hover {
+      opacity: 0.8;
+      filter: brightness(0.8);
+      transform: translateX(-53%) scale(0.82) rotateY(22deg) translateZ(-150px);
+    }
+
+    body.light-mode .carousel-item.prev:hover {
+      filter: brightness(1);
+    }
+
+
+    /* Next (Right) */
+    .carousel-item.next {
+      z-index: 40;
+      opacity: 0.6;
+      transform: translateX(55%) scale(0.8) rotateY(-25deg) translateZ(-200px);
+      filter: brightness(0.5);
+    }
+
+    body.light-mode .carousel-item.next {
+      filter: brightness(0.95);
+      opacity: 0.7;
+    }
+
+    .carousel-item.next:hover {
+      opacity: 0.8;
+      filter: brightness(0.8);
+      transform: translateX(53%) scale(0.82) rotateY(-22deg) translateZ(-150px);
+    }
+
+    body.light-mode .carousel-item.next:hover {
+      filter: brightness(1);
+    }
+
+    /* Hidden */
+    .carousel-item.hidden-left {
+      z-index: 10;
+      opacity: 0;
+      transform: translateX(-150%) scale(0.5) translateZ(-400px);
+      pointer-events: none;
+    }
+
+    .carousel-item.hidden-right {
+      z-index: 10;
+      opacity: 0;
+      transform: translateX(150%) scale(0.5) translateZ(-400px);
+      pointer-events: none;
+    }
+
+    .nav-button {
+      transition: all 0.2s ease;
+    }
+
+    .nav-button:hover {
+      transform: scale(1.1);
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    body.light-mode .nav-button {
+      background-color: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: #0f172a;
+    }
+
+    body.light-mode .nav-button:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body class="antialiased min-h-screen relative flex flex-col transition-colors duration-500">
+
+  <!-- Background Blobs -->
+  <div class="blob w-[600px] h-[600px] top-[-150px] left-[-150px] animate-pulse opacity-40"></div>
+  <div
+    class="blob w-[500px] h-[500px] bottom-[-100px] right-[-100px] bg-purple-600/30 animate-pulse animation-delay-2000 opacity-40">
+  </div>
+
+  <!-- Navigation -->
+  <nav class="relative z-50 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div
+        class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform transition hover:rotate-6">
+        <i data-lucide="database" class="w-6 h-6 text-white"></i>
+      </div>
+      <span
+        class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 dark-mode-text">Andb</span>
+      <span class="text-2xl font-bold tracking-tight text-slate-900 light-mode-text hidden">Andb</span>
+    </div>
+    <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300 light-text-slate-600">
+      <a href="#features"
+        class="hover:text-white dark:hover:text-white light:hover:text-black transition-colors relative group">
+        Features
+        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all group-hover:w-full"></span>
+      </a>
+      <a href="#download"
+        class="hover:text-white dark:hover:text-white light:hover:text-black transition-colors relative group">
+        Download
+        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all group-hover:w-full"></span>
+      </a>
+      <a href="https://github.com/ph4n4n/andb-ui"
+        class="hover:text-white dark:hover:text-white light:hover:text-black transition-colors relative group">
+        GitHub
+        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all group-hover:w-full"></span>
+      </a>
+
+      <!-- Theme Toggle -->
+      <button id="theme-toggle"
+        class="p-2 rounded-full bg-slate-800 text-yellow-400 hover:bg-slate-700 transition-all shadow-inner border border-slate-700">
+        <i data-lucide="sun" class="w-4 h-4 hidden light-icon"></i>
+        <i data-lucide="moon" class="w-4 h-4 dark-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-20">
+    <div
+      class="inline-flex items-center px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-10 backdrop-blur-md">
+      <span class="flex h-2.5 w-2.5 rounded-full bg-indigo-400 mr-2.5 animate-ping"></span>
+      v2.0.0 is now live
+    </div>
+
+    <h1 class="text-5xl md:text-8xl font-black tracking-tight mb-8 leading-tight">
+      <span class="bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 dark-heading">Database
+        Migrations,</span>
+      <span class="text-slate-900 light-heading hidden">Database Migrations,</span>
+      <br />
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Reimagined.</span>
+    </h1>
+
+    <p class="max-w-2xl text-xl text-slate-400 light-text-slate-600 mb-12 leading-relaxed font-light">
+      Ditch the CLI commands. Experience the most intuitive way to visualize, compare, and sync your database schemas.
+    </p>
+
+    <!-- Download Buttons -->
+    <div class="flex flex-col sm:flex-row gap-5 w-full max-w-lg mx-auto mb-16" id="download">
+      <a href="./Andb-2.0.0-arm64.dmg"
+        class="group flex-1 flex items-center justify-center px-8 py-4 bg-white dark:bg-white light:bg-slate-900 text-slate-900 light:text-white rounded-2xl font-bold text-lg hover:bg-slate-50 light:hover:bg-slate-800 transition-all transform hover:scale-[1.02] shadow-[0_0_40px_rgba(255,255,255,0.2)] light:shadow-[0_0_40px_rgba(0,0,0,0.1)]">
+        <i data-lucide="apple" class="w-6 h-6 mr-3 fill-current"></i>
+        <div class="text-left">
+          <div class="text-xs font-medium text-slate-500 light:text-slate-400 uppercase tracking-wider">MacOS Installer
+          </div>
+          <div class="leading-none">Download .dmg</div>
+        </div>
+        <i data-lucide="arrow-right"
+          class="w-5 h-5 ml-auto opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-indigo-600 light:text-indigo-400"></i>
+      </a>
+
+      <a href="./Andb-2.0.0-arm64-mac.zip"
+        class="group flex-1 flex items-center justify-center px-8 py-4 glass-card text-white light:text-slate-900 rounded-2xl font-bold text-lg hover:bg-white/10 light:hover:bg-slate-100 transition-all border-slate-600/50 light:border-slate-200">
+        <i data-lucide="package" class="w-6 h-6 mr-3 text-indigo-400 light:text-indigo-600"></i>
+        <div class="text-left">
+          <div class="text-xs font-medium text-slate-400 light:text-slate-500 uppercase tracking-wider">Portable</div>
+          <div class="leading-none">Download .zip</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="text-sm text-slate-500 mb-16">
+      <span
+        class="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-800/50 light:bg-white border border-slate-700/50 light:border-slate-200 shadow-sm">
+        Requires macOS 11.0+ • Apple Silicon <i data-lucide="cpu" class="w-3 h-3"></i>
+      </span>
+      <div class="mt-2 opacity-60 flex items-center justify-center gap-1.5 text-xs">
+        <i data-lucide="monitor-off" class="w-3 h-3"></i> Windows version coming soon
+      </div>
+    </div>
+
+    <!-- 3D CAROUSEL SECTION -->
+    <div class="w-full max-w-[1600px] mx-auto relative perspective-container mt-10 px-4">
+
+      <!-- CONTROLS: Large Side Carets -->
+      <button onclick="moveLeft()"
+        class="nav-button absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 p-4 rounded-full bg-slate-900/50 backdrop-blur-md border border-slate-700/50 text-white shadow-2xl group cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <i data-lucide="chevron-left"
+          class="w-8 h-8 md:w-10 md:h-10 group-hover:-translate-x-1 transition-transform"></i>
+      </button>
+
+      <button onclick="moveRight()"
+        class="nav-button absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-50 p-4 rounded-full bg-slate-900/50 backdrop-blur-md border border-slate-700/50 text-white shadow-2xl group cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <i data-lucide="chevron-right"
+          class="w-8 h-8 md:w-10 md:h-10 group-hover:translate-x-1 transition-transform"></i>
+      </button>
+
+      <!-- TRACK -->
+      <div id="carousel-track" class="carousel-track">
+        <!-- Items injected via JS -->
+      </div>
+
+      <!-- DOTS -->
+      <div id="carousel-dots" class="flex justify-center gap-3 mt-10">
+        <!-- Dots injected via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer
+    class="relative z-10 border-t border-slate-800 light:border-slate-200 bg-slate-900/50 light:bg-slate-50/50 backdrop-blur-lg mt-20">
+    <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="text-slate-500 text-sm">
+        &copy; 2024 Ph4n4n. All rights reserved. <br />
+        <span class="text-xs opacity-60">Made with ❤️ for developers.</span>
+      </div>
+      <div class="flex gap-8">
+        <a href="#" class="text-slate-500 hover:text-indigo-500 transition-colors text-sm font-medium">Privacy</a>
+        <a href="#" class="text-slate-500 hover:text-indigo-500 transition-colors text-sm font-medium">Terms</a>
+        <a href="#" class="text-slate-500 hover:text-indigo-500 transition-colors text-sm font-medium">Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+
+    /* --- THEME LOGIC --- */
+    const body = document.body;
+    const themeBtn = document.getElementById('theme-toggle');
+    const sunIcon = document.querySelector('.light-icon');
+    const moonIcon = document.querySelector('.dark-icon');
+    const darkText = document.querySelector('.dark-mode-text');
+    const lightText = document.querySelector('.light-mode-text');
+    const darkHeading = document.querySelector('.dark-heading');
+    const lightHeading = document.querySelector('.light-heading');
+
+    // Manual override for simpler impl than class swapping everything
+    // Ideally use Tailwind dark: classes but we are swapping "light-mode" on body to override default dark
+
+    let isLight = false;
+
+    themeBtn.addEventListener('click', () => {
+      isLight = !isLight;
+      body.classList.toggle('light-mode', isLight);
+
+      if (isLight) {
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+        themeBtn.classList.replace('bg-slate-800', 'bg-white');
+        themeBtn.classList.replace('text-yellow-400', 'text-amber-500');
+        themeBtn.classList.add('shadow-md');
+
+        // Toggle text visibility
+        darkText.classList.add('hidden');
+        lightText.classList.remove('hidden');
+        darkHeading.classList.add('hidden');
+        lightHeading.classList.remove('hidden');
+
+        // Update text colors for helpers
+        document.querySelectorAll('.text-slate-300').forEach(el => el.classList.replace('text-slate-300', 'text-slate-600'));
+
+      } else {
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+        themeBtn.classList.replace('bg-white', 'bg-slate-800');
+        themeBtn.classList.replace('text-amber-500', 'text-yellow-400');
+        themeBtn.classList.remove('shadow-md');
+
+        darkText.classList.remove('hidden');
+        lightText.classList.add('hidden');
+        darkHeading.classList.remove('hidden');
+        lightHeading.classList.add('hidden');
+
+        document.querySelectorAll('.text-slate-600').forEach(el => el.classList.replace('text-slate-600', 'text-slate-300'));
+      }
+
+      updateCarousel(); // Re-render carousel images
+    });
+
+
+    /* --- CAROUSEL LOGIC --- */
+    const screenshots = [
+      { src: './screenshots/dashboard.png', srcLight: './screenshots/dashboard-light.png', title: 'Dashboard', desc: 'Operational Overview' },
+      { src: './screenshots/compare.png', srcLight: './screenshots/compare-light.png', title: 'Comparison', desc: 'Diff & Sync Schemas' },
+      { src: './screenshots/schema.png', srcLight: './screenshots/schema-light.png', title: 'Schema Explorer', desc: 'Navigate Database Objects' },
+      { src: './screenshots/history.png', srcLight: './screenshots/history-light.png', title: 'History', desc: 'Version Control for DBs' },
+      { src: './screenshots/settings.png', srcLight: './screenshots/settings-light.png', title: 'Settings', desc: 'Manage Connections' }
+    ];
+
+    const track = document.getElementById('carousel-track');
+    const dotsContainer = document.getElementById('carousel-dots');
+    let currentIndex = Math.floor(screenshots.length / 2);
+
+    // Init Dots
+    screenshots.forEach((_, index) => {
+      const dot = document.createElement('button');
+      dot.className = 'w-12 h-1.5 rounded-full bg-slate-700 transition-all hover:bg-slate-600 focus:outline-none';
+      dot.onclick = () => jumpTo(index);
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = Array.from(dotsContainer.children);
+
+    function updateCarousel() {
+      // Clear Track
+      track.innerHTML = '';
+
+      screenshots.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'carousel-item group';
+        card.onclick = () => jumpTo(index);
+
+        // Use light or dark image
+        const imgSrc = isLight && item.srcLight ? item.srcLight : item.src;
+
+        card.innerHTML = `
+                    <div class="w-full h-full relative bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl">
+                         <!-- macOS Window Controls Decoration (Restored for frameless screenshots) -->
+                        <div class="h-6 bg-slate-800/80 w-full absolute top-0 left-0 flex items-center px-4 space-x-2 z-10 border-b border-white/5">
+                            <div class="w-3 h-3 rounded-full bg-[#FF5F56]"></div>
+                            <div class="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
+                            <div class="w-3 h-3 rounded-full bg-[#27C93F]"></div>
+                        </div>
+                        <img src="${imgSrc}" alt="${item.title}" class="w-full h-full object-cover pt-6">
+                    </div>
+                `;
+
+        if (index === currentIndex) {
+          card.classList.add('active');
+        } else if (index === (currentIndex - 1 + screenshots.length) % screenshots.length) {
+          card.classList.add('prev');
+        } else if (index === (currentIndex + 1) % screenshots.length) {
+          card.classList.add('next');
+        } else {
+          const len = screenshots.length;
+          const half = Math.floor(len / 2);
+          let diff = (index - currentIndex + len + half) % len - half;
+
+          if (diff < 0) card.classList.add('hidden-left');
+          else card.classList.add('hidden-right');
+        }
+
+        track.appendChild(card);
+      });
+
+      // Update Dots style based on theme
+      dots.forEach((dot, index) => {
+        const activeColor = isLight ? 'bg-indigo-600' : 'bg-indigo-500';
+        const inactiveColor = isLight ? 'bg-slate-300' : 'bg-slate-700';
+
+        if (index === currentIndex) {
+          dot.className = `w-20 h-1.5 rounded-full ${activeColor} shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all`;
+        } else {
+          dot.className = `w-12 h-1.5 rounded-full ${inactiveColor} hover:opacity-80 transition-all`;
+        }
+      });
+    }
+
+    function moveRight() {
+      currentIndex = (currentIndex + 1) % screenshots.length;
+      updateCarousel();
+    }
+
+    function moveLeft() {
+      currentIndex = (currentIndex - 1 + screenshots.length) % screenshots.length;
+      updateCarousel();
+    }
+
+    function jumpTo(index) {
+      currentIndex = index;
+      updateCarousel();
+    }
+
+    // Init
+    updateCarousel();
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') moveRight();
+      if (e.key === 'ArrowLeft') moveLeft();
+    });
+
+    // Autoplay
+    let autoPlay = setInterval(moveRight, 5000);
+    track.addEventListener('mouseenter', () => clearInterval(autoPlay));
+    track.addEventListener('mouseleave', () => autoPlay = setInterval(moveRight, 5000));
+
+  </script>
+</body>
+
+</html>

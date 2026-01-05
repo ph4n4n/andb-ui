@@ -60,6 +60,12 @@ navigation:
     source: 'Source Explorer'
     history: 'History Explorer'
     schema: 'Schema Explorer'
+  ddl:
+    tables: 'Tables'
+    views: 'Views'
+    procedures: 'Procedures'
+    functions: 'Functions'
+    triggers: 'Triggers'
 
 dashboard:
   title: 'Dashboard'

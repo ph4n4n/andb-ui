@@ -60,6 +60,12 @@ navigation:
     source: 'Khám phá Nguồn'
     history: 'Khám phá Lịch sử'
     schema: 'Khám phá Lược đồ'
+  ddl:
+    tables: 'Bảng'
+    views: 'Views'
+    procedures: 'Thủ tục'
+    functions: 'Hàm'
+    triggers: 'Triggers'
 
 dashboard:
   title: 'Bảng điều khiển'

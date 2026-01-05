@@ -30,7 +30,8 @@
     "andb-core"
   ],
   "author": "ph4n4n",
-  "license": "MIT",
+  "license": "UNLICENSED",
+  "private": true,
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/ph4n4n/andb-ui/issues"
