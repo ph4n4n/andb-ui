@@ -18,7 +18,6 @@ export interface DatabaseConnection {
     from: string  // e.g., '@dev.example.com'
     to: string    // e.g., '@prod.example.com'
   }
-  type?: 'mysql' | 'postgres' | 'sqlite'
 }
 
 export interface ConnectionPair {

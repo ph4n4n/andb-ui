@@ -26,23 +26,11 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 - **Build Tool**: Vite
 - **Database Tool**: andb-core
 
-## 📥 Downloads (v2.0.0)
-
-### macOS (Apple Silicon)
-
-- _Downloads Coming Soon_ (Stay tuned!)
-
-### Windows
-
-- _Windows support is coming soon!_ (Planned for v2.1.0)
-
-> Note: Currently built and tested for macOS arm64.
-
 ## 📦 Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/The-Andb/andb-ui.git
+git clone https://github.com/ph4n4n/andb-ui.git
 cd andb-ui
 
 # Install dependencies

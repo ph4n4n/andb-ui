@@ -4,12 +4,12 @@
 
 ## 🏁 Phase 1: Solid Core (Củng cố nền tảng)
 
-_Mục tiêu: Đảm bảo app chạy mượt, support đa database cơ bản, UX ngon nghẻ để release bản Community._
+_Mục tiêu: Đảm bảo app chạy mượt, UX ngon nghẻ để release bản Community._
 
 ### 1.1 Multi-Database Support UI
 
 - [ ] **Dynamic Connection Form**:
-  - Thêm dropdown `Database Type`: `MySQL`, `PostgreSQL`, `SQLite`.
+  - Thêm dropdown `Database Type`: `MySQL`, `PostgreSQL (Coming Soon)`, `SQLite (Beta)`.
   - `SQLite`: Ẩn Host/Port/User/Pass, hiện nút **"Pick .sqlite file"**.
   - `PostgreSQL`: Đổi default port sang 5432.
 - [ ] **Iconography**: Hiển thị icon DB tương ứng trong danh sách connection (để user dễ phân biệt).
@@ -17,18 +17,14 @@ _Mục tiêu: Đảm bảo app chạy mượt, support đa database cơ bản, U
 ### 1.2 UX Polish & Onboarding
 
 - [ ] **Dashboard Revamp**:
-  - Thêm "Quick Actions" card: "New Comparison", "Open Recent".
+  - Thêm "Quick Actions" card:"New Connection", "New Comparison", "Open Recent", click vào sẽ mở form componet setting tương ứng.
   - Hiển thị trạng thái các connection gần nhất (Last used).
-- [ ] **Settings Refinement**:
-  - Tách biệt setting cho App (Theme, Lang) và Default Connection Settings.
-
-### 1.3 Core Fixes
-
-- [ ] **Schema Loading**: Đảm bảo load schema của PostgreSQL ngon như MySQL (test kỹ các case Enum, Trigger, View).
 
 ---
 
 ## 🚀 Phase 2: Power User Utility (Tính năng "Sát thủ")
+
+_Mục tiêu: Đảm bảo app chạy mượt, support đa database cơ bản._
 
 _Mục tiêu: Thêm các tính năng mà Dev/DevOps chuyên nghiệp bắt buộc phải có. Đây là lý do họ rời bỏ tool cũ để sang dùng ANDB._
 
@@ -52,16 +48,22 @@ _Mục tiêu: Thêm các tính năng mà Dev/DevOps chuyên nghiệp bắt buộ
 
 ---
 
-## 💎 Phase 3: Commercial & Enterprise (Bản thu tiền)
+## Phase 3: Core Fixes
+
+- [ ] **Schema Loading**: Đảm bảo load schema của PostgreSQL ngon như MySQL (test kỹ các case Enum, Trigger, View).
+
+---
+
+## 💎 Phase 4: Commercial & Enterprise (Bản thu tiền)
 
 _Mục tiêu: Các tính năng dành cho team lớn, giải quyết vấn đề quy trình và dữ liệu phức tạp._
 
-### 3.1 Data Management
+### 4.1 Data Management
 
 - [ ] **Data Compare**: So sánh dữ liệu giữa 2 bảng (thường dùng cho bảng Config, Lookup, Dictionary).
 - [ ] **Seed Data Generator**: Generate dummy data để test performance.
 
-### 3.2 Intelligence (AI)
+### 4.2 Intelligence (AI)
 
 - [ ] **Text-to-SQL Migration**: "Add column phone to users table" -> Generate `ALTER TABLE users ADD COLUMN phone VARCHAR(20)...`
 - [ ] **Migration Explanation**: Giải thích script migration phức tạp bằng tiếng người.

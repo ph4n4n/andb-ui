@@ -51,21 +51,6 @@
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-2">
-          <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.type') }} *</label>
-          <div class="relative group">
-            <select
-              v-model="form.type"
-              class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none outline-none"
-            >
-              <option value="mysql">MySQL / MariaDB</option>
-              <option value="postgres" disabled>PostgreSQL {{ $t('connections.comingSoon') }}</option>
-              <option value="sqlite">SQLite {{ $t('connections.beta') }}</option>
-            </select>
-            <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-primary-500 transition-colors" />
-          </div>
-        </div>
-
-        <div class="space-y-2" v-if="form.type !== 'sqlite'">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.host') }} *</label>
           <input
             v-model="form.host"
@@ -77,25 +62,7 @@
           <p v-if="errors.host" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.host }}</p>
         </div>
 
-        <div class="space-y-2 md:col-span-2" v-if="form.type === 'sqlite'">
-          <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.databaseFile') }} *</label>
-          <div class="flex gap-2">
-            <input
-              v-model="form.database"
-              type="text"
-              placeholder="/path/to/database.sqlite"
-              class="flex-1 px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
-              :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.database }"
-            />
-            <!-- Browse button placeholder - strictly UI for now as we need IPC for real file dialog -->
-            <button class="px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              ...
-            </button>
-          </div>
-          <p v-if="errors.database" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.database }}</p>
-        </div>
-
-        <div class="space-y-2" v-if="form.type !== 'sqlite'">
+        <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.port') }} *</label>
           <input
             v-model.number="form.port"
@@ -107,7 +74,7 @@
           <p v-if="errors.port" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.port }}</p>
         </div>
 
-        <div class="space-y-2" v-if="form.type !== 'sqlite'">
+        <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.database') }} *</label>
           <input
             v-model="form.database"
@@ -119,7 +86,7 @@
           <p v-if="errors.database" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.database }}</p>
         </div>
 
-        <div class="space-y-2" v-if="form.type !== 'sqlite'">
+        <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.username') }} *</label>
           <input
             v-model="form.username"
@@ -131,7 +98,7 @@
           <p v-if="errors.username" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.username }}</p>
         </div>
 
-        <div class="space-y-2" v-if="form.type !== 'sqlite'">
+        <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.password') }}</label>
           <div class="relative">
             <input
@@ -321,11 +288,10 @@ const emit = defineEmits<{
 // Form state
 const form = ref({
   name: '',
-  type: 'mysql' as 'mysql' | 'postgres' | 'sqlite',
-  host: 'localhost',
+  host: '',
   port: 3306,
   database: '',
-  username: 'root',
+  username: '',
   password: '',
   environment: '',
   timeout: 30,
@@ -349,7 +315,6 @@ const errors = ref<Record<string, string>>({})
 if (props.connection) {
   form.value = {
     name: props.connection.name,
-    type: props.connection.type || 'mysql',
     host: props.connection.host,
     port: props.connection.port,
     database: props.connection.database,
@@ -364,21 +329,6 @@ if (props.connection) {
   }
 }
 
-// Watch for type changes
-watch(() => form.value.type, (newType) => {
-  if (newType === 'mysql') {
-    form.value.port = 3306
-    form.value.username = form.value.username || 'root'
-  } else if (newType === 'postgres') {
-    form.value.port = 5432
-    form.value.username = form.value.username || 'postgres'
-  } else if (newType === 'sqlite') {
-    form.value.host = 'localhost' // Dummy value for SQLite
-    form.value.username = 'sqlite'
-    form.value.port = 0
-  }
-})
-
 // Validation
 const validateForm = () => {
   errors.value = {}
@@ -387,22 +337,20 @@ const validateForm = () => {
     errors.value.name = $t('validation.required', { field: $t('connections.connectionName') })
   }
   
-  if (form.value.type !== 'sqlite') {
-    if (!form.value.host.trim()) {
-      errors.value.host = $t('validation.required', { field: $t('connections.host') })
-    }
-    
-    if (!form.value.port || form.value.port < 1 || form.value.port > 65535) {
-      errors.value.port = $t('validation.invalidPort')
-    }
-
-    if (!form.value.username.trim()) {
-      errors.value.username = $t('validation.required', { field: $t('connections.username') })
-    }
+  if (!form.value.host.trim()) {
+    errors.value.host = $t('validation.required', { field: $t('connections.host') })
+  }
+  
+  if (!form.value.port || form.value.port < 1 || form.value.port > 65535) {
+    errors.value.port = $t('validation.invalidPort')
   }
   
   if (!form.value.database.trim()) {
     errors.value.database = $t('validation.required', { field: $t('connections.database') })
+  }
+  
+  if (!form.value.username.trim()) {
+    errors.value.username = $t('validation.required', { field: $t('connections.username') })
   }
   
   if (!form.value.environment) {
@@ -413,18 +361,12 @@ const validateForm = () => {
 }
 
 const isFormValid = computed(() => {
-  const commonValid = form.value.name.trim() && 
-                      form.value.database.trim() && 
-                      form.value.environment
-
-  if (form.value.type === 'sqlite') {
-    return commonValid
-  }
-
-  return commonValid && 
+  return form.value.name.trim() && 
          form.value.host.trim() && 
          form.value.port > 0 && 
-         form.value.username.trim()
+         form.value.database.trim() && 
+         form.value.username.trim() && 
+         form.value.environment
 })
 
 // Test connection
@@ -464,7 +406,6 @@ const saveConnection = async () => {
   try {
     const connectionData: Omit<DatabaseConnection, 'id'> = {
       name: form.value.name,
-      type: form.value.type,
       host: form.value.host,
       port: form.value.port,
       database: form.value.database,

@@ -54,50 +54,6 @@
           </div>
         </div>
         
-        <!-- Quick Actions Card -->
-        <div class="mb-8">
-           <div class="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-900/40 dark:to-purple-900/40 rounded-2xl p-6 border border-indigo-200/50 dark:border-indigo-700/50 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
-             <!-- Decorators -->
-             <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-             
-             <div class="flex items-center gap-4 relative z-10 w-full sm:w-auto">
-               <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-700">
-                 <Flash class="w-8 h-8 text-indigo-500" />
-               </div>
-               <div>
-                  <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('dashboard.quickActions') }}</h2>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 font-medium max-w-[200px]">{{ $t('dashboard.quickActionsDesc') }}</p>
-               </div>
-             </div>
-
-             <div class="flex flex-wrap items-center gap-3 relative z-10 w-full sm:w-auto justify-end">
-               <button 
-                 @click="navigateTo('/settings?tab=connections')"
-                 class="flex items-center gap-2 px-5 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-300 hover:-translate-y-0.5"
-               >
-                 <Plus class="w-4 h-4 text-indigo-500" />
-                 <span class="text-xs font-black text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('connections.addConnection') }}</span>
-               </button>
-
-               <button 
-                 @click="navigateTo('/compare')"
-                 class="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all duration-300 hover:-translate-y-0.5"
-               >
-                 <GitCompare class="w-4 h-4 text-white" />
-                 <span class="text-xs font-black uppercase tracking-widest">{{ $t('dashboard.newComparison') }}</span>
-               </button>
-
-               <button 
-                @click="navigateTo('/settings?tab=pairs')"
-                 class="flex items-center gap-2 px-5 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-300 hover:-translate-y-0.5"
-               >
-                 <Link class="w-4 h-4 text-purple-500" />
-                 <span class="text-xs font-black text-gray-700 dark:text-gray-200 uppercase tracking-widest">{{ $t('dashboard.pairMapping') }}</span>
-               </button>
-             </div>
-           </div>
-        </div>
-
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <!-- Total Connections -->
@@ -384,10 +340,7 @@ import {
   CheckCircle,
   FileCode,
   Clock,
-  ArrowRightLeft,
-  Zap as Flash,
-  Link,
-  Plus
+  ArrowRightLeft
 } from 'lucide-vue-next'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAppStore } from '@/stores/app'

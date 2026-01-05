@@ -3,55 +3,55 @@ const path = require('path');
 const fs = require('fs');
 
 async function capture() {
-  await app.whenReady();
-  const win = new BrowserWindow({
-    width: 1440,
-    height: 900,
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+    await app.whenReady();
+    const win = new BrowserWindow({
+        width: 1920,
+        height: 1200,
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+
+    const views = [
+        { name: 'dashboard', url: 'http://localhost:5173/' },
+        { name: 'schema', url: 'http://localhost:5173/#/schema' },
+        { name: 'compare', url: 'http://localhost:5173/#/compare' },
+        { name: 'history', url: 'http://localhost:5173/#/history' },
+        { name: 'settings', url: 'http://localhost:5173/#/settings' }
+    ];
+
+    const outDir = path.join(__dirname, '../../andb-landing/screenshots');
+    if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
     }
-  });
 
-  const views = [
-    { name: 'dashboard', url: 'http://localhost:5173/' },
-    { name: 'schema', url: 'http://localhost:5173/#/schema' },
-    { name: 'compare', url: 'http://localhost:5173/#/compare' },
-    { name: 'history', url: 'http://localhost:5173/#/history' },
-    { name: 'settings', url: 'http://localhost:5173/#/settings' }
-  ];
+    console.log('Starting screenshot capture...');
 
-  const outDir = path.join(__dirname, '../../andb-landing/screenshots');
-  if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir, { recursive: true });
-  }
+    // Initial load to initialize origin for localStorage
+    try {
+        await win.loadURL('http://localhost:5173/');
+        await new Promise(r => setTimeout(r, 2000));
+    } catch (err) {
+        console.error("Initial load failed:", err);
+    }
 
-  console.log('Starting screenshot capture...');
+    const modes = [
+        { suffix: '', theme: 'dark' },
+        { suffix: '-light', theme: 'light' }
+    ];
 
-  // Initial load to initialize origin for localStorage
-  try {
-    await win.loadURL('http://localhost:5173/');
-    await new Promise(r => setTimeout(r, 2000));
-  } catch (err) {
-    console.error("Initial load failed:", err);
-  }
+    win.webContents.on('console-message', (event, level, message) => {
+        // Filter out some noise if needed
+        // console.log('Browser Console:', message); 
+    });
 
-  const modes = [
-    { suffix: '', theme: 'dark' },
-    { suffix: '-light', theme: 'light' }
-  ];
+    for (const mode of modes) {
+        console.log(`\n--- Switching to ${mode.theme.toUpperCase()} mode ---`);
 
-  win.webContents.on('console-message', (event, level, message) => {
-    // Filter out some noise if needed
-    // console.log('Browser Console:', message); 
-  });
-
-  for (const mode of modes) {
-    console.log(`\n--- Switching to ${mode.theme.toUpperCase()} mode ---`);
-
-    // Set theme in localStorage
-    await win.webContents.executeJavaScript(`
+        // Set theme in localStorage
+        await win.webContents.executeJavaScript(`
         localStorage.setItem('andb-ui-settings', JSON.stringify({
             theme: '${mode.theme}',
             language: 'en',
@@ -59,17 +59,18 @@ async function capture() {
         }));
     `);
 
-    for (const view of views) {
-      try {
-        console.log(`Navigating to ${view.name}...`);
-        await win.loadURL(view.url);
+        for (const view of views) {
+            try {
+                console.log(`Navigating to ${view.name}...`);
+                await win.loadURL(view.url);
+                win.webContents.setZoomFactor(0.85);
 
-        console.log(`Loaded ${view.url}, waiting for render...`);
-        // Wait for connection to settle and animations
-        await new Promise(r => setTimeout(r, 4000));
+                console.log(`Loaded ${view.url}, waiting for render...`);
+                // Wait for connection to settle and animations
+                await new Promise(r => setTimeout(r, 4000));
 
-        // Ensure theme is applied (backup safety)
-        await win.webContents.executeJavaScript(`
+                // Ensure theme is applied (backup safety)
+                await win.webContents.executeJavaScript(`
             try {
                 // FORCE THEME & BACKGROUNDS
                 if ('${mode.theme}' === 'light') {
@@ -117,21 +118,21 @@ async function capture() {
 
             } catch(e) { console.error('Screenshot prep error:', e); }
         `);
-        // Small wait after forced class update if needed
-        await new Promise(r => setTimeout(r, 500));
+                // Small wait after forced class update if needed
+                await new Promise(r => setTimeout(r, 500));
 
-        console.log('Taking screenshot...');
-        const img = await win.capturePage();
-        const filePath = path.join(outDir, `${view.name}${mode.suffix}.png`);
-        fs.writeFileSync(filePath, img.toPNG());
-        console.log(`Captured ${view.name}${mode.suffix} to ${filePath} `);
-      } catch (e) {
-        console.error(`Failed to capture ${view.name}: `, e);
-      }
+                console.log('Taking screenshot...');
+                const img = await win.capturePage();
+                const filePath = path.join(outDir, `${view.name}${mode.suffix}.png`);
+                fs.writeFileSync(filePath, img.toPNG());
+                console.log(`Captured ${view.name}${mode.suffix} to ${filePath} `);
+            } catch (e) {
+                console.error(`Failed to capture ${view.name}: `, e);
+            }
+        }
     }
-  }
 
-  app.quit();
+    app.quit();
 }
 
 capture();
