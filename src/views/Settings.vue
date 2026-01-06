@@ -20,19 +20,23 @@
             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest opacity-60">{{ $t('settings.subtitle') }}</p>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-4 space-y-1">
-            <button 
-              v-for="cat in categories" :key="cat.id"
-              @click="activeCategory = cat.id"
-              class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden"
-              :class="activeCategory === cat.id 
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 active:scale-95' 
-                : 'text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
-            >
-              <component :is="cat.icon" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-              <span class="text-[11px] font-bold uppercase tracking-widest">{{ cat.label }}</span>
-              <div v-if="activeCategory === cat.id" class="absolute inset-0 bg-white/10 translate-x-[-100%] animate-[shimmer_3s_infinite] pointer-events-none"></div>
-            </button>
+          <div class="flex-1 overflow-y-auto px-4 py-2 space-y-6">
+            <!-- App Settings -->
+            <div class="space-y-1">
+              <h3 class="px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-50">{{ $t('settings.sections.app') }}</h3>
+              <button 
+                v-for="cat in appSettings" :key="cat.id"
+                @click="activeCategory = cat.id"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden"
+                :class="activeCategory === cat.id 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 active:scale-95' 
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
+              >
+                <component :is="cat.icon" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                <span class="text-[11px] font-bold uppercase tracking-widest">{{ cat.label }}</span>
+                 <div v-if="activeCategory === cat.id" class="absolute inset-0 bg-white/10 translate-x-[-100%] animate-[shimmer_3s_infinite] pointer-events-none"></div>
+              </button>
+            </div>
           </div>
 
           <!-- Bottom Actions -->
@@ -343,46 +347,18 @@
               </div>
             </div>
 
-            <!-- ENVIRONMENTS SECTION -->
-            <div v-if="activeCategory === 'environment'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
-               <div class="flex items-center gap-4 mb-12">
+            <!-- CONNECTION TEMPLATES SECTION -->
+            <div v-if="activeCategory === 'templates'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div class="flex items-center gap-4 mb-12">
                 <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shadow-inner">
-                  <Globe2 class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <LayoutTemplate class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.environment.title') }}</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.environment.subtitle') }}</p>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.templates.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.templates.subtitle') }}</p>
                 </div>
               </div>
-              <EnvironmentManager />
-            </div>
-
-            <!-- CONNECTIONS SECTION -->
-            <div v-if="activeCategory === 'connections'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div class="flex items-center gap-4 mb-12">
-                <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shadow-inner">
-                  <Link2 class="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.connections.title') }}</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.connections.subtitle') }}</p>
-                </div>
-              </div>
-              <ConnectionManager />
-            </div>
-
-            <!-- PAIRS SECTION -->
-            <div v-if="activeCategory === 'pairs' " class="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div class="flex items-center gap-4 mb-12">
-                <div class="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shadow-inner">
-                  <GitCompare class="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.pairs.title') }}</h2>
-                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.pairs.subtitle') }}</p>
-                </div>
-              </div>
-              <ConnectionPairManager :enabled-environments="enabledEnvironments" />
+              <ConnectionTemplateManager />
             </div>
 
             <!-- BACKUP SECTION -->
@@ -397,6 +373,84 @@
                 </div>
               </div>
               <BackupManager />
+            </div>
+
+            <!-- UPDATE SECTION -->
+            <div v-if="activeCategory === 'update'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+               <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shadow-inner">
+                  <DownloadCloud class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.update.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.update.subtitle') }}</p>
+                </div>
+              </div>
+
+                 <div class="space-y-6">
+                 <!-- Status Card -->
+                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 flex flex-col items-center text-center">
+                    <div class="mb-4">
+                       <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('settings.update.currentVersion') }}</span>
+                       <div class="text-3xl font-black text-gray-900 dark:text-white mt-1">2.0.0</div>
+                    </div>
+
+                    <div v-if="updaterStore.status === 'checking'" class="flex items-center gap-2 text-primary-500 font-bold mb-4">
+                       <RefreshCw class="w-4 h-4 animate-spin" />
+                       {{ $t('settings.update.checking') }}
+                    </div>
+                     <div v-else-if="updaterStore.status === 'available'" class="flex flex-col items-center gap-2 mb-4">
+                       <div class="flex items-center gap-2 text-green-500 font-bold">
+                          <Check class="w-4 h-4" />
+                          {{ $t('settings.update.available', { version: updaterStore.updateInfo?.version }) }}
+                       </div>
+                    </div>
+                    <div v-else-if="updaterStore.status === 'downloaded'" class="flex flex-col items-center gap-2 mb-4">
+                       <div class="flex items-center gap-2 text-green-500 font-bold">
+                          <Check class="w-4 h-4" />
+                          {{ $t('settings.update.ready') }}
+                       </div>
+                    </div>
+                    <div v-else-if="updaterStore.status === 'not-available'" class="flex items-center gap-2 text-gray-500 font-bold mb-4">
+                       <Check class="w-4 h-4" />
+                       {{ $t('settings.update.upToDate') }}
+                    </div>
+
+                    <!-- Action Button -->
+                    <button 
+                      @click="updaterStore.checkForUpdates()"
+                      :disabled="updaterStore.status === 'checking' || updaterStore.status === 'downloading'"
+                      class="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                       <RefreshCw v-if="updaterStore.status === 'checking'" class="w-4 h-4 animate-spin" />
+                       <span v-else>{{ $t('settings.update.check') }}</span>
+                    </button>
+                    
+                    <button 
+                       v-if="updaterStore.status === 'available' || updaterStore.status === 'downloaded'"
+                       @click="updaterStore.showModal = true"
+                       class="mt-4 text-xs font-bold text-primary-500 hover:text-primary-600 underline"
+                    >
+                       {{ $t('settings.update.viewNotes') }}
+                    </button>
+                 </div>
+                 
+                 <!-- Settings -->
+                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <label class="flex items-center justify-between cursor-pointer">
+                       <div>
+                          <div class="text-sm font-bold text-gray-900 dark:text-white">{{ $t('settings.update.autoDownload') }}</div>
+                          <div class="text-xs text-gray-500">{{ $t('settings.update.autoDownloadDesc') }}</div>
+                       </div>
+                       <div class="relative">
+                          <input type="checkbox" v-model="updaterStore.autoDownload" class="sr-only peer">
+                          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                       </div>
+                    </label>
+                 </div>
+
+
+               </div>
             </div>
 
           </div>
@@ -507,9 +561,6 @@ import {
   MousePointer2, 
   Layers,
   Settings as SettingsIcon, 
-  Globe2, 
-  Link2, 
-  GitCompare, 
   MonitorSmartphone, 
   History as HistoryIcon,
   Database,
@@ -517,18 +568,20 @@ import {
   X,
   FileCode,
   Activity,
-  Type
+  Type,
+  DownloadCloud,
+  LayoutTemplate
 } from 'lucide-vue-next'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
-import EnvironmentManager from '@/components/EnvironmentManager.vue'
-import ConnectionPairManager from '@/components/ConnectionPairManager.vue'
-import ConnectionManager from '@/components/ConnectionManager.vue'
 import BackupManager from '@/components/BackupManager.vue'
+import ConnectionTemplateManager from '@/components/ConnectionTemplateManager.vue'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
 import { useSettingsStore, themeOptions } from '@/stores/settings'
 import { useOperationsStore } from '@/stores/operations'
+import { useUpdaterStore } from '@/stores/updater'
+
 import { setLanguage } from '@/i18n'
 
 
@@ -536,32 +589,47 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+
 const connectionPairsStore = useConnectionPairsStore()
 const settingsStore = useSettingsStore()
 const operationsStore = useOperationsStore()
+const updaterStore = useUpdaterStore()
 const route = useRoute()
 
-const categories = computed(() => [
-  { id: 'interface', label: t('settings.categories.interface'), icon: MonitorSmartphone },
-  { id: 'environment', label: t('settings.categories.environment'), icon: Globe2 },
-  { id: 'connections', label: t('settings.categories.connections'), icon: Link2 },
-  { id: 'pairs', label: t('settings.categories.pairs'), icon: GitCompare },
-  { id: 'backup', label: t('settings.categories.backup'), icon: Database }
-])
+
+
+const categories = computed(() => {
+  const appCats = [
+    { id: 'interface', label: t('settings.categories.interface'), icon: MonitorSmartphone },
+    { id: 'templates', label: t('settings.categories.templates'), icon: LayoutTemplate },
+    { id: 'backup', label: t('settings.categories.backup'), icon: Database },
+    { id: 'update', label: t('settings.categories.update'), icon: DownloadCloud }
+  ]
+
+  return appCats.map(c => ({ ...c, type: 'app' }))
+})
+
+const appSettings = computed(() => categories.value)
 
 const activeCategory = ref('interface')
 
 // Handle deep linking from query params
-onMounted(() => {
-  if (route.query.cat && categories.value.find(c => c.id === route.query.cat)) {
-    activeCategory.value = route.query.cat as string
+const handleDeepLink = (query: any) => {
+  if (query.cat && categories.value.find(c => c.id === query.cat)) {
+    activeCategory.value = query.cat as string
   }
+  // Support 'tab' alias as used in dashboard (e.g. settings?tab=connections)
+  if (query.tab && categories.value.find(c => c.id === query.tab)) {
+    activeCategory.value = query.tab as string
+  }
+}
+
+onMounted(() => {
+  handleDeepLink(route.query)
 })
 
-watch(() => route.query.cat, (newCat) => {
-  if (newCat && categories.value.find(c => c.id === newCat)) {
-    activeCategory.value = newCat as string
-  }
+watch(() => route.query, (newQuery) => {
+  handleDeepLink(newQuery)
 })
 
 const timezones = [
@@ -575,10 +643,6 @@ const timezones = [
 ]
 
 const settings = computed(() => settingsStore.settings)
-
-const enabledEnvironments = computed(() => {
-  return connectionPairsStore.enabledEnvironments
-})
 
 
 const updateLanguage = () => {
@@ -633,6 +697,7 @@ const confirmResetData = async () => {
   }
 }
 </script>
+
 
 <style scoped>
 @keyframes shimmer {

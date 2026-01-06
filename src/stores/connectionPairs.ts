@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useAppStore } from './app'
+import { useProjectsStore } from './projects'
 import { storage } from '../utils/storage-ipc'
+
 
 export interface Environment {
   id: string
@@ -112,8 +114,19 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
   })
 
   const availablePairs = computed(() => {
-    return connectionPairs.value
+    const projectsStore = useProjectsStore()
+    const project = projectsStore.currentProject
+
+    // Default project or no project selected -> show all
+    if (!project || project.id === 'default') {
+      return connectionPairs.value
+    }
+
+    // Specific project -> filter by IDs
+    return connectionPairs.value.filter(pair => project.pairIds.includes(pair.id))
   })
+
+
 
   const defaultPair = computed(() => {
     return connectionPairs.value.find(pair => pair.isDefault)
@@ -209,6 +222,7 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
       id: Date.now().toString()
     }
     connectionPairs.value.push(newPair)
+    return newPair
   }
 
   const updateConnectionPair = (id: string, updates: Partial<ConnectionPair>) => {
@@ -354,6 +368,7 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
 
     // Actions
     setSelectedPair,
+    selectPair: setSelectedPair,
     addEnvironment,
     updateEnvironment,
     removeEnvironment,

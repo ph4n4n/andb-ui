@@ -86,13 +86,13 @@
 
           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-          <!-- Settings Shortcut -->
+          <!-- Settings Shortcut (Project Context) -->
           <button
-            @click="router.push(route.path === '/compare' ? '/settings?cat=pairs' : '/settings?cat=connections')"
+            @click="router.push(route.path === '/compare' ? '/project-settings?cat=pairs' : '/project-settings?cat=connections')"
             class="p-2 text-gray-400 hover:text-primary-500 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all group"
             :title="route.path === '/compare' ? $t('header.managePairs') : $t('header.manageConnections')"
           >
-            <Settings class="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
+            <Layers class="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
           </button>
         </div>
       </div>
@@ -100,11 +100,49 @@
       <!-- Right side: System Actions -->
       <div class="flex items-center space-x-1 shrink-0">
         <div class="flex items-center space-x-1">
+          <!-- Project Selector -->
+          <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg px-2 mr-2 border border-gray-200 dark:border-gray-600">
+            <Folder class="w-4 h-4 text-gray-500 mr-2" />
+            <select 
+              v-model="selectedProjectModel"
+              class="bg-transparent border-none text-xs font-bold py-1.5 focus:ring-0 cursor-pointer text-gray-700 dark:text-gray-200 min-w-[100px]"
+            >
+              <option v-for="p in projectsStore.projects" :key="p.id" :value="p.id" class="bg-white dark:bg-gray-800">
+                {{ p.name }}
+              </option>
+              <hr />
+              <option value="__NEW__" class="bg-gray-50 dark:bg-gray-900 font-bold text-primary-500">
+                + {{ $t('projects.newProject') || 'New Project' }}
+              </option>
+            </select>
+          </div>
           <ThemeToggle />
           <LanguageToggle />
         </div>
+
         
         <div class="w-px h-6 bg-gray-200 dark:border-gray-700 mx-2"></div>
+
+        <!-- App Settings -->
+        <button
+          @click="router.push('/settings')"
+          class="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          :title="$t('common.settings')"
+        >
+          <Settings class="w-5 h-5" />
+        </button>
+
+        <!-- Update Indicator -->
+        <button
+          v-if="updaterStore.status === 'downloaded' || updaterStore.status === 'available'"
+          @click="handleUpdateClick"
+          class="p-2 rounded-lg transition-all animate-pulse relative group"
+          :class="updaterStore.status === 'downloaded' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'"
+          :title="updaterStore.status === 'downloaded' ? 'Update Ready - Click to Restart' : 'New Update Available'"
+        >
+           <Download class="w-5 h-5" />
+           <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 border-2 border-white dark:border-gray-800"></span>
+        </button>
 
         <button
           @click="showAbout = true"
@@ -127,12 +165,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useProjectsStore } from '@/stores/projects'
 import ThemeToggle from './ThemeToggle.vue'
+
 import LanguageToggle from './LanguageToggle.vue'
 import AboutModal from './AboutModal.vue'
 import Breadcrumbs from './Breadcrumbs.vue'
 import { 
- 
   ShieldCheck, 
   RefreshCw, 
   Settings,
@@ -141,18 +180,31 @@ import {
   Check,
   AlertCircle,
   GitCompare,
-  Database
+  Database,
+  Download,
+  Folder,
+  Layers 
 } from 'lucide-vue-next'
+
+import { useUpdaterStore } from '@/stores/updater'
 
 const route = useRoute()
 const router = useRouter()
 const { t: $t } = useI18n()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
+const projectsStore = useProjectsStore()
+const updaterStore = useUpdaterStore()
 
+
+// About modal state
 // About modal state
 const showAbout = ref(false)
 const isRefreshing = ref(false)
+
+const handleUpdateClick = () => {
+   updaterStore.showModal = true
+}
 
 const isContextTesting = computed(() => {
   if (route.path === '/compare') {
@@ -232,6 +284,27 @@ const selectedPairId = computed({
 })
 
 const availablePairs = computed(() => connectionPairsStore.availablePairs)
+
+const selectedProjectModel = computed({
+  get: () => projectsStore.selectedProjectId,
+  set: (val: string) => {
+    if (val === '__NEW__') {
+       const newProject = projectsStore.addProject({
+          name: 'New Project',
+          description: '',
+          connectionIds: [],
+          pairIds: []
+       })
+       projectsStore.selectProject(newProject.id)
+       router.push('/projects')
+    } else {
+       projectsStore.selectedProjectId = val
+       if (val !== 'default') {
+          router.push('/projects') // Auto-navigate to project view on selection? Optional but nice.
+       }
+    }
+  }
+})
 
 const currentPageTitle = computed(() => {
   const routeNames: Record<string, string> = {

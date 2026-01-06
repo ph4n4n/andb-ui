@@ -81,6 +81,15 @@ declare global {
         send: (level: 'info' | 'warn' | 'error', message: string, data?: any) => Promise<void>
         write: (content: string) => Promise<void>
       }
+
+      updater: {
+        checkForUpdates: () => Promise<{ success: boolean; result?: any; error?: string }>
+        downloadUpdate: () => Promise<{ success: boolean; result?: any; error?: string }>
+        quitAndInstall: () => Promise<void>
+        debugTestUpdate: (status: string) => Promise<void>
+        onUpdateStatus: (callback: (response: any) => void) => void
+        offUpdateStatus: () => void
+      }
     }
   }
 }

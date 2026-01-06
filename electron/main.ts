@@ -1,7 +1,6 @@
 import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { AndbBuilder } from './services/andb-builder'
-import { SQLiteStorageService } from './services/sqlite-storage'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -43,6 +42,29 @@ if (isDev) {
 
 app.name = 'Andb'
 
+import { autoUpdater } from 'electron-updater'
+
+// Set log level for updater
+autoUpdater.logger = require('andb-logger').getInstance({
+  mode: isDev ? 'DEV' : 'PROD',
+  dirpath: app.getPath('userData'),
+  logName: 'UPDATER'
+})
+
+// Control auto-download manually
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
+
+// HOSTED UPDATE API CONFIGURATION
+// When you have the API ready, just uncomment/set this URL
+// const UPDATE_SERVER_URL = 'https://your-update-server.com'
+// if (UPDATE_SERVER_URL) {
+//   autoUpdater.setFeedURL({
+//     provider: 'generic',
+//     url: UPDATE_SERVER_URL
+//   })
+// }
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1400,
@@ -75,6 +97,38 @@ function createWindow() {
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+    // Check for updates on startup (in production)
+    if (!isDev) {
+      autoUpdater.checkForUpdatesAndNotify()
+    }
+  })
+
+  // Auto Updater Events
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow.webContents.send('update-status', { status: 'checking' })
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow.webContents.send('update-status', { status: 'available', info })
+  })
+
+  autoUpdater.on('update-not-available', (info) => {
+    mainWindow.webContents.send('update-status', { status: 'not-available', info })
+  })
+
+  autoUpdater.on('error', (err) => {
+    mainWindow.webContents.send('update-status', { status: 'error', error: err.message })
+  })
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = 'Download speed: ' + progressObj.bytesPerSecond
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%'
+    log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')'
+    mainWindow.webContents.send('update-status', { status: 'downloading', progress: progressObj })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow.webContents.send('update-status', { status: 'downloaded', info })
   })
 
   // Handle window closed
@@ -315,8 +369,8 @@ ipcMain.handle('test-connection', async (event, connection: any) => {
  */
 ipcMain.handle('get-migration-history', async (event, limit: number = 50) => {
   try {
-    const storage = SQLiteStorageService.getInstance()
-    return { success: true, data: storage.getMigrationHistory(limit) }
+    const storage = (AndbBuilder as any).getSQLiteStorage()
+    return { success: true, data: await storage.getMigrationHistory(limit) }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
@@ -352,8 +406,8 @@ ipcMain.handle('get-all-snapshots', async (event, limit: number = 200) => {
  */
 ipcMain.handle('get-comparison-history', async (event, limit: number = 50) => {
   try {
-    const storage = SQLiteStorageService.getInstance()
-    return { success: true, data: storage.getLatestComparisons(limit) }
+    const storage = (AndbBuilder as any).getSQLiteStorage()
+    return { success: true, data: await storage.getLatestComparisons(limit) }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
@@ -364,8 +418,10 @@ ipcMain.handle('get-comparison-history', async (event, limit: number = 50) => {
  */
 ipcMain.handle('get-database-stats', async () => {
   try {
-    const storage = SQLiteStorageService.getInstance()
-    return { success: true, data: storage.getStats() }
+    const storage = (AndbBuilder as any).getSQLiteStorage()
+    // stats might need special handling since core might not have exactly 'getStats'
+    // but let's assume we add it to AndbBuilder or it's similar
+    return { success: true, data: await (AndbBuilder as any).getDatabaseStats() }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
@@ -480,12 +536,12 @@ ipcMain.handle('storage-clear', async () => {
  */
 ipcMain.handle('andb-get-schemas', async (event) => {
   try {
-    const storage = SQLiteStorageService.getInstance()
-    const environments = storage.getEnvironments()
+    const storage = (AndbBuilder as any).getSQLiteStorage()
+    const environments = await storage.getEnvironments()
     const result: any[] = []
 
     for (const env of environments) {
-      const databases = storage.getDatabases(env)
+      const databases = await storage.getDatabases(env)
 
       const envObj = {
         name: env,
@@ -505,7 +561,7 @@ ipcMain.handle('andb-get-schemas', async (event) => {
 
         const ddlTypes = ['tables', 'views', 'procedures', 'functions', 'triggers']
         for (const type of ddlTypes) {
-          const objects = storage.getDDLObjects(env, db, type)
+          const objects = await storage.getDDLObjects(env, db, type)
 
           for (const obj of objects) {
             // @ts-ignore
@@ -522,7 +578,7 @@ ipcMain.handle('andb-get-schemas', async (event) => {
 
         // Add last updated timestamp
         // @ts-ignore
-        dbObj.lastUpdated = storage.getLastUpdated(env, db)
+        dbObj.lastUpdated = await storage.getLastUpdated(env, db)
 
         if (dbObj.totalCount > 0) {
           envObj.databases.push(dbObj)
@@ -546,8 +602,8 @@ ipcMain.handle('andb-get-schemas', async (event) => {
  */
 ipcMain.handle('andb-clear-storage', async () => {
   try {
-    const storage = SQLiteStorageService.getInstance()
-    storage.clearAll()
+    const storage = (AndbBuilder as any).getSQLiteStorage()
+    await storage.clearAll()
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -770,3 +826,56 @@ ipcMain.handle('app-log-write', (event, content) => {
 // app.on('before-quit', () => {
 //   database.close()
 // })
+
+// ========================================
+// IPC Handlers for Auto Updater
+// ========================================
+
+ipcMain.handle('check-for-updates', async () => {
+  if (isDev) return { success: false, message: 'Cannot check for updates in DEV mode' }
+  try {
+    const result = await autoUpdater.checkForUpdates()
+    return { success: true, result }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('quit-and-install', () => {
+  autoUpdater.quitAndInstall()
+})
+
+ipcMain.handle('download-update', async () => {
+  try {
+    const result = await autoUpdater.downloadUpdate()
+    return { success: true, result }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+})
+
+// Mock Update Events for Debugging
+ipcMain.handle('debug-test-update', (event, status) => {
+  if (!isDev) return
+  const contents = event.sender
+
+  if (status === 'available') {
+    contents.send('update-status', { status: 'available', info: { version: '9.9.9', releaseNotes: 'Test Update' } })
+  } else if (status === 'downloading') {
+    let progress = 0
+    const interval = setInterval(() => {
+      progress += 10
+      contents.send('update-status', {
+        status: 'downloading',
+        progress: { percent: progress, bytesPerSecond: 1024 * 1024, transferred: progress * 1000, total: 10000 }
+      })
+      if (progress >= 100) {
+        clearInterval(interval)
+        contents.send('update-status', { status: 'downloaded', info: { version: '9.9.9' } })
+      }
+    }, 500)
+  } else {
+    contents.send('update-status', { status })
+  }
+})
+

@@ -88,7 +88,7 @@
             ]"
             :title="$t('compare.runCompareTooltip')"
           >
-            <Zap v-if="!loading" class="w-4 h-4 fill-current" />
+            <GitCompare v-if="!loading" class="w-4 h-4" />
             <RefreshCw v-else class="w-4 h-4 animate-spin" />
             <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? $t('compare.comparing') : (appStore.buttonStyle === 'full' ? $t('compare.runCompare') : $t('compare.compare')) }}</span>
           </button>
@@ -327,7 +327,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 flex flex-col min-h-0 min-w-0">
                   <MirrorDiffView 
                     :source-ddl="selectedItem.diff?.source"
                     :target-ddl="selectedItem.diff?.target"
@@ -366,6 +366,7 @@
       :is-open="showDetailModal"
       :item="selectedItem"
       @close="closeDetailModal"
+      @apply="handleApplyFromDetail"
     />
 
     <MigrationConfirmModal
@@ -374,6 +375,8 @@
       :item="migratingItem"
       :source-name="sourceName"
       :target-name="targetName"
+      :sql-script="migrationSql"
+      :fetching-sql="fetchingMigrationSql"
       @close="showMigrateModal = false"
       @confirm="confirmMigration"
     />
@@ -382,6 +385,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import DDLDetailModal from '@/components/DDLDetailModal.vue'
 import MirrorDiffView from '@/components/MirrorDiffView.vue'
@@ -410,7 +414,8 @@ import {
   Search,
   List,
   GitMerge,
-  ArrowRightLeft
+  ArrowRightLeft,
+  GitCompare
 } from 'lucide-vue-next'
 import MigrationConfirmModal from '@/components/MigrationConfirmModal.vue'
 import { useOperationsStore } from '@/stores/operations'
@@ -429,6 +434,40 @@ const { t } = useI18n()
 const activePair = computed(() => connectionPairsStore.activePair)
 const sourceName = computed(() => activePair.value?.source?.name || 'Source')
 const targetName = computed(() => activePair.value?.target?.name || 'Target')
+
+const route = useRoute()
+const router = useRouter() // Ensure router is available
+
+// Deep Link Handling
+onMounted(async () => {
+    // Check for pairId in query
+    if (route.query.pairId) {
+        // Wait for store to load
+        if (connectionPairsStore.connectionPairs.length === 0) {
+            await connectionPairsStore.reloadData()
+        }
+        connectionPairsStore.selectPair(route.query.pairId as string)
+    }
+
+    // Check for action=new (Auto Run)
+    if (route.query.action === 'new') {
+        // If we have an active pair, run valid comparison immediately
+        if (activePair.value) {
+           runComparison(true)
+        } else {
+            // If no pair, we might want to prompt user to select one or create one
+            // For now, let's just show a notification
+            notificationStore.add({
+                type: 'info',
+                title: 'New Comparison',
+                message: 'Please select a Connection Pair to start comparison.'
+            })
+        }
+        
+        // Clean URL
+        router.replace({ query: { ...route.query, action: undefined } })
+    }
+})
 
 const viewMode = ref<'list' | 'tree'>('list')
 
@@ -475,6 +514,8 @@ const statusFilters = computed(() => [
 const isMigrating = ref(false)
 const showMigrateModal = ref(false)
 const migratingItem = ref<any>(null)
+const migrationSql = ref('')
+const fetchingMigrationSql = ref(false)
 const batchType = ref<string | null>(null)
 
 const hasChanges = (type: string) => {
@@ -737,7 +778,14 @@ const handleObjectSelected = (event: any) => {
     selectedItem.value = found
     // Ensure selected type matches the item type
     selectedFilterType.value = 'all' 
-    // Scroll selection into view if needed (optional)
+  } else {
+    // If NOT found, it might be because comparison hasn't run or item is new/missing
+    // Let's trigger a LOCAL comparison first to check cache
+    consoleStore.addLog(`Object ${name} not in current results. Triggering local comparison...`, 'info')
+    runComparison(false).then(() => {
+       const retryFound = allResults.value.find(i => i.name === name)
+       if (retryFound) selectedItem.value = retryFound
+    })
   }
 }
 
@@ -749,12 +797,13 @@ const handleCategorySelected = (event: any) => {
   // Clear diff view when category is selected
   selectedItem.value = null
   
-  // Optional: Auto-select first item if user prefers
-  /*
-  if (filteredResults.value.length > 0) {
-    selectedItem.value = filteredResults.value[0]
+  // If we have literally 0 results for this category after selection, 
+  // maybe we should auto-trigger a comparison?
+  const hasTypeResults = allResults.value.some(i => i.type.toLowerCase() === type.toLowerCase())
+  if (type !== 'all' && !hasTypeResults) {
+    consoleStore.addLog(`No results for ${type}. Auto-triggering comparison...`, 'info')
+    runComparison(false)
   }
-  */
 }
 
 const getStatusIcon = (status: string) => {
@@ -822,10 +871,115 @@ const closeDetailModal = () => {
 }
 
 // Migration Actions
-const openMigrateModal = (item: any) => {
+const openMigrateModal = async (item: any) => {
+  console.log('[Compare] openMigrateModal for item:', item.name, item.status)
+  consoleStore.addLog(`Preparing migration for ${item.name} (${item.type})...`, 'info')
+  
   migratingItem.value = item
   batchType.value = null
+  migrationSql.value = ''
   showMigrateModal.value = true
+  
+  // 1. If item already has generated DDL (from comparison), use it immediately!
+  const hasExistingDdl = item.ddl && (Array.isArray(item.ddl) ? item.ddl.length > 0 : !!item.ddl)
+  if (hasExistingDdl) {
+    console.log('[Compare] Using existing DDL from item:', item.ddl)
+    migrationSql.value = Array.isArray(item.ddl) ? item.ddl.join('\n') : item.ddl
+    consoleStore.addLog(`Using pre-generated SQL for ${item.name}`, 'success')
+    return
+  }
+
+  // 2. Otherwise, if it's an individual item, try to fetch/generate SQL
+  if (!item.isBatch && activePair.value) {
+    fetchingMigrationSql.value = true
+    try {
+      const { source, target } = activePair.value
+      let status: 'NEW' | 'UPDATED' | 'DEPRECATED' = 'NEW'
+      if (item.status === 'modified' || item.status === 'different' || item.status === 'updated') status = 'UPDATED'
+      if (item.status === 'deprecated' || item.status === 'missing_in_source') status = 'DEPRECATED'
+      
+      console.log('[Compare] Fetching dry-run SQL for:', item.name, 'with status:', status)
+      
+      const result = await Andb.migrate(source, target, {
+        type: item.type as any,
+        sourceEnv: source.environment,
+        targetEnv: target.environment,
+        name: item.name,
+        status: status,
+        dryRun: true // DRY RUN to get SQL
+      })
+      
+      console.log('[Compare] Dry run raw result:', result)
+      
+      let sql = ''
+      if (result !== null && result !== undefined && result !== '') {
+        // Robust parsing of dry-run result
+        if (typeof result === 'string') {
+          sql = result
+        } else if (typeof result === 'number') {
+          // If it's a number (like 0), it's probably NOT the SQL unless the SQL is just '0'
+          sql = '' 
+        } else if (Array.isArray(result)) {
+          sql = result.join('\n')
+        } else {
+          // Object results
+          const rawData = result.data || result
+          if (typeof rawData === 'string') {
+            sql = rawData
+          } else if (rawData.sql) {
+            sql = rawData.sql
+          } else if (rawData.script) {
+            sql = rawData.script
+          } else if (Array.isArray(rawData)) {
+            sql = rawData.join('\n')
+          } else if (rawData.ddl) {
+            sql = Array.isArray(rawData.ddl) ? rawData.ddl.join('\n') : rawData.ddl
+          }
+        }
+      }
+      
+      migrationSql.value = sql
+      
+      if (migrationSql.value) {
+        consoleStore.addLog(`Successfully fetched SQL preview for ${item.name}`, 'success')
+      } else {
+        console.log('[Compare] Dry run returned no content. Trying fallbacks...')
+        consoleStore.addLog(`No direct SQL from dry-run for ${item.name}, checking fallbacks...`, 'info')
+      }
+      
+      // Extended Fallbacks
+      if (!migrationSql.value) {
+        // PRIORITY 1: Use pre-generated ALTER ddl from item (from comparison result)
+        const cachedAlter = item.ddl && (Array.isArray(item.ddl) ? item.ddl.join('\n') : item.ddl)
+        if (status === 'UPDATED' && cachedAlter) {
+          console.log('[Compare] Fallback: Using cached ALTER statement from comparison')
+          migrationSql.value = cachedAlter
+        } 
+        // PRIORITY 2: New items get Source DDL
+        else if (status === 'NEW' && item.diff?.source) {
+          console.log('[Compare] Fallback: Using Source DDL for NEW item')
+          migrationSql.value = Array.isArray(item.diff.source) ? item.diff.source.join('\n') : item.diff.source
+        } 
+        // PRIORITY 3: Deprecated items get DROP
+        else if (status === 'DEPRECATED') {
+          console.log('[Compare] Fallback: Generating DROP for DEPRECATED item')
+          const objectType = item.type.toLowerCase().replace(/s$/, '').toUpperCase()
+          migrationSql.value = `DROP ${objectType} IF EXISTS \`${item.name}\`;`
+        } 
+        // PRIORITY 4: Worst case fallback for UPDATED (Show warning and Source DDL)
+        else if (status === 'UPDATED' && item.diff?.source) {
+          console.log('[Compare] Fallback: No ALTER found, showing Source DDL as warning')
+          const sourceCode = Array.isArray(item.diff.source) ? item.diff.source.join('\n') : item.diff.source
+          migrationSql.value = `-- Warning: No ALTER script generated. Displaying new full DDL:\n\n${sourceCode}`
+        }
+      }
+    } catch (e: any) {
+      console.error('Failed to fetch migration SQL preview:', e)
+      consoleStore.addLog(`Error fetching preview: ${e.message}`, 'error')
+    } finally {
+      fetchingMigrationSql.value = false
+    }
+  }
 }
 
 const openBatchMigrateModal = (type: string) => {
@@ -855,6 +1009,27 @@ const openBatchMigrateModal = (type: string) => {
     isBatch: true,
     items: itemsToMigrate
   }
+  
+  // Populate migration SQL for batch preview
+  migrationSql.value = itemsToMigrate.map(i => {
+    let sql = Array.isArray(i.ddl) ? i.ddl.join('\n') : i.ddl
+    
+    // Fallback for New items
+    const isNew = i.status === 'new' || i.status === 'missing_in_target'
+    if (!sql && isNew && i.diff?.source) {
+       sql = Array.isArray(i.diff.source) ? i.diff.source.join('\n') : i.diff.source
+    }
+    
+    // Fallback for Deprecated items
+    const isDeprecated = i.status === 'deprecated' || i.status === 'missing_in_source'
+    if (!sql && isDeprecated) {
+       const objectType = i.type.toLowerCase().replace(/s$/, '').toUpperCase()
+       sql = `DROP ${objectType} IF EXISTS \`${i.name}\`;`
+    }
+
+    return `-- OBJECT: ${i.name} (${i.type})\n${sql || '-- No SQL script available'}`
+  }).join('\n\n')
+
   showMigrateModal.value = true
 }
 
@@ -1057,10 +1232,49 @@ const applyAtomicVerify = async (item: any) => {
   }
 }
 
+const handleApplyFromDetail = (item: any) => {
+  showDetailModal.value = false
+  openMigrateModal(item)
+}
+
+const handleDatabaseRefreshRequested = (e: any) => {
+  const { env } = e.detail
+  if (activePair.value && (activePair.value.sourceEnv === env || activePair.value.targetEnv === env)) {
+    runComparison(true)
+  }
+}
+
+const handleCategoryRefreshRequested = (e: any) => {
+  const { type, env } = e.detail
+  if (activePair.value && (activePair.value.sourceEnv === env || activePair.value.targetEnv === env)) {
+    selectedFilterType.value = type
+    runComparison(true)
+  }
+}
+
+const handleObjectRefreshRequested = (e: any) => {
+  const { name, type, env } = e.detail
+  if (activePair.value && (activePair.value.sourceEnv === env || activePair.value.targetEnv === env)) {
+    // Select it first so runComparison(true) knows what to refresh atomically
+    const normalizedType = type.endsWith('s') ? type : type + 's'
+    const item = allResults.value.find(i => i.name === name && i.type === normalizedType)
+    if (item) {
+      selectedItem.value = item
+    } else {
+      // If not in local results, at least set the search/filter so it might appear
+      selectedFilterType.value = normalizedType
+    }
+    runComparison(true)
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   window.addEventListener('category-selected', handleCategorySelected as any)
   window.addEventListener('object-selected', handleObjectSelected as any)
+  window.addEventListener('database-refresh-requested', handleDatabaseRefreshRequested as any)
+  window.addEventListener('category-refresh-requested', handleCategoryRefreshRequested as any)
+  window.addEventListener('object-refresh-requested', handleObjectRefreshRequested as any)
   
   // Trigger local comparison on init (fetch from DB is manual)
   if (activePair.value) {
@@ -1071,6 +1285,17 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('category-selected', handleCategorySelected as any)
   window.removeEventListener('object-selected', handleObjectSelected as any)
+  window.removeEventListener('database-refresh-requested', handleDatabaseRefreshRequested as any)
+  window.removeEventListener('category-refresh-requested', handleCategoryRefreshRequested as any)
+  window.removeEventListener('object-refresh-requested', handleObjectRefreshRequested as any)
+})
+
+// Auto-run comparison when sidebar refresh is clicked (Top refresh button)
+watch(() => sidebarStore.refreshRequestKey, () => {
+  if (route.path === '/compare' && activePair.value) {
+    consoleStore.addLog('Sidebar refresh requested: Fetching from DB...', 'info')
+    runComparison(true)
+  }
 })
 
 // Auto-load or Auto-compare on pair change

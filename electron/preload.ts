@@ -141,5 +141,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('restore-snapshot', connection, snapshot)
   },
   // Load mock compare data for testing
-  loadMockCompareData: () => ipcRenderer.invoke('load-mock-compare-data')
+  loadMockCompareData: () => ipcRenderer.invoke('load-mock-compare-data'),
+
+  // Auto Updater
+  updater: {
+    checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+    downloadUpdate: () => ipcRenderer.invoke('download-update'),
+    quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+    debugTestUpdate: (status: string) => ipcRenderer.invoke('debug-test-update', status),
+    onUpdateStatus: (callback: (response: any) => void) => {
+      ipcRenderer.on('update-status', (event, response) => callback(response))
+    },
+    offUpdateStatus: () => {
+      ipcRenderer.removeAllListeners('update-status')
+    }
+  }
 })

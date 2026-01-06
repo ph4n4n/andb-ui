@@ -117,13 +117,52 @@
                   </div>
                 </div>
 
-                <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/30 flex items-start mb-6">
+                <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/30 flex items-start mb-4">
                   <AlertTriangle class="w-4 h-4 text-amber-500 mr-2 shrink-0 mt-0.5" />
                   <div class="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
                     {{ $t('migration.warning') }}
                     <div class="mt-1 font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1">
                       <History class="w-3 h-3" />
                       {{ $t('migration.snapshotNote') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SQL Preview Section -->
+                <div class="mb-6">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                      <Terminal class="w-3 h-3" />
+                      {{ $t('migration.sqlPreview') }}
+                    </span>
+                    <button 
+                      v-if="sqlScript && !fetchingSql"
+                      @click="copySql"
+                      class="text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                    >
+                      <component :is="copied ? Check : Copy" class="w-3 h-3" />
+                      {{ copied ? $t('common.copied') : $t('common.copy') }}
+                    </button>
+                  </div>
+                  <div class="relative rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50 flex flex-col shadow-inner">
+                    <div v-if="fetchingSql" class="flex-1 flex flex-col items-center justify-center p-12 text-gray-500">
+                      <RefreshCw class="w-8 h-8 animate-spin mb-3 opacity-40 text-primary-500" />
+                      <span class="text-[10px] uppercase tracking-widest font-bold animate-pulse">{{ $t('common.loading') }}</span>
+                    </div>
+                    <div v-else-if="sqlScript" class="max-h-[320px] min-h-[120px] overflow-hidden relative transition-all duration-300 flex flex-col">
+                      <DDLViewer 
+                        :content="sqlScript" 
+                        :font-size="appStore.fontSizes.code - 1" 
+                        :font-family="appStore.fontFamilies.code"
+                        :show-line-numbers="true"
+                        class="bg-white dark:bg-gray-950 flex-1"
+                      />
+                    </div>
+                    <div v-else class="flex-1 flex flex-col items-center justify-center p-10 text-gray-400 italic text-[11px] bg-gray-100/30 dark:bg-gray-800/20">
+                      <div class="mb-3 opacity-10">
+                        <Terminal class="w-12 h-12" />
+                      </div>
+                      <span class="max-w-[200px] text-center">{{ $t('migration.noPreview') }}</span>
                     </div>
                   </div>
                 </div>
@@ -159,8 +198,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAppStore } from '@/stores/app'
+import DDLViewer from '@/components/DDLViewer.vue'
 import {
   Dialog,
   DialogPanel,
@@ -180,10 +221,14 @@ import {
   Trash2,
   PlusCircle,
   FileEdit,
-  History
+  History,
+  Terminal,
+  Copy,
+  Check
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
+const appStore = useAppStore()
 
 const props = defineProps<{
   isOpen: boolean
@@ -191,7 +236,17 @@ const props = defineProps<{
   item: any
   sourceName: string
   targetName: string
+  sqlScript?: string
+  fetchingSql?: boolean
 }>()
+
+const copied = ref(false)
+const copySql = () => {
+  if (!props.sqlScript) return
+  navigator.clipboard.writeText(props.sqlScript)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
+}
 
 defineEmits(['close', 'confirm'])
 

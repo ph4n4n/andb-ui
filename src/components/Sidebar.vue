@@ -50,7 +50,7 @@
     <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0" :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px', fontWeight: 'bold' }">
       <span>{{ route.path === '/compare' ? $t('navigation.explorer.source') : (route.path === '/history' ? $t('navigation.explorer.history') : $t('navigation.explorer.schema')) }}</span>
       <div class="flex items-center space-x-1">
-        <button @click="refreshSchemas" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.refresh')">
+        <button @click="sidebarStore.requestRefresh()" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.refresh')">
           <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
         </button>
         <button @click="expandAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.expandAll')">
@@ -64,16 +64,17 @@
 
     <!-- Tree Content -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-white dark:bg-gray-900">
-      <!-- Loading State -->
-      <div v-if="loading" class="p-4 space-y-2 opacity-50">
-        <div class="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
-        <div class="h-4 bg-gray-700 rounded animate-pulse w-1/2"></div>
-        <div class="h-4 bg-gray-700 rounded animate-pulse w-2/3"></div>
+      <!-- Loading State (Only if no data or requested refresh) -->
+      <div v-if="sidebarStore.loading && sidebarStore.environments.length === 0" class="p-4 space-y-2 opacity-50">
+        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
+        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
       </div>
 
-      <!-- Tree Roots (Environments) -->
+      <!-- Tree Content (Always show if has data, even while loading in background) -->
       <div v-else class="pb-4">
         <div v-for="env in filteredEnvironments" :key="env.name">
+
           <!-- Environment Node -->
           <div 
             class="group/env flex items-center h-7 px-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
@@ -239,14 +240,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
-import Andb from '@/utils/andb'
 import { useSidebarStore } from '@/stores/sidebar'
+import { useProjectsStore } from '@/stores/projects'
+
 import { 
   Home, 
   Database,
   GitCompare, 
   History,
-  Settings, 
   RefreshCw, 
   ChevronRight,
   Table,
@@ -257,6 +258,7 @@ import {
   Server,
   Folder,
   FolderOpen,
+
   MinusSquare,
   PlusSquare
 } from 'lucide-vue-next'
@@ -267,26 +269,35 @@ const router = useRouter()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
 const sidebarStore = useSidebarStore()
+const projectsStore = useProjectsStore()
+
 
 const isCollapsed = computed(() => appStore.sidebarCollapsed)
 const activePair = computed(() => connectionPairsStore.activePair)
 
 // Navigation Items
-const navItems = computed(() => [
-  { name: t('common.dashboard'), path: '/', icon: Home },
-  { name: t('common.schema'), path: '/schema', icon: Database },
-  { name: t('common.compare'), path: '/compare', icon: GitCompare },
-  { name: t('common.history'), path: '/history', icon: History },
-  { name: t('common.settings'), path: '/settings', icon: Settings },
-])
+// Navigation Items
+const navItems = computed(() => {
+  const items = [
+    { name: t('common.dashboard'), path: '/', icon: Home },
+    { name: t('projects.title'), path: '/projects', icon: Folder },
+    { name: t('common.schema'), path: '/schema', icon: Database },
+    { name: t('common.compare'), path: '/compare', icon: GitCompare },
+    { name: t('common.history'), path: '/history', icon: History },
+    { name: t('settings.project_settings'), path: '/project-settings', icon: Layers }, 
+  ]
+  return items.filter(i => i.path !== '/projects')
+})
 
 // Schema Tree State
-const loading = ref(false)
-const environments = ref<any[]>([])
-const expandedEnvironments = ref(new Set<string>())
-const expandedDatabases = ref(new Set<string>())
-const expandedTypes = ref(new Set<string>())
+const environments = computed(() => sidebarStore.environments)
+const loading = computed(() => sidebarStore.loading)
+
+const expandedEnvironments = computed(() => sidebarStore.expandedEnvironments)
+const expandedDatabases = computed(() => sidebarStore.expandedDatabases)
+const expandedTypes = computed(() => sidebarStore.expandedTypes)
 const selectedObjectId = ref<string | null>(null)
+
 
 const isCompareView = computed(() => route.path === '/compare')
 
@@ -473,11 +484,12 @@ const refreshObject = (env: string, db: string, type: string, name: string) => {
   window.dispatchEvent(new CustomEvent('object-refresh-requested', { detail: { env, db, type, name } }))
 }
 
-const refreshSchemas = async () => {
-  loading.value = true
+const refreshSchemas = async (force = false) => {
   try {
-    const result = await Andb.getSchemas() // Schema data from SQLite
-    const conns = appStore.connections // All configured connections
+    const result = await sidebarStore.loadSchemas(force)
+    if (!result) return
+
+    const conns = appStore.filteredConnections || [] // Connections for current project
     
     // Group by environment
     const envMap = new Map<string, any>()
@@ -525,18 +537,18 @@ const refreshSchemas = async () => {
       })
     }
     
-    environments.value = Array.from(envMap.values())
+    const finalEnvs = Array.from(envMap.values())
+    sidebarStore.setEnvironments(finalEnvs)
     
     // Auto-expand all environments by default to show connections
-    environments.value.forEach(env => expandedEnvironments.value.add(env.name))
+    finalEnvs.forEach(env => expandedEnvironments.value.add(env.name))
   } catch (error: any) {
     if (window.electronAPI) {
       window.electronAPI.log.send('error', 'Failed to load schemas in sidebar', error.message)
     }
-  } finally {
-    loading.value = false
   }
 }
+
 
 // Watch for active pair changes to auto-expand
 watch(activePair, (newPair) => {
@@ -546,12 +558,22 @@ watch(activePair, (newPair) => {
 }, { immediate: true })
 
 watch(() => appStore.connections, () => {
-  refreshSchemas()
-}, { deep: true, immediate: true })
+  refreshSchemas(true)
+}, { deep: true })
 
 watch(() => sidebarStore.refreshKey, () => {
-  refreshSchemas()
+  refreshSchemas(false) // Use cache if available
 })
+
+watch(() => sidebarStore.refreshRequestKey, () => {
+  refreshSchemas(true) // Force fetch from DB
+})
+
+watch(() => projectsStore.selectedProjectId, () => {
+  refreshSchemas(false) // Just regroup the connections
+})
+
+
 
 onMounted(() => {
   refreshSchemas()

@@ -3,7 +3,65 @@
     <!-- Dashboard Content -->
     <main class="flex-1 p-6 overflow-y-auto">
       <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <!-- Header & Quick Actions -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div class="flex flex-col gap-1">
+            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {{ isGlobalView ? $t('dashboard.title') : currentProject?.name }}
+            </h1>
+            <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">
+              {{ isGlobalView ? $t('dashboard.subtitle') : $t('dashboard.projectDashboard') }}
+            </p>
+          </div>
+
+          <!-- Project Quick Actions -->
+          <div v-if="!isGlobalView" class="flex items-center gap-3">
+             <button 
+                @click="navigateTo('/projects')"
+                class="group flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 text-gray-700 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
+             >
+                <div class="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-primary-500/10 transition-colors duration-300">
+                  <ArrowLeft class="w-3.5 h-3.5" />
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('common.back') }}</span>
+             </button>
+             <button 
+                @click="navigateTo('/settings?tab=connections&action=new')"
+                class="group flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all duration-200"
+             >
+                <div class="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
+                  <Plus class="w-3.5 h-3.5 text-white" />
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.addConnection') }}</span>
+             </button>
+          </div>
+
+          <div v-else class="flex items-center gap-3">
+             <!-- Quick Action: New Connection -->
+             <button 
+                @click="navigateTo('/settings?tab=connections&action=new')"
+                class="group flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all duration-200"
+             >
+                <div class="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
+                  <Plus class="w-3.5 h-3.5 text-white" />
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.newConnection') }}</span>
+             </button>
+
+             <!-- Quick Action: New Comparison -->
+             <button 
+                @click="navigateTo('/settings?tab=pairs&action=new')"
+                class="group flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
+             >
+                <div class="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-purple-500/10 transition-colors duration-300">
+                  <GitCompare class="w-3.5 h-3.5" />
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.newComparison') }}</span>
+             </button>
+          </div>
+        </div>
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 hidden">
           <div class="flex flex-col gap-1">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
               {{ $t('dashboard.title') }}
@@ -242,7 +300,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
-                  <tr v-for="pair in connectionPairs" :key="pair.id" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group">
+                  <tr v-for="pair in displayedPairs" :key="pair.id" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group">
                     <td class="py-4 px-6">
                       <div class="flex flex-col gap-0.5">
                         <div class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-primary-500 transition-colors">{{ pair.name }}</div>
@@ -273,8 +331,8 @@
                   </tr>
                 </tbody>
               </table>
-              <div v-if="connectionPairs.length === 0" class="p-12 text-center text-gray-400 uppercase tracking-widest text-xs font-black italic">
-                {{ $t('dashboard.noSyncMappings') }}
+              <div v-if="displayedPairs.length === 0" class="p-12 text-center text-gray-400 uppercase tracking-widest text-xs font-black italic">
+                {{ isGlobalView ? $t('dashboard.noSyncMappings') : $t('dashboard.noProjectMappings') }}
               </div>
             </div>
           </div>
@@ -340,15 +398,19 @@ import {
   CheckCircle,
   FileCode,
   Clock,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Plus,
+  ArrowLeft
 } from 'lucide-vue-next'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAppStore } from '@/stores/app'
+import { useProjectsStore } from '@/stores/projects'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useOperationsStore } from '@/stores/operations'
 
 const router = useRouter()
 const appStore = useAppStore()
+const projectsStore = useProjectsStore()
 const connectionPairsStore = useConnectionPairsStore()
 const operationsStore = useOperationsStore()
 
@@ -373,12 +435,30 @@ const loadSampleData = async () => {
 }
 
 // Computed properties
-const totalConnections = computed(() => appStore.connections.length)
-const connectedCount = computed(() => appStore.connections.filter(c => c.status === 'connected').length)
-const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
-const connectionPairs = computed(() => connectionPairsStore.connectionPairs)
-const totalPairs = computed(() => connectionPairs.value.length)
-const activePairs = computed(() => connectionPairs.value.filter(p => p.status === 'success').length)
+const isGlobalView = computed(() => !projectsStore.selectedProjectId || projectsStore.selectedProjectId === 'default')
+const currentProject = computed(() => projectsStore.currentProject)
+
+const displayedConnections = computed(() => {
+  if (isGlobalView.value) return appStore.connections
+  return appStore.connections.filter(c => currentProject.value?.connectionIds.includes(c.id))
+})
+
+const displayedPairs = computed(() => {
+  if (isGlobalView.value) return connectionPairsStore.connectionPairs
+  return connectionPairsStore.connectionPairs.filter(p => currentProject.value?.pairIds.includes(p.id))
+})
+
+const totalConnections = computed(() => displayedConnections.value.length)
+const connectedCount = computed(() => displayedConnections.value.filter(c => c.status === 'connected').length)
+const enabledEnvironments = computed(() => {
+  // Filter environments present in displayed connections
+  const envs = new Set(displayedConnections.value.map(c => c.environment))
+  return connectionPairsStore.enabledEnvironments.filter(e => envs.has(e.name))
+})
+
+// const connectionPairs is replaced by displayedPairs
+const totalPairs = computed(() => displayedPairs.value.length)
+const activePairs = computed(() => displayedPairs.value.filter(p => p.status === 'success').length)
 const operationsToday = computed(() => operationsStore.operationsToday)
 const lastOperationTime = computed(() => {
   const recent = operationsStore.recentOperations[0]

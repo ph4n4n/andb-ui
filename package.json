@@ -63,6 +63,31 @@
     "vue-tsc": "^3.0.5",
     "wait-on": "^8.0.4"
   },
+  "build": {
+    "appId": "com.anph.andb",
+    "productName": "Andb",
+    "copyright": "Copyright © 2026 ph4n4n",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ph4n4n",
+        "repo": "andb-ui"
+      }
+    ]
+  },
   "dependencies": {
     "@andb/core": "file:../andb-core",
     "@headlessui/vue": "^1.7.23",
@@ -71,6 +96,7 @@
     "andb-logger": "^1.0.3",
     "better-sqlite3": "^12.4.1",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.6.2",
     "lucide-vue-next": "^0.294.0",
     "mysql2": "^3.15.3",
     "pinia": "^2.1.7",

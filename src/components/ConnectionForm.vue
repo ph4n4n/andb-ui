@@ -1,5 +1,75 @@
 <template>
   <div class="space-y-6">
+    <!-- Template Selection -->
+    <div class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/30">
+        <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <LayoutTemplate class="w-4 h-4" />
+            {{ $t('connections.template.source') }}
+        </label>
+        <div class="flex items-center gap-4">
+            <div class="relative flex-1">
+                <select
+                v-model="form.templateId"
+                class="w-full px-4 py-3 pl-10 text-sm border border-indigo-200 dark:border-indigo-800 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none outline-none font-medium"
+                >
+                <option value="">{{ $t('connections.template.custom') }}</option>
+                <option v-for="t in templates" :key="t.id" :value="t.id">
+                    {{ t.name }} ({{ t.host }})
+                </option>
+                </select>
+                <div v-if="form.templateId" class="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none">
+                    <Lock class="w-4 h-4" />
+                </div>
+                 <div v-else class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <Unlink class="w-4 h-4" />
+                </div>
+                <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+            
+             <button 
+                v-if="form.templateId"
+                @click="detachTemplate"
+                class="px-4 py-3 bg-white dark:bg-gray-800 text-gray-500 hover:text-red-500 border border-gray-200 dark:border-gray-700 hover:border-red-200 rounded-xl transition-all shadow-sm"
+                :title="$t('connections.template.detach')"
+             >
+                <Unlink class="w-4 h-4" />
+             </button>
+
+             <div v-else class="flex items-center gap-2">
+                 <div v-if="showTemplateCreate" class="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
+                    <input 
+                        v-model="newTemplateName"
+                        type="text" 
+                        :placeholder="$t('connections.template.namePrompt')"
+                        class="px-3 py-3 w-40 text-sm border border-indigo-200 dark:border-indigo-800 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        @keyup.enter="confirmcreateTemplate"
+                        @keyup.esc="cancelTemplateCreation"
+                        autoFocus
+                    />
+                    <button @click="confirmcreateTemplate" class="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all">
+                        <Check class="w-4 h-4" />
+                    </button>
+                     <button @click="cancelTemplateCreation" class="p-3 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl transition-all">
+                        <X class="w-4 h-4" />
+                    </button>
+                 </div>
+                 
+                 <button 
+                    v-else
+                    @click="startTemplateCreation"
+                    class="px-4 py-3 bg-white dark:bg-gray-800 text-indigo-500 hover:text-indigo-600 border border-gray-200 dark:border-gray-700 hover:border-indigo-200 rounded-xl transition-all shadow-sm flex items-center gap-2"
+                    :title="$t('connections.template.createFromDesc')"
+                 >
+                    <LayoutTemplate class="w-4 h-4" />
+                    <span class="text-xs font-bold whitespace-nowrap">{{ $t('connections.template.createFrom') }}</span>
+                 </button>
+             </div>
+        </div>
+        <p class="text-[10px] text-indigo-400 dark:text-indigo-500 mt-2 font-medium" v-if="form.templateId">
+            {{ $t('connections.template.inheritedDesc') }}
+        </p>
+    </div>
+
     <!-- Basic Connection Info -->
     <div class="space-y-6">
       <div class="pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -50,27 +120,53 @@
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="space-y-2">
+          <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.databaseType') }} *</label>
+          <div class="relative group">
+             <select
+              v-model="form.type"
+              :disabled="isInherited"
+              class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="mysql">{{ $t('connections.types.mysql') }}</option>
+              <option value="postgres" disabled>{{ $t('connections.types.postgres') }}</option>
+              <option value="sqlite" disabled>{{ $t('connections.types.sqlite') }}</option>
+            </select>
+             <ChevronDown v-if="!isInherited" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-primary-500 transition-colors" />
+             <Lock v-else class="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+
         <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.host') }} *</label>
-          <input
-            v-model="form.host"
-            type="text"
-            :placeholder="$t('connections.hostPlaceholder')"
-            class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
-            :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.host }"
-          />
+          <div class="relative">
+            <input
+                v-model="form.host"
+                type="text"
+                :disabled="isInherited"
+                :placeholder="$t('connections.hostPlaceholder')"
+                class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.host }"
+            />
+            <Lock v-if="isInherited" class="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
           <p v-if="errors.host" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.host }}</p>
         </div>
 
         <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.port') }} *</label>
-          <input
-            v-model.number="form.port"
-            type="number"
-            :placeholder="$t('connections.portPlaceholder')"
-            class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
-            :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.port }"
-          />
+          <div class="relative">
+            <input
+                v-model.number="form.port"
+                type="number"
+                :disabled="isInherited"
+                :placeholder="$t('connections.portPlaceholder')"
+                class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.port }"
+            />
+             <Lock v-if="isInherited" class="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+           </div>
           <p v-if="errors.port" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.port }}</p>
         </div>
 
@@ -88,13 +184,17 @@
 
         <div class="space-y-2">
           <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{{ $t('connections.username') }} *</label>
-          <input
-            v-model="form.username"
-            type="text"
-            :placeholder="$t('connections.usernamePlaceholder')"
-            class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
-            :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.username }"
-          />
+          <div class="relative">
+            <input
+                v-model="form.username"
+                type="text"
+                :disabled="isInherited"
+                :placeholder="$t('connections.usernamePlaceholder')"
+                class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                :class="{ 'border-red-500 ring-4 ring-red-500/10': errors.username }"
+            />
+            <Lock v-if="isInherited" class="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
           <p v-if="errors.username" class="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">{{ errors.username }}</p>
         </div>
 
@@ -104,10 +204,13 @@
             <input
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
-              :placeholder="$t('connections.passwordPlaceholder')"
-              class="w-full px-4 py-3 pr-12 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+              :disabled="isInherited"
+              :placeholder="isInherited ? '••••••••' : $t('connections.passwordPlaceholder')"
+              class="w-full px-4 py-3 pr-12 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
             />
+             <Lock v-if="isInherited" class="absolute right-12 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
             <button
+              v-if="!isInherited"
               @click="showPassword = !showPassword"
               type="button"
               class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 transition-colors"
@@ -262,15 +365,23 @@ import {
   ShieldQuestion, 
   Loader, 
   ShieldCheck, 
-  XCircle 
+  XCircle,
+  LayoutTemplate,
+  Unlink,
+  Lock,
+  Check,
+  X
 } from 'lucide-vue-next'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useConnectionTemplatesStore } from '@/stores/connectionTemplates'
 import type { DatabaseConnection } from '@/stores/app'
 
 const { t: $t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
+const templatesStore = useConnectionTemplatesStore()
 
 const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
+const templates = computed(() => templatesStore.templates)
 
 interface Props {
   connection?: DatabaseConnection
@@ -298,7 +409,9 @@ const form = ref({
   useSSL: false,
   allowSelfSigned: false,
   charset: 'utf8mb4',
-  timezone: '+00:00'
+  timezone: '+00:00',
+  type: 'mysql',
+  templateId: ''
 })
 
 // UI state
@@ -307,6 +420,8 @@ const showAdvanced = ref(false)
 const isTesting = ref(false)
 const isSaving = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
+const showTemplateCreate = ref(false)
+const newTemplateName = ref('')
 
 // Validation errors
 const errors = ref<Record<string, string>>({})
@@ -325,8 +440,71 @@ if (props.connection) {
     useSSL: false,
     allowSelfSigned: false,
     charset: 'utf8mb4',
-    timezone: '+00:00'
+    timezone: '+00:00',
+    type: props.connection.type || 'mysql',
+    templateId: props.connection.templateId || ''
   }
+}
+
+// Template Handling
+const selectedTemplate = computed(() => {
+  return templates.value.find(t => t.id === form.value.templateId)
+})
+
+const isInherited = computed(() => !!selectedTemplate.value)
+
+// Watch template selection
+watch(() => form.value.templateId, (newId) => {
+  const template = templates.value.find(t => t.id === newId)
+  if (template) {
+    // Apply template values
+    form.value.host = template.host
+    form.value.port = template.port
+    form.value.username = template.username
+    form.value.password = template.password || ''
+    form.value.type = template.type
+    // Clear errors for these fields as they are now valid/managed
+    delete errors.value.host
+    delete errors.value.port
+    delete errors.value.username
+  }
+})
+
+// Detach from template
+const detachTemplate = () => {
+  form.value.templateId = ''
+  // Values remain as they were, but now editable
+}
+
+// Start template creation flow
+const startTemplateCreation = () => {
+    newTemplateName.value = form.value.name + ' Template'
+    showTemplateCreate.value = true
+}
+
+// Cancel template creation
+const cancelTemplateCreation = () => {
+    showTemplateCreate.value = false
+    newTemplateName.value = ''
+}
+
+// Confirm creation
+const confirmcreateTemplate = () => {
+  if (!newTemplateName.value.trim()) return
+
+  const newTemplateData = {
+    name: newTemplateName.value,
+    host: form.value.host,
+    port: form.value.port,
+    username: form.value.username,
+    password: form.value.password,
+    type: form.value.type as 'mysql' | 'postgres' | 'sqlite'
+  }
+
+  const newTemplate = templatesStore.addTemplate(newTemplateData)
+  form.value.templateId = newTemplate.id
+  
+  cancelTemplateCreation()
 }
 
 // Validation
@@ -377,6 +555,10 @@ const testConnection = async () => {
   testResult.value = null
   
   try {
+    // Determine which credentials to use for testing
+    // If inherit, use template (though form should already have them)
+    // Actually, form handles the values directly, so we just use form vals.
+    
     // Simulate connection test
     await new Promise(resolve => setTimeout(resolve, 2000))
     
@@ -412,7 +594,9 @@ const saveConnection = async () => {
       username: form.value.username,
       password: form.value.password || undefined,
       environment: form.value.environment as 'DEV' | 'STAGE' | 'UAT' | 'PROD',
-      status: 'testing'
+      status: 'testing',
+      type: form.value.type as 'mysql' | 'postgres' | 'sqlite',
+      templateId: form.value.templateId || undefined
     }
     
     emit('save', connectionData)

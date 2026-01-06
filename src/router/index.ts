@@ -29,9 +29,19 @@ const routes = [
     component: () => import('@/views/Settings.vue')
   },
   {
+    path: '/project-settings',
+    name: 'ProjectSettings',
+    component: () => import('@/views/ProjectSettings.vue')
+  },
+  {
     path: '/history',
     name: 'History',
     component: () => import('@/views/History.vue')
+  },
+  {
+    path: '/projects',
+    name: 'Projects',
+    component: () => import('@/views/Projects.vue')
   }
 ]
 

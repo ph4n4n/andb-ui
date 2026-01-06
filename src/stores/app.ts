@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { Andb } from '@/utils/andb'
 import { storage } from '../utils/storage-ipc'
+import { useProjectsStore } from './projects'
+
 
 export interface DatabaseConnection {
   id: string
@@ -18,6 +20,8 @@ export interface DatabaseConnection {
     from: string  // e.g., '@dev.example.com'
     to: string    // e.g., '@prod.example.com'
   }
+  type?: 'mysql' | 'postgres' | 'sqlite'
+  templateId?: string // Optional link to a ConnectionTemplate
 }
 
 export interface ConnectionPair {
@@ -176,8 +180,23 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const getConnectionsByEnvironment = computed(() => {
-    return (env: string) => connections.value.filter(conn => conn.environment === env)
+    return (env: string) => filteredConnections.value.filter(conn => conn.environment === env)
   })
+
+  const filteredConnections = computed(() => {
+    const projectsStore = useProjectsStore()
+    const project = projectsStore.currentProject
+
+    // Default project or no project selected -> show all
+    if (!project || project.id === 'default') {
+      return connections.value
+    }
+
+    // Specific project -> filter by IDs (even if empty)
+    return connections.value.filter(conn => project.connectionIds.includes(conn.id))
+  })
+
+
 
   const isPairValid = computed(() => {
     return currentPair.value.source && currentPair.value.target
@@ -267,6 +286,7 @@ export const useAppStore = defineStore('app', () => {
       id: Date.now().toString()
     }
     connections.value.push(newConnection)
+    return newConnection
   }
 
   const updateConnection = (id: string, updates: Partial<DatabaseConnection>) => {
@@ -376,7 +396,9 @@ export const useAppStore = defineStore('app', () => {
     fontFamilies,
     fontSizeProfile,
     connections,
+    filteredConnections,
     currentPair,
+
     selectedConnectionId,
 
     // Getters

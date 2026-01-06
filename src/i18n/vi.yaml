@@ -19,7 +19,9 @@ common:
   delete: 'Xóa'
   edit: 'Sửa'
   add: 'Thêm'
+  create: 'Tạo'
   test: 'Kiểm tra'
+
   refresh: 'Làm mới'
   loading: 'Đang tải...'
   error: 'Lỗi'
@@ -35,8 +37,12 @@ common:
   showing: 'Hiển thị {from} đến {to} trong tổng số {total} kết quả'
   page: 'Trang {current} / {total}'
   close: 'Đóng'
+  copy: 'Sao chép'
+  copied: 'Đã sao chép'
   tooltips:
     refreshSchema: 'Buộc làm mới Lược đồ'
+    refreshCategory: 'Buộc làm mới Danh mục'
+    refreshObject: 'Buộc làm mới Đối tượng'
   status:
     identical: 'Giống nhau'
     modified: 'Đã thay đổi'
@@ -56,14 +62,26 @@ navigation:
   toggleSidebar: 'Chuyển đổi thanh bên'
   theme: 'Giao diện'
   language: 'Ngôn ngữ'
+  actions:
+    refresh: 'Làm mới'
+    expandAll: 'Mở rộng tất cả'
+    collapseAll: 'Thu gọn tất cả'
   explorer:
     source: 'Khám phá Nguồn'
     history: 'Khám phá Lịch sử'
     schema: 'Khám phá Lược đồ'
+  ddl:
+    tables: 'Bảng'
+    views: 'Views'
+    procedures: 'Thủ tục'
+    functions: 'Hàm'
+    triggers: 'Triggers'
 
 dashboard:
   title: 'Bảng điều khiển'
   subtitle: 'Tổng quan hoạt động'
+  newConnection: 'Kết nối mới'
+  newComparison: 'So sánh mới'
   loadSamples: 'Tải dữ liệu mẫu'
   samples: 'Mẫu'
   loading: 'Đang tải'
@@ -117,8 +135,6 @@ splash:
     schema: 'Khám phá Lược đồ'
   actions:
     refresh: 'Làm mới'
-    expandAll: 'Mở rộng tất cả'
-    collapseAll: 'Thu gọn tất cả'
   ddl:
     tables: 'Bảng'
     views: 'Views'
@@ -363,6 +379,25 @@ environments:
       enableDisable: 'Tích/bỏ tích để bật/tắt môi trường'
       defaults: 'Các môi trường mặc định (DEV, STAGE, UAT, PROD) không thể xóa'
       sequence: 'Thứ tự xác định quy trình di trú'
+      default: 'Các môi trường mặc định (DEV, STAGE, UAT, PROD) không thể xóa'
+
+projects:
+  title: 'Quản lý Dự án'
+  subtitle: 'Tổ chức các cụm cơ sở dữ liệu của bạn'
+  newProject: 'Dự án mới'
+  editTitle: 'Sửa dự án'
+  createTitle: 'Tạo dự án mới'
+  connections: 'Kết nối'
+  active: 'Đang dùng'
+  select: 'Chọn'
+  deleteConfirm: 'Bạn có chắc chắn muốn xóa dự án "{name}" không?'
+  form:
+    name: 'Tên dự án'
+    description: 'Mô tả'
+    connections: 'Bao gồm các kết nối'
+    noConnections: 'Không có kết nối nào. Đi tới Cài đặt để thêm.'
+    pairs: 'Cặp đồng bộ'
+    noPairs: 'Không có cặp đồng bộ nào.'
 
 validation:
   required: '{field} là bắt buộc'
@@ -378,6 +413,7 @@ settings:
     connections: 'Kết nối'
     pairs: 'Cặp đồng bộ'
     backup: 'Sao lưu'
+    update: 'Cập nhật'
   appearance: 'Giao diện'
   theme: 'Chủ đề'
   light: 'Sáng'
@@ -457,6 +493,9 @@ settings:
   backup:
     title: 'Toàn vẹn dữ liệu & Di động'
     subtitle: 'Sao lưu cấu hình chính và ảnh chụp khôi phục'
+  update:
+    title: 'Cập nhật phần mềm'
+    subtitle: 'Kiểm tra bản cập nhật ứng dụng và quản lý phiên bản'
   resetModal:
     title: 'Đặt lại dữ liệu ứng dụng'
     subtitle: 'Hành động hệ thống quan trọng'
@@ -484,6 +523,8 @@ migration:
   confirmBtnBatch: 'Di trú {count} mục'
   confirmBtnSingle: 'Xác nhận di trú'
   migrating: 'Đang di trú...'
+  sqlPreview: 'Xem trước SQL Di trú'
+  noPreview: 'Không có bản xem trước SQL cho thao tác này.'
 
 ddlDetail:
   details: 'Chi tiết {type}'

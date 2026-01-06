@@ -65,15 +65,24 @@
                 <td class="px-4 py-2 whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-8 w-8">
-                      <div class="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <Database class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      <div class="h-8 w-8 rounded-full flex items-center justify-center transition-colors"
+                        :class="{
+                          'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': !connection.type || connection.type === 'mysql',
+                          'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400': connection.type === 'postgres',
+                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400': connection.type === 'sqlite'
+                        }"
+                      >
+                         <!-- Simple Text Badge for Type -->
+                        <span v-if="connection.type === 'postgres'" class="text-[10px] font-black">PG</span>
+                        <span v-else-if="connection.type === 'sqlite'" class="text-[10px] font-black">SL</span>
+                        <span v-else class="text-[10px] font-black">MY</span>
                       </div>
                     </div>
                     <div class="ml-3">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ connection.name }}
                       </div>
-                      <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                      <div class="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
                         {{ connection.database }}
                       </div>
                     </div>
@@ -189,17 +198,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Plus, Database, ShieldQuestion, Edit, Trash2, X, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useProjectsStore } from '@/stores/projects' // Added
 import ConnectionForm from './ConnectionForm.vue'
 import type { DatabaseConnection } from '@/stores/app'
 
 const { t: $t } = useI18n()
 const appStore = useAppStore()
 const connectionPairsStore = useConnectionPairsStore()
+const projectsStore = useProjectsStore() // Added
+const route = useRoute()
+const router = useRouter()
+
+// Handle deep linking for actions
+onMounted(() => {
+  if (route.query.action === 'new') {
+    showAddForm.value = true
+    // Optional: Clear query param to avoid reopening on refresh, 
+    // but usually user might want to see it. 
+    // Let's clear it to keep URL clean.
+    router.replace({ query: { ...route.query, action: undefined } })
+  }
+})
 
 // State
 const selectedEnvironment = ref('DEV')
@@ -251,7 +276,16 @@ const editConnection = (connection: DatabaseConnection) => {
 
 const duplicateConnection = (connection: DatabaseConnection) => {
   const { id, ...rest } = connection
-  appStore.addConnection(rest as Omit<DatabaseConnection, 'id'>)
+  const newConn = appStore.addConnection(rest as Omit<DatabaseConnection, 'id'>)
+
+  // Stick to project
+  if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
+      const current = projectsStore.currentProject
+      if (current) {
+        const newIds = [...current.connectionIds, newConn.id]
+        projectsStore.updateProject(current.id, { connectionIds: newIds })
+      }
+    }
 }
 
 const deleteConnection = (id: string) => {
@@ -262,10 +296,21 @@ const handleSaveConnection = (connectionData: Omit<DatabaseConnection, 'id'>) =>
   if (editingConnection.value) {
     appStore.updateConnection(editingConnection.value.id, connectionData)
   } else {
-    appStore.addConnection({ 
+    // Stick: If creating new connection in a project context, attach it!
+    const newConn = appStore.addConnection({ 
       ...connectionData, 
       environment: selectedEnvironment.value as 'DEV' | 'STAGE' | 'UAT' | 'PROD' 
     })
+    
+    // Check if we are in a project
+    if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
+      const current = projectsStore.currentProject
+      if (current) {
+        // Add to project
+        const newIds = [...current.connectionIds, newConn.id]
+        projectsStore.updateProject(current.id, { connectionIds: newIds })
+      }
+    }
   }
   closeForm()
 }

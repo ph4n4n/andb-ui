@@ -1,19 +1,18 @@
-/**
- * Storage IPC Implementation
- * 
- * Replaces storage-stub.ts with real IPC calls to electron-store
- */
-
 import type { DatabaseConnection } from '@/stores/app'
 import type { ConnectionPair, Environment } from '@/stores/connectionPairs'
+import type { Project } from '@/types/project'
+import type { ConnectionTemplate } from '@/stores/connectionTemplates'
 
 interface AppSchema {
   connections: DatabaseConnection[]
   connectionPairs: ConnectionPair[]
   environments: Environment[]
+  projects: Project[]
+  connectionTemplates: ConnectionTemplate[]
   settings: {
     sidebarCollapsed: boolean
     lastSelectedConnectionId: string
+    lastSelectedProjectId?: string
     theme: 'light' | 'dark' | 'system'
     language: 'en' | 'vi'
     buttonStyle: 'full' | 'minimal' | 'icons'
@@ -149,13 +148,47 @@ export const storage = {
     }
   },
 
+  // ==================== Projects ====================
+  async getProjects(): Promise<Project[]> {
+    const result = await getStorage().get('projects')
+    return result.success ? (result.data || []) : []
+  },
+
+  async saveProjects(projects: Project[]): Promise<void> {
+    await getStorage().set('projects', JSON.parse(JSON.stringify(projects)))
+  },
+
+  async addProject(project: Project): Promise<void> {
+    const projects = await this.getProjects()
+    projects.push(project)
+    await this.saveProjects(projects)
+  },
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<void> {
+    const projects = await this.getProjects()
+    const index = projects.findIndex(p => p.id === id)
+    if (index !== -1) {
+      projects[index] = { ...projects[index], ...updates }
+      await this.saveProjects(projects)
+    }
+  },
+
+  async removeProject(id: string): Promise<void> {
+    const projects = await this.getProjects()
+    const filtered = projects.filter(p => p.id !== id)
+    await this.saveProjects(filtered)
+  },
+
   // ==================== Settings ====================
+
   async getSettings() {
     const result = await getStorage().get('settings')
     const defaults = {
       sidebarCollapsed: false,
       lastSelectedConnectionId: '',
+      lastSelectedProjectId: 'default',
       theme: 'system' as const,
+
       language: 'en' as const,
       buttonStyle: 'full' as const,
       navStyle: 'vertical-list' as const,
@@ -185,6 +218,16 @@ export const storage = {
   async updateSettings(updates: Partial<AppSchema['settings']>): Promise<void> {
     const settings = await this.getSettings()
     await this.saveSettings({ ...settings, ...updates })
+  },
+
+  // ==================== Connection Templates ====================
+  async getConnectionTemplates(): Promise<ConnectionTemplate[]> {
+    const result = await getStorage().get('connectionTemplates')
+    return result.success ? (result.data || []) : []
+  },
+
+  async saveConnectionTemplates(templates: ConnectionTemplate[]): Promise<void> {
+    await getStorage().set('connectionTemplates', JSON.parse(JSON.stringify(templates)))
   },
 
   // ==================== Generic Store Access ====================

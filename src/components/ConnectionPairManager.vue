@@ -152,15 +152,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Plus, ArrowRight, ShieldQuestion, Star, Copy, Trash2 } from 'lucide-vue-next'
 import { useConnectionPairsStore, type ConnectionPair } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
+import { useProjectsStore } from '@/stores/projects' // Added
 
 const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 const appStore = useAppStore()
+const projectsStore = useProjectsStore() // Added
+const route = useRoute()
+const router = useRouter()
+
+// Handle deep linking for actions
+onMounted(() => {
+  if (route.query.action === 'new') {
+    addConnectionPair()
+    // Optional: Clear query param
+    router.replace({ query: { ...route.query, action: undefined } })
+  }
+})
 
 const connectionPairs = computed(() => connectionPairsStore.connectionPairs)
 const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
@@ -173,7 +187,7 @@ const getConnectionsByEnv = (envName: string) => {
 }
 
 const addConnectionPair = () => {
-  connectionPairsStore.addConnectionPair({
+  const newPair = connectionPairsStore.addConnectionPair({
     name: 'New Pair',
     sourceEnv: '',
     targetEnv: '',
@@ -183,10 +197,18 @@ const addConnectionPair = () => {
     isDefault: false,
     status: 'idle'
   })
+  
+  if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
+     const current = projectsStore.currentProject
+     if (current) {
+        const newIds = [...current.pairIds, newPair.id]
+        projectsStore.updateProject(current.id, { pairIds: newIds })
+     }
+  }
 }
 
 const duplicatePair = (pair: ConnectionPair) => {
-  connectionPairsStore.addConnectionPair({
+  const newPair = connectionPairsStore.addConnectionPair({
     name: `${pair.name}_COPY`,
     sourceEnv: pair.sourceEnv,
     targetEnv: pair.targetEnv,
@@ -196,6 +218,14 @@ const duplicatePair = (pair: ConnectionPair) => {
     isDefault: false,
     status: 'idle'
   })
+
+  if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
+     const current = projectsStore.currentProject
+     if (current) {
+        const newIds = [...current.pairIds, newPair.id]
+        projectsStore.updateProject(current.id, { pairIds: newIds })
+     }
+  }
 }
 
 const removePair = (pair: ConnectionPair) => {

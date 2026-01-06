@@ -1,20 +1,18 @@
 <template>
-  <div class="mirror-diff-view flex h-full min-w-0 max-w-full overflow-hidden bg-white dark:bg-gray-900 group/view border-t border-gray-200 dark:border-gray-800 relative" :style="{ fontFamily: appStore.fontFamilies.code, fontSize: appStore.fontSizes.code + 'px' }">
+  <div class="mirror-diff-view flex h-full min-h-0 min-w-0 max-w-full overflow-hidden bg-white dark:bg-gray-900 group/view border-t border-gray-200 dark:border-gray-800 relative" :style="{ fontFamily: appStore.fontFamilies.code, fontSize: appStore.fontSizes.code + 'px' }">
     <!-- SPLIT VIEW MODE -->
     <template v-if="viewType === 'split'">
       <!-- Source Pane (Left) -->
       <div 
-        ref="sourcePane" 
         :style="{ width: leftPaneWidth + '%' }"
-        @scroll="handleScroll('source')"
-        class="shrink-0 flex flex-col min-w-0 max-w-full overflow-hidden border-r border-gray-200 dark:border-[#30363d] relative"
+        class="shrink-0 flex flex-col min-h-0 min-w-0 max-w-full overflow-hidden border-r border-gray-200 dark:border-[#30363d] relative"
       >
-        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
           <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.source', { label: sourceLabel }) }}</span>
           <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">{{ $t('compare.diffView.deleted') }}</span>
         </div>
         
-        <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
+        <div ref="sourcePane" @scroll="handleScroll('source')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             {{ $t('compare.diffView.sourceEmpty') }}
           </div>
@@ -50,11 +48,9 @@
 
       <!-- Target Pane (Right) -->
       <div 
-        ref="targetPane" 
-        class="flex-1 flex flex-col min-w-0 max-w-full overflow-hidden relative"
-        @scroll="handleScroll('target')"
+        class="flex-1 flex flex-col min-h-0 min-w-0 max-w-full overflow-hidden relative"
       >
-        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
           <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.target', { label: targetLabel }) }}</span>
           
           <div class="flex items-center gap-3">
@@ -127,7 +123,7 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
+        <div ref="targetPane" @scroll="handleScroll('target')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
           <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             {{ $t('compare.diffView.targetEmpty') }}
           </div>
@@ -158,9 +154,9 @@
     <!-- UNIFIED VIEW MODE -->
     <div 
       v-else
-      class="flex-1 flex flex-col overflow-hidden"
+      class="flex-1 flex flex-col min-h-0 overflow-hidden"
     >
-      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 min-h-[37px]">
+      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
         <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.unified', { source: sourceLabel, target: targetLabel }) }}</span>
         
         <!-- Settings inside header -->
@@ -324,7 +320,7 @@ const unifiedRows = computed(() => {
           targetLine: null,
           content: row.source.content,
           highlighted: row.source.highlighted,
-          type: row.source.type === 'equal' ? 'equal' : 'added' // Wait, using source as + is weird but consistent with current component
+          type: 'removed' // This should be 'removed' for source-only lines
         })
       }
       if (row.target.type !== 'empty') {
@@ -333,7 +329,7 @@ const unifiedRows = computed(() => {
           targetLine: row.target.line,
           content: row.target.content,
           highlighted: row.target.highlighted,
-          type: row.target.type === 'equal' ? 'equal' : 'removed'
+          type: 'added' // This should be 'added' for target-only lines
         })
       }
     }
@@ -344,70 +340,71 @@ const unifiedRows = computed(() => {
 
 const highlightedSourceLines = computed(() => {
   if (!props.sourceDdl) return []
-  return highlightLines(props.sourceDdl)
+  const normalize = (s: string) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const html = Prism.highlight(normalize(props.sourceDdl), Prism.languages.sql, 'sql')
+  return html.split('\n')
 })
 
 const highlightedTargetLines = computed(() => {
   if (!props.targetDdl) return []
-  return highlightLines(props.targetDdl)
+  const normalize = (s: string) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const html = Prism.highlight(normalize(props.targetDdl), Prism.languages.sql, 'sql')
+  return html.split('\n')
 })
 
-function highlightLines(ddl: string) {
-  // Prism highlight entire block to maintain context (comments, strings)
-  const html = Prism.highlight(ddl, Prism.languages.sql, 'sql')
-  return html.split('\n')
-}
-
-/**
- * Compute aligned diff using a basic LCS alignment strategy
- */
-function computeAlignedDiff(oldLines: string[], newLines: string[]) {
-  const compare = (l1: string, l2: string) => {
-    if (hideWhitespace.value) {
-      return l1.trim() === l2.trim()
-    }
-    return l1 === l2
+function computeAlignedDiff(sourceLines: string[], targetLines: string[]) {
+  const compare = (s1: string | undefined, s2: string | undefined) => {
+    if (s1 === undefined || s2 === undefined) return false
+    const str1 = hideWhitespace.value ? s1.trim() : s1
+    const str2 = hideWhitespace.value ? s2.trim() : s2
+    return str1 === str2
   }
 
-  const matrix: number[][] = Array(oldLines.length + 1).fill(0).map(() => Array(newLines.length + 1).fill(0))
+  const n = sourceLines.length
+  const m = targetLines.length
   
-  for (let i = 1; i <= oldLines.length; i++) {
-    for (let j = 1; j <= newLines.length; j++) {
-      if (compare(oldLines[i - 1], newLines[j - 1])) {
+  // LCS Matrix
+  const matrix: number[][] = Array(n + 1).fill(0).map(() => Array(m + 1).fill(0))
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      if (compare(sourceLines[i - 1], targetLines[j - 1])) {
         matrix[i][j] = matrix[i - 1][j - 1] + 1
       } else {
         matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1])
       }
     }
   }
-  
+
   const result: any[] = []
-  let i = oldLines.length
-  let j = newLines.length
-  
+  let i = n
+  let j = m
+
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && compare(oldLines[i - 1], newLines[j - 1])) {
+    if (i > 0 && j > 0 && compare(sourceLines[i - 1], targetLines[j - 1])) {
+      // MATCH
       result.unshift({
-        source: { line: i, content: oldLines[i - 1], highlighted: highlightedSourceLines.value[i-1], type: 'equal' },
-        target: { line: j, content: newLines[j - 1], highlighted: highlightedTargetLines.value[j-1], type: 'equal' }
+        source: { line: i, content: sourceLines[i - 1], highlighted: highlightedSourceLines.value[i - 1], type: 'equal' },
+        target: { line: j, content: targetLines[j - 1], highlighted: highlightedTargetLines.value[j - 1], type: 'equal' }
       })
       i--
       j--
-    } else if (j > 0 && (i === 0 || matrix[i][j - 1] >= matrix[i - 1][j])) {
+    } else if (i > 0 && (j === 0 || matrix[i - 1][j] >= matrix[i][j - 1])) {
+      // Source has extra line (ADDED)
       result.unshift({
-        source: { line: null, content: '', highlighted: '', type: 'empty' },
-        target: { line: j, content: newLines[j - 1], highlighted: highlightedTargetLines.value[j-1], type: 'removed' }
-      })
-      j--
-    } else {
-      result.unshift({
-        source: { line: i, content: oldLines[i - 1], highlighted: highlightedSourceLines.value[i-1], type: 'added' },
+        source: { line: i, content: sourceLines[i - 1], highlighted: highlightedSourceLines.value[i - 1], type: 'added' },
         target: { line: null, content: '', highlighted: '', type: 'empty' }
       })
       i--
+    } else {
+      // Target has extra line (REMOVED)
+      result.unshift({
+        source: { line: null, content: '', highlighted: '', type: 'empty' },
+        target: { line: j, content: targetLines[j - 1], highlighted: highlightedTargetLines.value[j - 1], type: 'removed' }
+      })
+      j--
     }
   }
-  
+
   return result
 }
 
@@ -589,7 +586,7 @@ onUnmounted(() => {
 }
 
 .custom-scrollbar-diff::-webkit-scrollbar-thumb {
-  background: rgba(48, 54, 61, 0.5);
+  background: rgba(100, 116, 139, 0.6);
   border-radius: 10px;
 }
 

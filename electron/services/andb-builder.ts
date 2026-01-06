@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import path from 'path'
 
 // Import dependencies safely
 // @ts-ignore
@@ -54,13 +55,19 @@ export class AndbBuilder {
   // NEW: SQLiteStorage instance (shared across all operations)
   private static sqliteStorage: any = null
 
+  public static async getDatabaseStats() {
+    const storage = this.getSQLiteStorage()
+    return await storage.getStats()
+  }
+
   /**
    * Get or create SQLiteStorage instance
    */
-  private static getSQLiteStorage() {
+  public static getSQLiteStorage() {
     if (!this.sqliteStorage) {
-      const { SQLiteStorageService } = require('./sqlite-storage')
-      this.sqliteStorage = SQLiteStorageService.getInstance()
+      const { SQLiteStorage } = require('@andb/core/core/utils/storage.strategy')
+      const dbPath = path.join(app.getPath('userData'), 'andb-storage.db')
+      this.sqliteStorage = new SQLiteStorage(dbPath, app.getPath('userData'))
     }
     return this.sqliteStorage
   }
@@ -72,13 +79,15 @@ export class AndbBuilder {
     sourceConn: DatabaseConnection,
     targetConn: DatabaseConnection | null
   ): AndbConfig {
-    // Build ENVIRONMENTS object dynamically
+    // Build ENVIRONMENTS object dynamically with uppercase keys
+    const sEnv = sourceConn.environment.toUpperCase()
     const ENVIRONMENTS: Record<string, string> = {
-      [sourceConn.environment]: sourceConn.environment
+      [sEnv]: sEnv
     }
 
     if (targetConn) {
-      ENVIRONMENTS[targetConn.environment] = targetConn.environment
+      const tEnv = targetConn.environment.toUpperCase()
+      ENVIRONMENTS[tEnv] = tEnv
     }
 
     return {
@@ -256,7 +265,7 @@ export class AndbBuilder {
 
         case 'migrate':
           if (!targetConn) throw new Error('Target connection is required for migration')
-          return await this.executeMigrate(services, options, targetConn.environment)
+          return await this.executeMigrate(services, options, targetConn.environment, sourceConn)
 
         case 'generate':
           throw new Error('Generate operation is only available via andb-cli')
@@ -326,17 +335,23 @@ export class AndbBuilder {
       const normalizedDestEnv = destEnv.toUpperCase();
       const destDbName = config.getDBName(normalizedDestEnv);
 
-      const results = storage.getComparisons(normalizedSrcEnv, normalizedDestEnv, dbName, ddlType);
+      const results = await storage.getComparisons(normalizedSrcEnv, normalizedDestEnv, dbName, ddlType);
 
-      const mapped = results.map((res: any) => ({
-        name: res.ddl_name,
-        status: res.status,
-        type: res.ddl_type.toLowerCase(),
-        diff: {
-          source: storage.getDDL(srcEnv, dbName, ddlType, res.ddl_name),
-          target: storage.getDDL(destEnv, destDbName, ddlType, res.ddl_name)
-        }
-      }))
+      const mapped = await Promise.all(results.map(async (res: any) => {
+        const itemName = res.name;
+        const alterStmts = res.ddl;
+
+        return {
+          name: itemName,
+          status: res.status,
+          type: res.type.toUpperCase(),
+          ddl: Array.isArray(alterStmts) ? alterStmts : (alterStmts ? [alterStmts] : []),
+          diff: {
+            source: await storage.getDDL(srcEnv, dbName, ddlType, itemName),
+            target: await storage.getDDL(destEnv, destDbName, ddlType, itemName)
+          }
+        };
+      }));
 
       return mapped
     } catch (error: any) {
@@ -348,16 +363,81 @@ export class AndbBuilder {
   /**
    * Execute migrate operation
    */
-  private static async executeMigrate(services: any, options: any, destEnv: string) {
+  private static async executeMigrate(services: any, options: any, destEnv: string, sourceConn: DatabaseConnection) {
     const {
       type = 'tables',
       status = 'NEW',
-      name = null
+      name = null,
+      dryRun = false
     } = options
 
     const ddlType = type.toLowerCase()
-    const migrateFn = services.migrator(ddlType, status.toLowerCase(), name)
-    return await migrateFn(destEnv)
+
+    // Optimization: Check comparison cache FIRST for dry-run of specific items
+    // This avoids redundant re-comparison in andb-core and addresses the "lấy từ map migrate" concern
+    if (dryRun && name) {
+      if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Dry-run for ${name}: Checking comparison cache...`)
+      try {
+        const storage = this.getSQLiteStorage()
+        const srcEnv = options.sourceEnv || sourceConn.environment
+        const dbName = sourceConn.database
+        const comparisons = await storage.getComparisons(srcEnv.toUpperCase(), destEnv.toUpperCase(), dbName, ddlType)
+        const match = comparisons.find((c: any) => c.name === name)
+
+        if (match && match.alterStatements && match.alterStatements !== '[]' && match.alterStatements !== '""') {
+          let statements = match.alterStatements
+          try {
+            if (typeof statements === 'string' && statements.startsWith('[') && statements.endsWith(']')) {
+              statements = JSON.parse(statements)
+            }
+          } catch (e) { }
+
+          if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Cache hit for ${name}, returning saved alter statements from database.`)
+          return statements
+        }
+        if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] No cached alter statements found for ${name} in database.`)
+      } catch (e) {
+        if ((global as any).logger) (global as any).logger.warn(`[AndbBuilder] Cache check failed for ${name}:`, e)
+      }
+    }
+
+    const migrateFn = services.migrator(ddlType, status.toUpperCase(), name)
+
+    if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Executing native migrate for ${ddlType} ${name || 'ALL'} (status: ${status}, dryRun: ${!!dryRun})`)
+
+    const result = await migrateFn(destEnv, options)
+
+    if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Migrate raw result from core:`, result)
+
+    // DRY RUN fallback: If core returns nothing/0, try to fetch the alter statements from our comparisons table
+    if (options.dryRun && (result === 0 || result === '0' || !result)) {
+      if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Dry run returned nothing for ${name}, trying database fallback...`)
+      try {
+        const storage = this.getSQLiteStorage()
+        const srcEnv = options.sourceEnv || sourceConn.environment
+        const dbName = sourceConn.database
+        const comparisons = await storage.getComparisons(srcEnv.toUpperCase(), destEnv.toUpperCase(), dbName, ddlType)
+        const match = comparisons.find((c: any) => c.name === name)
+
+        if (match && match.alterStatements) {
+          if ((global as any).logger) (global as any).logger.info(`[AndbBuilder] Found cached alter statements for ${name} in database`)
+
+          let statements = match.alterStatements
+          try {
+            // It might be stored as a JSON array string
+            if (typeof statements === 'string' && statements.startsWith('[') && statements.endsWith(']')) {
+              statements = JSON.parse(statements)
+            }
+          } catch (e) { }
+
+          return statements
+        }
+      } catch (e) {
+        if ((global as any).logger) (global as any).logger.error(`[AndbBuilder] Database fallback failed:`, e)
+      }
+    }
+
+    return result
   }
 
   /**
@@ -376,15 +456,25 @@ export class AndbBuilder {
     const dbName = sourceConn.database
     const destDbName = targetConn.database
 
-    const results = storage.getComparisons(srcEnv, destEnv, dbName, ddlType);
+    const results = await storage.getComparisons(srcEnv, destEnv, dbName, ddlType);
 
-    const mapped = results.map((res: any) => ({
-      name: res.ddl_name,
-      status: res.status,
-      type: res.ddl_type.toLowerCase(),
-      diff: {
-        source: storage.getDDL(srcEnv, dbName, ddlType, res.ddl_name),
-        target: storage.getDDL(destEnv, destDbName, ddlType, res.ddl_name)
+    const mapped = await Promise.all(results.map(async (res: any) => {
+      let alterStmts = res.alter_statements
+      try {
+        if (alterStmts && typeof alterStmts === 'string' && alterStmts.startsWith('[')) {
+          alterStmts = JSON.parse(alterStmts)
+        }
+      } catch (e) { }
+
+      return {
+        name: res.name,
+        status: res.status,
+        type: res.type.toUpperCase(),
+        ddl: Array.isArray(alterStmts) ? alterStmts : (alterStmts ? [alterStmts] : []),
+        diff: {
+          source: await storage.getDDL(srcEnv, dbName, ddlType, res.name),
+          target: await storage.getDDL(destEnv, destDbName, ddlType, res.name)
+        }
       }
     }))
 
@@ -395,9 +485,9 @@ export class AndbBuilder {
   /**
    * Clear cached data for a specific connection
    */
-  static clearConnectionData(connection: DatabaseConnection): void {
+  static async clearConnectionData(connection: DatabaseConnection) {
     const storage = this.getSQLiteStorage()
-    storage.clearDataForConnection(connection.environment, connection.database)
+    await storage.clearDataForConnection(connection.environment, connection.database)
   }
 
   /**
@@ -439,12 +529,12 @@ export class AndbBuilder {
 
     const storage = this.getSQLiteStorage()
     // 2. Read from our shared storage to get the fresh content
-    const ddl = storage.getDDL(connection.environment, connection.database, type, name)
+    const ddl = await storage.getDDL(connection.environment, connection.database, type, name)
 
     if (ddl) {
       if ((global as any).logger) (global as any).logger.info(`DDL fetched for ${name}, saving snapshot...`)
       // 3. Save as snapshot in ddl_snapshots table
-      return storage.saveSnapshot({
+      return await storage.saveSnapshot({
         environment: connection.environment,
         database: connection.database,
         type: type.toUpperCase(),

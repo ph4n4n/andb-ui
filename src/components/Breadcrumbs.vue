@@ -22,6 +22,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
+import { useProjectsStore } from '@/stores/projects'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -30,24 +31,44 @@ const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 
 const breadcrumbs = computed(() => {
-  const crumbs = [
+  const crumbs: Array<{ label: string; action?: () => void }> = [
     { label: t('common.dashboard'), action: () => router.push('/') }
   ]
 
-  const activePair = connectionPairsStore.activePair
-  if (activePair) {
+  const projectsStore = useProjectsStore()
+  const currentProject = projectsStore.currentProject
+  
+  // Add current project if not default
+  if (currentProject && currentProject.id !== 'default') {
     crumbs.push({ 
-      label: activePair.name, 
-      action: () => router.push('/compare') 
+      label: currentProject.name, 
+      action: () => router.push('/projects') 
     })
   }
 
-  if (route.path === '/compare') {
-    crumbs.push({ label: t('common.compare'), action: async () => {} })
-  } else if (route.path === '/migrate') {
-    crumbs.push({ label: t('migration.titleSingle'), action: async () => {} }) // Or a generic migration title
+  // Add page-specific breadcrumbs
+  if (route.path === '/projects') {
+    crumbs.push({ label: t('projects.title') })
+  } else if (route.path === '/schema') {
+    crumbs.push({ label: t('common.schema') })
+    // TODO: Add selected database/table context here
+  } else if (route.path === '/compare') {
+    const activePair = connectionPairsStore.activePair
+    if (activePair) {
+      crumbs.push({ 
+        label: activePair.name, 
+        action: () => router.push('/compare') 
+      })
+    }
+    crumbs.push({ label: t('common.compare') })
+  } else if (route.path === '/history') {
+    crumbs.push({ label: t('common.history') })
   } else if (route.path === '/settings') {
-    crumbs.push({ label: t('common.settings'), action: async () => {} })
+    crumbs.push({ label: t('common.settings') })
+    // Add settings category if available
+    if (route.query.cat) {
+      crumbs.push({ label: String(route.query.cat).toUpperCase() })
+    }
   }
 
   return crumbs

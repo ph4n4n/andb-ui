@@ -12,12 +12,43 @@
   }
 }
 
-/* Theme Definitions */
+:root {
+  --primary-50: #edf0f9;
+  --primary-100: #d5dcf1;
+  --primary-200: #abbbd8;
+  --primary-300: #8299bf;
+  --primary-400: #5a77a6;
+  --primary-500: #32558c;
+  --primary-600: #264678;
+  --primary-700: #1b3864;
+  --primary-800: #122b50;
+  --primary-900: #0a1f3d;
+  --primary-950: #061529;
+
+  /* Code Colors - Standard Light */
+  --code-text: #333333;
+  --code-keyword: #0000FF;
+  --code-string: #A31515;
+  --code-comment: #008000;
+  --code-function: #795E26;
+  --code-number: #098658;
+  --code-operator: #000000;
+  --code-punctuation: #000000;
+}
+
 :root.solarized-dark {
   --bg-main: #002b36;
   --bg-sidebar: #073642;
   --text-main: #93a1a1;
   --border-color: #586e75;
+
+  --primary-500: #268bd2;
+  --primary-600: #2176b1;
+  
+  --code-keyword: #859900;
+  --code-string: #2aa198;
+  --code-comment: #586e75;
+  --code-function: #b58900;
 }
 
 :root.night-owl-dark {
@@ -25,6 +56,15 @@
   --bg-sidebar: #01111d;
   --text-main: #d6deeb;
   --border-color: #1d3b53;
+
+  --primary-500: #82aaff;
+  --primary-600: #5f7eaf;
+
+  --code-keyword: #c792ea;
+  --code-string: #ecc48d;
+  --code-comment: #637777;
+  --code-function: #82aaff;
+  --code-punctuation: #7fdbca;
 }
 
 :root.night-owl-light {
@@ -32,6 +72,28 @@
   --bg-sidebar: #f0f0f0;
   --text-main: #403f53;
   --border-color: #d3d3d3;
+
+  /* "Xanh bồ" - Teal/Cyan Palette for buttons */
+  --primary-50: #f0fdfa;
+  --primary-100: #ccfbf1;
+  --primary-200: #99f6e4;
+  --primary-300: #5eead4;
+  --primary-400: #2dd4bf;
+  --primary-500: #3cad96; /* The Teal color from user image */
+  --primary-600: #0d9488;
+  --primary-700: #0f766e;
+  --primary-800: #115e59;
+  --primary-900: #134e4a;
+  --primary-950: #042f2e;
+
+  /* Code Colors - Night Owl Light */
+  --code-text: #403f53;
+  --code-keyword: #994cc3;
+  --code-string: #403f53;
+  --code-comment: #707a8c; /* Darker comment for visibility */
+  --code-function: #4876d6;
+  --code-operator: #994cc3;
+  --code-punctuation: #0c969b;
 }
 
 /* Apply variables to core elements when those themes are active */
@@ -89,7 +151,8 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5;
+    @apply bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:-translate-y-0.5;
+    /* Use a simpler shadow since variable-based opacity is tricky in @apply */
   }
 
   .btn-secondary {

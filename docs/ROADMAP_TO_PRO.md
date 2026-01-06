@@ -1,82 +1,81 @@
 # 🚀 ANDB "Go Pro" Roadmap
 
-Đây là bản kế hoạch chi tiết để nâng cấp `andb-ui` từ một tool cá nhân thành một sản phẩm commercial-ready. Kế hoạch được chia thành các Phase từ nền tảng đến nâng cao, đảm bảo đi từng bước chắc chắn.
+Đây là bản kế hoạch chi tiết để nâng cấp `andb-ui` từ một tool cá nhân thành một sản phẩm commercial-ready. Kế hoạch được tái cấu trúc để ưu tiên sự ổn định (Stability) và tính năng thiết yếu cho môi trường Production.
 
-## 🏁 Phase 1: Solid Core (Củng cố nền tảng)
+## 🏁 Phase 1: MySQL Solid Core (Release v1.0)
 
-_Mục tiêu: Đảm bảo app chạy mượt, UX ngon nghẻ để release bản Community._
+_Mục tiêu: Đảm bảo app chạy mượt với MySQL/MariaDB, UX ngon nghẻ để release bản Community đầu tiên._
 
-### 1.1 Multi-Database Support UI
+### 1.1 Integrity & Stability
 
-- [ ] **Dynamic Connection Form**:
-  - Thêm dropdown `Database Type`: `MySQL`, `PostgreSQL (Coming Soon)`, `SQLite (Beta)`.
-  - `SQLite`: Ẩn Host/Port/User/Pass, hiện nút **"Pick .sqlite file"**.
-  - `PostgreSQL`: Đổi default port sang 5432.
-- [ ] **Iconography**: Hiển thị icon DB tương ứng trong danh sách connection (để user dễ phân biệt).
+- [ ] **Auto-Update System**: Setup `electron-builder` để app tự động update. (High Priority).
+- [ ] **Form Validation**: Validation chặt chẽ form Connection.
+- [ ] **i18n Completeness**: Đảm bảo không còn key nào bị thiếu.
 
-### 1.2 UX Polish & Onboarding
+### 1.2 UX Polish
 
-- [ ] **Dashboard Revamp**:
-  - Thêm "Quick Actions" card:"New Connection", "New Comparison", "Open Recent", click vào sẽ mở form componet setting tương ứng.
-  - Hiển thị trạng thái các connection gần nhất (Last used).
+- [ ] **Dashboard Revamp**: Quick Actions, Recent Activity.
+- [ ] **Data Type Select**: Dropdown chọn loại DB (Hiện tại disable Postgres/SQLite).
 
 ---
 
-## 🚀 Phase 2: Power User Utility (Tính năng "Sát thủ")
+## 🐘 Phase 2: The PostgreSQL Expansion (Technical Heavy)
 
-_Mục tiêu: Đảm bảo app chạy mượt, support đa database cơ bản._
+_Mục tiêu: Mở rộng Core Engine để support PostgreSQL. Đây là phase tốn nhiều effort nhất về backend._
 
-_Mục tiêu: Thêm các tính năng mà Dev/DevOps chuyên nghiệp bắt buộc phải có. Đây là lý do họ rời bỏ tool cũ để sang dùng ANDB._
+### 2.1 Core Logic Update (Backend) (Critical)
 
-### 2.1 Connectivity Pro
+- [ ] **Schema Adapter**: Viết lại Adapter để handle cấu trúc `Schema > Table` của Postgres.
+- [ ] **Data Types Mapping**: Map các type đặc thù (JSONB, Array, UUID, Enum) sang format chuẩn của ANDB.
+- [ ] **Function/Procedure Parser**: Parser riêng cho cú pháp PL/pgSQL (khác hẳn MySQL).
+
+### 2.2 UI Integration
+
+- [ ] **Postgres Connection Form**: Default port 5432, thêm field `Schema` (default `public`).
+- [ ] **UI Testing**: Verify hiển thị cây thư mục với cấu trúc mới.
+
+---
+
+## 🚀 Phase 3: Power User Utility (Tính năng "Sát thủ")
+
+_Mục tiêu: Thêm các tính năng mà Dev/DevOps chuyên nghiệp bắt buộc phải có (SSH, SSL)._
+
+### 3.1 Connectivity Pro
 
 - [ ] **SSH Tunneling**:
-  - Form config SSH Tunnel (Host, Port, User, Private Key/Password) trong Connection Settings.
-  - Tự động setup tunnel khi connect DB.
-- [ ] **SSL/TLS Certificates**: UI để upload/paste CA Certs cho các connection bảo mật (Azure/AWS RDS often need this).
+  - Form config SSH (Host, Port, User, Key/Pass).
+  - Tự động dựng tunnel khi connect.
+- [ ] **SSL/TLS Certificates**: UI để upload CA Certs.
 
-### 2.2 Structure & Organization
+### 2.2 Structure & Safety
 
-- [ ] **Project/Workspace Concept**:
-  - Gom nhóm Connection theo Project (e.g., "E-commerce Project" gồm Dev/Staging/Prod).
-  - Environment tagging: Label màu rõ ràng cho Prod (Đỏ), Dev (Xanh) để tránh tai nạn delete nhầm.
-
-### 2.3 Advanced Migration
-
-- [ ] **Drift Detection**: Cảnh báo nếu State hiện tại của DB khác với State được lưu lần cuối (phát hiện ai đó sửa nóng DB).
-- [ ] **Rollback Generation**: Tự động generate script `DOWN` khi tạo migration `UP`.
+- [ ] **Project/Workspace**: Gom nhóm Connection theo dự án.
+- [ ] **Environment Tagging**: Label màu (Prod=Red, Dev=Green) để tránh thao tác nhầm trên Prod.
+- [ ] **Safe Mode**: Cảnh báo xác nhận 2 bước khi chạy query trên môi trường Production.
 
 ---
 
-## Phase 3: Core Fixes
+## 💎 Phase 3: Commercial & Enterprise (Bản thu tiền)
 
-- [ ] **Schema Loading**: Đảm bảo load schema của PostgreSQL ngon như MySQL (test kỹ các case Enum, Trigger, View).
+_Mục tiêu: Giải quyết các bài toán quy mô lớn, dữ liệu phức tạp và làm việc nhóm._
 
----
+### 3.1 Data Management
 
-## 💎 Phase 4: Commercial & Enterprise (Bản thu tiền)
+- [ ] **Data Compare**: So sánh dữ liệu (Data Diff) giữa 2 bảng (dùng cho bảng Config, Lookup).
+- [ ] **Seed Data Generator**: Tạo dữ liệu giả để test.
 
-_Mục tiêu: Các tính năng dành cho team lớn, giải quyết vấn đề quy trình và dữ liệu phức tạp._
+### 3.2 Advanced Migration
 
-### 4.1 Data Management
+- [ ] **Drift Detection (Manual)**: So sánh state hiện tại với snapshot lần cuối để phát hiện thay đổi ngoài luồng.
+- [ ] **Rollback Assistant**: Hỗ trợ generate script `DOWN` cơ bản (có cảnh báo rủi ro mất dữ liệu).
 
-- [ ] **Data Compare**: So sánh dữ liệu giữa 2 bảng (thường dùng cho bảng Config, Lookup, Dictionary).
-- [ ] **Seed Data Generator**: Generate dummy data để test performance.
+### 3.3 Collaboration
 
-### 4.2 Intelligence (AI)
-
-- [ ] **Text-to-SQL Migration**: "Add column phone to users table" -> Generate `ALTER TABLE users ADD COLUMN phone VARCHAR(20)...`
-- [ ] **Migration Explanation**: Giải thích script migration phức tạp bằng tiếng người.
-
-### 3.3 Team Collaboration
-
-- [ ] **Shared Configuration**: Export Project config thành file (đã encrypt pass) để share cho đồng đội.
-- [ ] **Cloud Sync (Future)**: Sync connection setting qua tài khoản Cloud (cần backend service).
+- [ ] **Shared Configuration**: Export/Import Connection config (có password protection hoặc exclude password) để share cho team.
 
 ---
 
-## 🛠 Tech Tasks (Behind the scenes)
+## 🛠 Tech Tasks (Ongoing)
 
-- [ ] Setup `electron-builder` để auto-update app.
-- [ ] Review lại Architecture: Tách rõ Layer UI và Layer Core Logic (để sau này dễ port sang Web version nếu cần).
-- [ ] Viết Unit Test cho các hàm generate SQL critical.
+- [ ] **Refactor Architecture**: Tách rõ Layer UI và Core Logic (Chuẩn bị cho khả năng Port sang Web/Cloud trong tương lai).
+- [ ] **Unit Tests**: Viết test cho các hàm generate SQL critical để đảm bảo không sai cú pháp.
