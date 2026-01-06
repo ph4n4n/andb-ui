@@ -18,8 +18,6 @@ export const useConnectionTemplatesStore = defineStore('connectionTemplates', ()
   const templates = ref<ConnectionTemplate[]>([])
 
   const init = async () => {
-    // Load from storage (assume storage method exists or will be added)
-    // For now, we might need to mock or ensure storage supports this key
     const saved = await storage.get('connectionTemplates')
     if (saved) {
       templates.value = saved
@@ -29,10 +27,23 @@ export const useConnectionTemplatesStore = defineStore('connectionTemplates', ()
   init()
 
   watch(templates, (newVal) => {
-    storage.set('connectionTemplates', newVal)
+    storage.set('connectionTemplates', JSON.parse(JSON.stringify(newVal)))
   }, { deep: true })
 
+  function checkDuplicate(template: Partial<ConnectionTemplate>, excludeId?: string) {
+    return templates.value.some(t => {
+      if (excludeId && t.id === excludeId) return false
+      return t.host === template.host &&
+        t.port === template.port &&
+        t.username === template.username
+    })
+  }
+
   function addTemplate(template: Omit<ConnectionTemplate, 'id' | 'createdAt' | 'updatedAt'>) {
+    if (checkDuplicate(template)) {
+      throw new Error('DUPLICATE_CONNECTION')
+    }
+
     const newTemplate: ConnectionTemplate = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -46,6 +57,11 @@ export const useConnectionTemplatesStore = defineStore('connectionTemplates', ()
   function updateTemplate(id: string, updates: Partial<ConnectionTemplate>) {
     const index = templates.value.findIndex(t => t.id === id)
     if (index !== -1) {
+      const merged = { ...templates.value[index], ...updates }
+      if (checkDuplicate(merged, id)) {
+        throw new Error('DUPLICATE_CONNECTION')
+      }
+
       templates.value[index] = {
         ...templates.value[index],
         ...updates,

@@ -17,13 +17,13 @@
               <SettingsIcon class="w-5 h-5 text-primary-500" />
               {{ $t('settings.title') }}
             </h1>
-            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest opacity-60">{{ $t('settings.subtitle') }}</p>
+
           </div>
           
           <div class="flex-1 overflow-y-auto px-4 py-2 space-y-6">
             <!-- App Settings -->
             <div class="space-y-1">
-              <h3 class="px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-50">{{ $t('settings.sections.app') }}</h3>
+
               <button 
                 v-for="cat in appSettings" :key="cat.id"
                 @click="activeCategory = cat.id"

@@ -179,12 +179,21 @@ const closeModal = () => {
 const saveTemplate = () => {
     if (!form.value.name) return // Simple validation
 
-    if (editingTemplate.value) {
-        store.updateTemplate(editingTemplate.value.id, form.value)
-    } else {
-        store.addTemplate(form.value)
+    try {
+        if (editingTemplate.value) {
+            store.updateTemplate(editingTemplate.value.id, form.value)
+        } else {
+            store.addTemplate(form.value)
+        }
+        closeModal()
+    } catch (e: any) {
+        if (e.message === 'DUPLICATE_CONNECTION') {
+            alert(t('connections.template.duplicateError'))
+        } else {
+            console.error(e)
+            alert(t('common.error'))
+        }
     }
-    closeModal()
 }
 
 const deleteTemplate = (id: string) => {

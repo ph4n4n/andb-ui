@@ -22,6 +22,7 @@
         </div>
 
         <div 
+          v-if="!showMigrateModal"
           class="flex items-center gap-3 p-1.5 rounded-2xl transition-all duration-300 shadow-sm"
           :class="appStore.buttonStyle === 'full' 
             ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' 
@@ -117,23 +118,24 @@
           <!-- Vertical Split: Object List vs DDL View -->
           <div v-if="viewMode === 'list'" class="flex-1 flex overflow-hidden relative min-w-0">
             <!-- Left: Comparison Results List (Sub-sidebar style) -->
-            <div :style="{ width: resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col shrink-0 relative">
+            <div :style="{ width: showMigrateModal ? '60px' : resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col shrink-0 relative transition-all duration-300">
               <!-- Results Header with Breadcrumb-like stack navigation -->
-              <div class="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-10 flex items-center shrink-0">
+              <div class="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-10 flex items-center shrink-0 justify-center">
                 <button 
                   v-if="selectedFilterType !== 'all'"
                   @click="selectedFilterType = 'all'"
-                  class="p-1 hover:bg-white dark:hover:bg-gray-700 rounded mr-2 transition-colors text-gray-500"
+                  class="p-1 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-gray-500"
+                  :class="showMigrateModal ? '' : 'mr-2'"
                   title="Back to Database Overview"
                 >
                   <ChevronLeft class="w-4 h-4" />
                 </button>
-                <div class="flex items-center min-w-0 flex-1">
-                  <span class="text-primary-600 dark:text-primary-400 mr-1.5 shrink-0">
+                <div class="flex items-center min-w-0" :class="showMigrateModal ? 'justify-center' : 'flex-1'">
+                  <span class="text-primary-600 dark:text-primary-400 shrink-0" :class="showMigrateModal ? '' : 'mr-1.5'">
                     <Database v-if="selectedFilterType === 'all'" class="w-3.5 h-3.5" />
                     <component v-else :is="getIconForType(selectedFilterType)" class="w-3.5 h-3.5" />
                   </span>
-                  <div class="flex flex-col min-w-0">
+                  <div v-if="!showMigrateModal" class="flex flex-col min-w-0">
                     <span class="truncate text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300">
                       <span v-if="selectedFilterType === 'all'">{{ selectedPath.db || $t('common.database') }} {{ $t('common.overview') }}</span>
                       <span v-else>{{ selectedFilterType }}</span>
@@ -145,7 +147,7 @@
                 </div>
                 <!-- Batch Migrate for single type or entire schema -->
                 <button 
-                  v-if="hasChanges(selectedFilterType)"
+                  v-if="hasChanges(selectedFilterType) && !showMigrateModal"
                   @click="openBatchMigrateModal(selectedFilterType === 'all' ? 'Schema' : selectedFilterType)"
                   class="ml-auto p-1.5 rounded-lg bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
                   :title="selectedFilterType === 'all' ? 'Migrate Entire Schema' : 'Migrate All in this category'"
@@ -155,7 +157,7 @@
               </div>
 
               <!-- Filter & Search Bar -->
-              <div v-if="hasResults" class="p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
+              <div v-if="hasResults && !showMigrateModal" class="p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
                     <Search class="w-3.5 h-3.5 text-gray-400" />
@@ -184,27 +186,35 @@
               <div class="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden p-2">
                 <div v-if="!hasResults" class="p-8 text-center text-gray-400 h-full flex flex-col justify-center">
                   <ScanSearch class="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p class="text-xs uppercase tracking-widest font-bold">{{ $t('history.noHistory') }}</p>
+                  <p v-if="!showMigrateModal" class="text-xs uppercase tracking-widest font-bold">{{ $t('history.noHistory') }}</p>
                 </div>
 
                 <!-- OVERVIEW MODE: Stack view of categories -->
                 <div v-else-if="selectedFilterType === 'all'" class="space-y-2">
                   <div 
                     v-for="cat in resultsByCategory" :key="cat.type"
-                    @click="selectedFilterType = cat.type"
-                    class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-primary-500/30 transition-all cursor-pointer group"
+                    @click="selectedFilterType = cat.type; showMigrateModal = false"
+                    class="rounded-xl transition-all cursor-pointer group flex items-center relative"
+                    :class="showMigrateModal 
+                      ? 'p-2 justify-center hover:bg-gray-100 dark:hover:bg-gray-800' 
+                      : 'p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-primary-500/30'"
+                    :title="showMigrateModal ? `${cat.type} (${cat.items.length})` : ''"
                   >
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center min-w-0">
-                        <div class="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mr-3 group-hover:scale-110 transition-transform">
-                          <component :is="getIconForType(cat.type)" class="w-4 h-4" />
+                    <div class="flex items-center justify-between w-full">
+                      <div class="flex items-center min-w-0" :class="showMigrateModal ? 'justify-center w-full' : ''">
+                        <div class="rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 transition-transform group-hover:scale-110 relative" :class="showMigrateModal ? 'p-2' : 'p-2 mr-3'">
+                          <component :is="getIconForType(cat.type)" />
+                          <!-- Collapsed Badge -->
+                          <div v-if="showMigrateModal && cat.changes > 0" class="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-orange-500 text-white text-[9px] font-bold shadow-sm ring-2 ring-white dark:ring-gray-900 z-10">
+                            {{ cat.changes }}
+                          </div>
                         </div>
-                        <div class="min-w-0">
+                        <div v-if="!showMigrateModal" class="min-w-0">
                           <div class="font-bold text-gray-900 dark:text-white uppercase text-[10px] tracking-widest">{{ cat.type }}</div>
                           <div class="text-[10px] text-gray-400">{{ cat.items.length }} items</div>
                         </div>
                       </div>
-                      <div class="flex items-center">
+                      <div v-if="!showMigrateModal" class="flex items-center">
                         <button 
                           v-if="cat.changes > 0"
                           @click.stop.prevent="openBatchMigrateModal(cat.type)"
@@ -220,7 +230,7 @@
                       </div>
                     </div>
                     <!-- Micro progress bar -->
-                    <div class="mt-3 h-1 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden flex">
+                    <div v-if="!showMigrateModal" class="mt-3 h-1 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden flex">
                       <div 
                         class="h-full bg-amber-500" 
                         :style="{ width: (cat.changes / cat.items.length * 100) + '%' }"
@@ -237,19 +247,22 @@
                 <div v-else class="space-y-1">
                   <div v-for="item in filteredResults" :key="item.name" 
                     @click="selectItem(item)"
-                    class="p-2.5 cursor-pointer rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all flex items-center justify-between group"
-                    :class="{ 'bg-white dark:bg-gray-800 shadow-sm border border-primary-500/20 ring-1 ring-primary-500/10': selectedItem?.name === item.name }"
+                    class="cursor-pointer rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-all flex items-center group"
+                    :class="[
+                      showMigrateModal ? 'p-2 justify-center' : 'p-2.5 justify-between',
+                      { 'bg-white dark:bg-gray-800 shadow-sm border border-primary-500/20 ring-1 ring-primary-500/10': selectedItem?.name === item.name }
+                    ]"
                   >
-                    <div class="min-w-0 pr-2">
-                      <div class="text-[12px] font-mono truncate text-gray-900 dark:text-gray-100" :class="{ 'font-bold': selectedItem?.name === item.name }" :title="item.name">
+                    <div class="min-w-0" :class="showMigrateModal ? '' : 'pr-2'">
+                      <div v-if="!showMigrateModal" class="text-[12px] font-mono truncate text-gray-900 dark:text-gray-100" :class="{ 'font-bold': selectedItem?.name === item.name }" :title="item.name">
                         {{ item.name }}
                       </div>
                       <div class="text-[9px] text-gray-400 uppercase tracking-tighter flex items-center">
-                        <component :is="getIconForType(item.type)" class="w-2.5 h-2.5 mr-1" />
-                        {{ item.type }}
+                        <component :is="getIconForType(item.type)" class="mr-1" :class="showMigrateModal ? 'w-4 h-4' : 'w-2.5 h-2.5'" :title="showMigrateModal ? item.name : ''" />
+                        <span v-if="!showMigrateModal">{{ item.type }}</span>
                       </div>
                     </div>
-                    <div class="flex items-center justify-center w-6 h-6 shrink-0 group/status">
+                    <div v-if="!showMigrateModal" class="flex items-center justify-center w-6 h-6 shrink-0 group/status">
                       <!-- Always show status icon if identical -->
                       <component 
                         v-if="item.status === 'equal' || item.status === 'same'"
@@ -285,6 +298,20 @@
 
             <!-- Right: Split DDL Detail -->
             <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 relative min-w-0">
+               <!-- Migration Overlay -->
+               <MigrationConfirm
+                  :is-open="showMigrateModal"
+                  :loading="isMigrating"
+                  :item="migratingItem"
+                  :source-name="sourceName"
+                  :target-name="targetName"
+                  :sql-script="migrationSql"
+                  :sql-map="migrationSqlMap"
+                  :fetching-sql="fetchingMigrationSql"
+                  @close="showMigrateModal = false"
+                  @confirm="confirmMigration"
+                />
+
               <div v-if="selectedItem" class="h-full flex flex-col">
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
                   <div class="flex items-center text-xs space-x-2 overflow-hidden">
@@ -369,18 +396,6 @@
       @apply="handleApplyFromDetail"
     />
 
-    <MigrationConfirmModal
-      :is-open="showMigrateModal"
-      :loading="isMigrating"
-      :item="migratingItem"
-      :source-name="sourceName"
-      :target-name="targetName"
-      :sql-script="migrationSql"
-      :fetching-sql="fetchingMigrationSql"
-      @close="showMigrateModal = false"
-      @confirm="confirmMigration"
-    />
-
 </template>
 
 <script setup lang="ts">
@@ -417,7 +432,7 @@ import {
   ArrowRightLeft,
   GitCompare
 } from 'lucide-vue-next'
-import MigrationConfirmModal from '@/components/MigrationConfirmModal.vue'
+import MigrationConfirm from '@/components/MigrationConfirm.vue'
 import { useOperationsStore } from '@/stores/operations'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -515,6 +530,7 @@ const isMigrating = ref(false)
 const showMigrateModal = ref(false)
 const migratingItem = ref<any>(null)
 const migrationSql = ref('')
+const migrationSqlMap = ref<Record<string, string>>({})
 const fetchingMigrationSql = ref(false)
 const batchType = ref<string | null>(null)
 
@@ -1010,7 +1026,7 @@ const openBatchMigrateModal = (type: string) => {
     items: itemsToMigrate
   }
   
-  // Populate migration SQL for batch preview
+  // Populate migration SQL for batch preview (Combined)
   migrationSql.value = itemsToMigrate.map(i => {
     let sql = Array.isArray(i.ddl) ? i.ddl.join('\n') : i.ddl
     
@@ -1026,8 +1042,13 @@ const openBatchMigrateModal = (type: string) => {
        const objectType = i.type.toLowerCase().replace(/s$/, '').toUpperCase()
        sql = `DROP ${objectType} IF EXISTS \`${i.name}\`;`
     }
-
-    return `-- OBJECT: ${i.name} (${i.type})\n${sql || '-- No SQL script available'}`
+    
+    const finalSql = `-- OBJECT: ${i.name} (${i.type})\n${sql || '-- No SQL script available'}`
+    
+    // Populate Map for individual selection
+    migrationSqlMap.value[`${i.type}-${i.name}`] = finalSql
+    
+    return finalSql
   }).join('\n\n')
 
   showMigrateModal.value = true

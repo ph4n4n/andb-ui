@@ -501,10 +501,18 @@ const confirmcreateTemplate = () => {
     type: form.value.type as 'mysql' | 'postgres' | 'sqlite'
   }
 
-  const newTemplate = templatesStore.addTemplate(newTemplateData)
-  form.value.templateId = newTemplate.id
-  
-  cancelTemplateCreation()
+  try {
+    const newTemplate = templatesStore.addTemplate(newTemplateData)
+    form.value.templateId = newTemplate.id
+    cancelTemplateCreation()
+  } catch (e: any) {
+    if (e.message === 'DUPLICATE_CONNECTION') {
+        alert($t('connections.template.duplicateError'))
+    } else {
+        console.error(e)
+        alert($t('common.error'))
+    }
+  }
 }
 
 // Validation

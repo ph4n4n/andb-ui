@@ -145,8 +145,8 @@
                   <!-- Only show if has items -->
                   <div v-if="db[type.key]?.length > 0">
                     <div 
-                      class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
-                      :class="{ 'text-gray-900 dark:text-gray-100': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
+                      class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
+                      :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800/50': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
                       @click="selectCategory(env.name, db.name, type.key)"
                     >
                       <span 

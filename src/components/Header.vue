@@ -30,17 +30,26 @@
           <!-- PAIR SELECTOR (Available in Compare, Schema, History) -->
           <div class="flex items-center space-x-2" :class="{ 'pr-2 border-r border-gray-200 dark:border-gray-700 mr-2': route.path !== '/compare' }">
              <GitCompare class="w-4 h-4 text-indigo-500" />
-             <select
-              v-model="selectedPairId"
-              @change="onPairChange"
-              class="py-1.5 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer max-w-[140px] truncate"
-              :title="$t('header.pairContext')"
-            >
-              <option value="" disabled>{{ $t('header.selectPair') }}</option>
-              <option v-for="pair in availablePairs" :key="pair.id" :value="pair.id" class="bg-white dark:bg-gray-800">
-                {{ pair.name }}
-              </option>
-            </select>
+             <div class="relative">
+                 <select
+                  v-model="selectedPairId"
+                  @change="onPairChange"
+                  class="w-32 py-1.5 pl-2 pr-6 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer appearance-none truncate"
+                  :class="{'text-gray-400 font-normal': !selectedPairId}"
+                  :title="$t('header.pairContext')"
+                >
+                  <option value="" class="text-gray-400 bg-white dark:bg-gray-800">{{ $t('header.selectPair') }}</option>
+                  <option v-for="pair in availablePairs" :key="pair.id" :value="pair.id" class="bg-white dark:bg-gray-800 font-bold text-gray-900 dark:text-white">
+                    {{ pair.name }}
+                  </option>
+                </select>
+                <!-- Custom Arrow for better styling -->
+                <div class="absolute inset-y-0 right-0 flex items-center pr-1 pointer-events-none">
+                     <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+             </div>
           </div>
           
           <!-- SINGLE DB SELECTOR (Available in Schema, History) -->
@@ -81,7 +90,7 @@
             :disabled="isRefreshing"
             :title="$t('header.reload')"
           >
-            <RefreshCw class="w-4 h-4 text-gray-400 group-hover:text-primary-500" :class="{ 'animate-spin': isRefreshing }" />
+            <RefreshCw class="w-4 h-4 text-gray-400 group-hover:text-primary-500 group-hover:rotate-180 transition-transform duration-500" :class="{ 'animate-spin': isRefreshing }" />
           </button>
 
           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
