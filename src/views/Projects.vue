@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
 import MainLayout from '@/layouts/MainLayout.vue'
@@ -71,14 +71,6 @@ onMounted(() => {
    // Default to auto-collapse for that 'Peak UI' feel
    appStore.autoCollapseColumns = true
 })
-
-onUnmounted(() => {
-  // Optional: Reset mode or keep it. For now, let's allow it to persist 
-  // or clear it if we consider 'PM Mode' specific to this page.
-  // Given the MainLayout logic, keeping it false elsewhere might be safer for sidebar.
-  appStore.projectManagerMode = false
-})
-
 
 const selectedProject = computed(() => {
   return projectsStore.projects.find((p: any) => p.id === projectsStore.selectedProjectId)

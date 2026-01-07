@@ -18,7 +18,7 @@
       </div>
 
       <!-- Floating Warning (Absolute Center) -->
-      <div v-if="showWarning" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-2 px-6 py-1.5 rounded-full bg-amber-50/95 dark:bg-amber-900/60 border border-amber-200 dark:border-amber-700/60 text-[11px] font-bold text-amber-700 dark:text-amber-400 shadow-md backdrop-blur-sm z-20 whitespace-normal max-w-[60%] text-center min-w-0">
+      <div v-if="showWarning" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-2 px-6 py-1.5 rounded-full bg-amber-50/95 dark:bg-amber-900 border border-amber-200 dark:border-amber-700/60 text-[11px] font-bold text-amber-700 dark:text-amber-400 shadow-md backdrop-blur-sm z-20 whitespace-normal max-w-[60%] text-center min-w-0">
           <AlertTriangle class="w-3.5 h-3.5 shrink-0" />
           <span class="truncate">{{ $t('migration.warning') }}</span>
       </div>
@@ -49,7 +49,7 @@
     <div class="flex-1 flex overflow-hidden lg:flex-row flex-col">
        
        <!-- LEFT PANEL: Overview & List -->
-       <div class="w-full lg:w-1/3 bg-gray-50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
+       <div class="w-full lg:w-1/3 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
           
           <!-- Summary Cards -->
           <div class="p-4 pb-0 shrink-0">
@@ -106,7 +106,7 @@
 
        <!-- RIGHT PANEL: SQL Preview -->
        <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900">
-            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 shrink-0">
+            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 shrink-0">
                <span class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest flex items-center gap-2">
                  <Terminal class="w-4 h-4 text-gray-400" />
                  {{ $t('migration.sqlPreview') }}
@@ -144,7 +144,7 @@
                   />
                 </div>
                 
-                <div v-else class="flex-1 flex flex-col items-center justify-center p-10 text-gray-400 italic text-[11px] bg-gray-100/30 dark:bg-gray-800/20">
+                <div v-else class="flex-1 flex flex-col items-center justify-center p-10 text-gray-400 italic text-[11px] bg-gray-100/30 dark:bg-gray-900">
                   <div class="mb-4 opacity-10 p-6 bg-gray-200 dark:bg-gray-700 rounded-full">
                     <Terminal class="w-12 h-12" />
                   </div>

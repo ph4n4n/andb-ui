@@ -1,7 +1,7 @@
 <template>
   <div class="h-screen flex flex-col pt-0 bg-gray-50 dark:bg-gray-900" :style="{ fontFamily: appStore.fontFamilies.general, fontSize: appStore.fontSizes.main + 'px' }">
     <!-- Header -->
-    <Header />
+    <Header v-if="!appStore.projectManagerMode" />
 
     <!-- Main Content Area -->
     <div class="flex-1 flex overflow-hidden">

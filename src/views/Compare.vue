@@ -25,12 +25,12 @@
           v-if="!showMigrateModal"
           class="flex items-center gap-3 p-1.5 rounded-2xl transition-all duration-300 shadow-sm"
           :class="appStore.buttonStyle === 'full' 
-            ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' 
+            ? 'bg-white/50 dark:bg-gray-950 border border-gray-200/50 dark:border-gray-800 backdrop-blur-sm dark:backdrop-blur-none shadow-sm ring-1 ring-black/5' 
             : 'bg-transparent border-transparent px-0'"
         >
           <!-- Segmented Control for View Mode -->
           <div 
-            class="flex items-center bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl"
+            class="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl"
             :class="appStore.buttonStyle === 'minimal' ? 'scale-90' : ''"
           >
               <button 
@@ -98,12 +98,13 @@
     </template>
         
         <!-- Comparison & Console Split -->
-        <div class="flex-1 flex flex-col overflow-hidden relative min-w-0">
+        <div class="flex-1 flex flex-col overflow-hidden relative min-w-0 bg-white dark:bg-gray-950">
           <!-- Comparison Area (Top) -->
           <div class="flex-1 flex overflow-hidden relative min-w-0">
             <main class="flex-1 flex overflow-hidden relative min-w-0">
               <!-- Loading Overlay (Spinner Only) -->
-              <div v-if="loading && !hasResults" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 z-20 flex items-center justify-center backdrop-blur-sm">
+              <!-- Loading Overlay (Spinner Only) -->
+              <!-- <div v-if="loading && !hasResults" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 z-20 flex items-center justify-center backdrop-blur-sm">
                 <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
                   <div class="relative w-20 h-20 mx-auto mb-6">
                     <div class="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
@@ -113,14 +114,14 @@
                   <p class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">{{ statusMessage || $t('schema.loading') }}</p>
                   <div class="mt-2 text-xs text-gray-500 uppercase tracking-tighter animate-pulse">{{ $t('schema.runningCommands') }}</div>
                 </div>
-              </div>
+              </div> -->
 
           <!-- Vertical Split: Object List vs DDL View -->
           <div v-if="viewMode === 'list'" class="flex-1 flex overflow-hidden relative min-w-0">
             <!-- Left: Comparison Results List (Sub-sidebar style) -->
-            <div :style="{ width: showMigrateModal ? '60px' : resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col shrink-0 relative transition-all duration-300">
+            <div :style="{ width: showMigrateModal ? '60px' : resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 flex flex-col shrink-0 relative transition-all duration-300">
               <!-- Results Header with Breadcrumb-like stack navigation -->
-              <div class="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-10 flex items-center shrink-0 justify-center">
+              <div class="p-2 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 h-10 flex items-center shrink-0 justify-center">
                 <button 
                   v-if="selectedFilterType !== 'all'"
                   @click="selectedFilterType = 'all'"
@@ -157,7 +158,7 @@
               </div>
 
               <!-- Filter & Search Bar -->
-              <div v-if="hasResults && !showMigrateModal" class="p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
+              <div v-if="hasResults && !showMigrateModal" class="p-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
                     <Search class="w-3.5 h-3.5 text-gray-400" />
@@ -297,7 +298,7 @@
             </div>
 
             <!-- Right: Split DDL Detail -->
-            <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 relative min-w-0">
+            <div class="flex-1 flex flex-col bg-white dark:bg-gray-950 relative min-w-0">
                <!-- Migration Overlay -->
                <MigrationConfirm
                   :is-open="showMigrateModal"

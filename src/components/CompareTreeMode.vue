@@ -23,7 +23,7 @@
       </div>
     </div>
     <!-- Filter Bar -->
-    <div class="flex items-center space-x-1 px-4 py-1.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 shrink-0 overflow-x-auto no-scrollbar">
+    <div class="flex items-center space-x-1 px-4 py-1.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0 overflow-x-auto no-scrollbar">
       <button 
         v-for="f in filterOptions" 
         :key="f.id"

@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 shrink-0">
+  <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 shrink-0">
     <div class="flex items-center justify-between gap-4">
       <!-- Left side: Toggle button and title/breadcrumbs -->
       <div class="flex items-center space-x-4 min-w-0">
@@ -28,7 +28,7 @@
       </div>
 
       <!-- Central Toolbar (Contextual Pair or Single Selector) -->
-      <div v-if="['/compare', '/schema', '/history'].includes(route.path)" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+      <div v-if="['/compare', '/schema', '/history'].includes(route.path)" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-950 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
         <!-- Dropdown Portion -->
         <div class="flex items-center pl-2 space-x-2 border-r border-gray-200 dark:border-gray-700 pr-2">
           <!-- PAIR SELECTOR (Available in Compare, Schema, History) -->

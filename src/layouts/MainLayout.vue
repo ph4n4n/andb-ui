@@ -20,7 +20,7 @@
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900">
         <!-- View Toolbar (Injected via slot) -->
-        <div v-if="$slots.toolbar" class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between shrink-0 h-16">
+        <div v-if="$slots.toolbar" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between shrink-0 h-16">
           <slot name="toolbar"></slot>
           
           <!-- Console Toggle (Global) -->

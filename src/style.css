@@ -34,6 +34,26 @@
   --code-number: #098658;
   --code-operator: #000000;
   --code-punctuation: #000000;
+  --code-punctuation: #000000;
+}
+
+:root[class~="dark"] {
+  /* Dark Mode Overrides for Primary Tint Scale */
+  /* Reverses/Darkens the lightest shades so they aren't "white" in dark mode */
+  --primary-50: #0f172a;  /* deep slate/blue background */
+  --primary-100: #1e293b; /* slightly lighter surface */
+  --primary-200: #334155;
+  --primary-300: #475569;
+  
+  /* Code Colors - Default Dark */
+  --code-text: #c9d1d9;
+  --code-keyword: #569cd6;
+  --code-string: #ce9178;
+  --code-comment: #6a9955;
+  --code-function: #dcdcaa;
+  --code-number: #b5cea8;
+  --code-operator: #8b949e;
+  --code-punctuation: #8b949e;
 }
 
 :root.solarized-dark {
@@ -57,8 +77,8 @@
   --text-main: #d6deeb;
   --border-color: #1d3b53;
 
-  --primary-500: #82aaff;
-  --primary-600: #5f7eaf;
+  --primary-500: #7fdbca; /* Cyan */
+  --primary-600: #0c969b;
 
   --code-keyword: #c792ea;
   --code-string: #ecc48d;

@@ -504,16 +504,16 @@ onUnmounted(() => {
 }
 /* Navicat-inspired Dark SQL Syntax (Muted & Balanced) */
 :global(.dark) .ddl-code {
-  color: #e4e4e4; /* Brighter base text */
+  color: #c9d1d9; /* Softer, matte gray (GitHub Dark Dim style) to reduce glare */
 }
 
 :global(.dark) :deep(.token.keyword) { color: #569cd6; font-weight: bold; }
 :global(.dark) :deep(.token.string) { color: #ce9178; }
-:global(.dark) :deep(.token.comment) { color: #6a9955; font-style: italic; opacity: 0.8; }
+:global(.dark) :deep(.token.comment) { color: #6a9955; }
 :global(.dark) :deep(.token.function) { color: #dcdcaa; }
 :global(.dark) :deep(.token.number) { color: #b5cea8; }
-:global(.dark) :deep(.token.operator) { color: #d4d4d4; }
-:global(.dark) :deep(.token.punctuation) { color: #d4d4d4; } /* Brighter punctuation for brackets */
+:global(.dark) :deep(.token.operator) { color: #8b949e; }
+:global(.dark) :deep(.token.punctuation) { color: #8b949e; } /* Softer gray for brackets/punctuation */
 :global(.dark) :deep(.token.boolean) { color: #569cd6; }
 :global(.dark) :deep(.token.property) { color: #9cdcfe; }
 :global(.dark) :deep(.token.comment *) { color: inherit !important; }

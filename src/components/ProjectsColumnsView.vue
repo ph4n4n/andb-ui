@@ -80,7 +80,7 @@
       <!-- Collapsed Vertical Label -->
       <div 
           v-if="isCollapsed(index) && column.selectedId"
-          class="absolute inset-x-0 top-20 bottom-0 flex flex-col items-center justify-start pb-4 bg-white/50 dark:bg-gray-900/50 group-hover/col:opacity-0 transition-opacity pointer-events-none z-10"
+          class="absolute inset-x-0 top-14 bottom-0 flex flex-col items-center justify-start pt-6 pb-4 bg-white/50 dark:bg-gray-900/50 group-hover/col:opacity-0 transition-opacity pointer-events-none z-10"
       >
         <span class="vertical-label rotate-180 whitespace-nowrap text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white select-none opacity-80">
             {{ getSelectedName(column) }}
@@ -185,9 +185,29 @@
           <p class="text-xs font-bold uppercase tracking-widest">Loading content...</p>
         </div>
       </template>
-      <template v-else-if="previewObject && (previewObject.ddl || previewObject.content)">
+      <template v-else-if="previewObject && (previewCode || previewObject.ddl || previewObject.content)">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5 bg-white/50 dark:bg-gray-900/50 backdrop-blur shrink-0 transition-colors">
+             <div class="flex items-center gap-2 overflow-hidden">
+                <div class="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-500">
+                    <component :is="previewObject.icon || Table" class="w-4 h-4" />
+                </div>
+                <div class="flex flex-col min-w-0">
+                    <span class="text-[10px] uppercase font-black tracking-widest text-gray-400 leading-none mb-0.5">{{ previewObject.ddlType || 'Object' }}</span>
+                    <span class="font-bold text-sm text-gray-900 dark:text-white truncate leading-tight">{{ previewObject.name }}</span>
+                </div>
+             </div>
+             <div class="flex items-center gap-2">
+                 <button @click="refreshObject" :disabled="previewLoading" class="p-2 text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Fetch latest from DB">
+                    <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': previewLoading }" />
+                 </button>
+                 <button @click="compareObject" class="flex items-center gap-2 px-3 py-1.5 bg-primary-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20" title="Compare against other environments">
+                    <GitCompare class="w-3.5 h-3.5" />
+                    <span>Compare</span>
+                 </button>
+             </div>
+        </div>
         <DDLCodeViewer
-          :code="previewCode"
+          :code="previewCode || previewObject.ddl || previewObject.content"
           :object-name="previewObject.name"
           :ddl-type="previewObject.type"
           :environment="previewObject.environment"
@@ -239,6 +259,11 @@
             </div>
          </div>
       </template>
+
+      <!-- ERD Diagram Preview -->
+      <template v-else-if="previewObject && previewObject.type === 'diagram'">
+         <SchemaDiagram :tables="previewObject.tables" class="flex-1" />
+      </template>
     </div>
     
     <!-- Empty State / Main Workspace Background -->
@@ -272,6 +297,7 @@ import { useNotificationStore } from '@/stores/notification'
 import DDLCodeViewer from '@/components/DDLCodeViewer.vue'
 import ConnectionForm from '@/components/ConnectionForm.vue'
 import CompareWorkbench from '@/components/CompareWorkbench.vue'
+import SchemaDiagram from '@/components/SchemaDiagram.vue'
 import { Andb } from '@/utils/andb'
 import { 
   Folder, 
@@ -290,7 +316,9 @@ import {
   PlusCircle,
   Plus,
   Zap,
-  ChevronRight
+  ChevronRight,
+  Network,
+  RefreshCw
 } from 'lucide-vue-next'
 
 interface ColumnData {
@@ -409,6 +437,28 @@ const handleSelection = async (item: any) => {
   } else if (item.sourceEnv && item.targetEnv) {
     // It's a pair
     loadComparisonResults(item)
+  } else if (item.ddlType) {
+    if (item.ddl) {
+        previewCode.value = item.ddl
+    } else {
+        fetchDDL(item)
+    }
+  } else if (item.id === 'diagram') {
+    // ER Diagram
+    previewLoading.value = true
+    try {
+       const schemas = await Andb.getSchemas()
+       const schema = schemas.find((s: any) => s.environment === item.environment && s.database === item.database)
+       if (schema && schema.tables) {
+           previewObject.value = { ...item, type: 'diagram', tables: schema.tables }
+       } else {
+           previewObject.value = { ...item, type: 'diagram', tables: [] }
+       }
+    } catch (e) {
+       console.error('Failed to load diagram data', e)
+    } finally {
+       previewLoading.value = false
+    }
   }
 }
 
@@ -521,6 +571,7 @@ const getNextColumn = async (level: number, item: any): Promise<ColumnData | nul
         type: 'types',
         title: item.name,
         items: [
+          { id: 'diagram', name: 'ER Diagram', icon: Network, environment: item.environment, database: item.name },
           { id: 'tables', name: 'Tables', icon: Table, count: item.counts?.tables },
           { id: 'views', name: 'Views', icon: Eye, count: item.counts?.views },
           { id: 'procedures', name: 'Procedures', icon: Hammer, count: item.counts?.procedures },
@@ -531,6 +582,7 @@ const getNextColumn = async (level: number, item: any): Promise<ColumnData | nul
       }
 
     case 'types':
+      if (item.id === 'diagram') return null
       const objects = await getDatabaseObjects(
         columns.value[0].selectedId!,
         columns.value[level - 2].title, // environment
@@ -591,7 +643,8 @@ const getDatabaseObjects = async (_projectId: string, environment: string, datab
     id: `${environment}-${database}-${type}-${obj.name}`,
     icon: type === 'tables' ? Table : type === 'views' ? Eye : Hammer,
     environment,
-    database
+    database,
+    ddlType: type
   }))
 }
 
@@ -673,6 +726,65 @@ const handleSaveConnection = async (_conn: any) => {
    notificationStore.add({ type: 'success', title: 'Saved', message: 'Connection updated successfully' })
 }
 
+const fetchDDL = async (item: any) => {
+    previewLoading.value = true
+    try {
+       const project = projectsStore.projects.find(p => p.id === columns.value[0].selectedId)
+       const connection = appStore.connections.find(c => 
+          project?.connectionIds.includes(c.id) && 
+          c.environment === item.environment && 
+          c.database === item.database
+       )
+
+       if (connection) {
+           const res = await Andb.export(connection, null as any, { 
+              type: item.ddlType as any, 
+              name: item.name 
+           })
+           
+           if (res && res[item.ddlType]) {
+             const obj = res[item.ddlType].find((o: any) => o.name === item.name)
+             if (obj && obj.ddl) {
+               previewCode.value = obj.ddl
+               item.ddl = obj.ddl 
+             } else {
+               previewCode.value = '-- No DDL available or empty'
+             }
+           }
+       } else {
+         previewCode.value = '-- Connection not found'
+       }
+    } catch (e) {
+       console.error('Failed to fetch DDL', e)
+       const msg = e instanceof Error ? e.message : String(e)
+       previewCode.value = `-- Error fetching DDL: ${msg}`
+    } finally {
+       previewLoading.value = false
+    }
+}
+
+const refreshObject = async () => {
+    if (previewObject.value && previewObject.value.ddlType) {
+        await fetchDDL(previewObject.value)
+    }
+}
+
+const compareObject = () => {
+    if (!previewObject.value) return
+    const currentProj = projectsStore.projects.find(p => p.id === columns.value[0].selectedId)
+    // Find connection for this object
+    const conn = appStore.connections.find(c => c.environment === previewObject.value.environment && c.database === previewObject.value.database)
+    
+    if (conn && currentProj) {
+        // Try to find a pair
+        const pair = connectionPairsStore.connectionPairs.find(p => currentProj.pairIds.includes(p.id) && (p.sourceId === conn.id || p.targetId === conn.id))
+        if (pair) {
+            router.push(`/compare?pairId=${pair.id}&item=${previewObject.value.name}`)
+            return
+        }
+    }
+    router.push('/compare')
+}
 </script>
 
 <style scoped>
