@@ -19,7 +19,21 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- Button removed as it's now in the column header -->
+          <!-- Auto Collapse Toggle -->
+          <div class="flex items-center gap-2 border-l border-gray-200 dark:border-gray-800 pl-3">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none">Auto Collapse</span>
+              <button 
+                  @click="appStore.autoCollapseColumns = !appStore.autoCollapseColumns"
+                  class="w-9 h-5 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  :class="appStore.autoCollapseColumns ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'"
+                  title="Toggle Auto-Collapse Columns"
+              >
+                  <div 
+                      class="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-spring"
+                      :class="appStore.autoCollapseColumns ? 'left-[18px]' : 'left-0.5'"
+                  ></div>
+              </button>
+          </div>
         </div>
       </div>
     </template>

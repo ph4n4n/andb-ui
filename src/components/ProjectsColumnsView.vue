@@ -1,182 +1,73 @@
+
+
 <template>
   <div class="flex w-full h-full overflow-hidden bg-white dark:bg-gray-950">
-    <!-- Columns -->
-    <div 
-      v-for="(column, index) in columns" 
-      :key="index"
-      class="border-r border-gray-100 dark:border-white/5 flex flex-col shrink-0 bg-white dark:bg-gray-950 transition-all duration-300 ease-in-out group/col relative"
-      :class="isCollapsed(index) ? 'w-12 hover:w-72 z-10 hover:z-20 hover:shadow-2xl' : 'w-72'"
-    >
-      <!-- Column Header (Luxury) -->
-      <div 
-         class="relative px-5 py-4 border-b border-gray-100 dark:border-white/5 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl flex items-center justify-between h-14 transition-all" 
-         :class="isCollapsed(index) ? 'justify-center px-0 group-hover/col:justify-between group-hover/col:px-4' : ''"
-      >
-        <!-- Title / Edit Input -->
-        <div 
-           class="min-w-0 flex-1 mr-2 transition-all duration-300"
-           :class="isCollapsed(index) ? 'w-0 opacity-0 group-hover/col:w-auto group-hover/col:opacity-100' : 'w-auto opacity-100'"
-        >
-            <input 
-              v-if="editingColumnIndex === index"
-              ref="titleInput"
-              v-model="editingTitle"
-              @blur="saveColumnTitle(index)"
-              @keydown.enter="saveColumnTitle(index)"
-              @keydown.esc="cancelEdit"
-              @click.stop
-              class="w-full bg-white dark:bg-gray-800 border-2 border-primary-500 rounded-xl px-2 py-1 text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white outline-none"
-            />
-            <div v-else class="flex flex-col min-w-0">
-               <span class="text-[8px] font-black uppercase tracking-[0.3em] text-primary-500/60 leading-none mb-1 truncate">{{ column.type === 'projects' ? 'Source Control' : 'Project Hierarchy' }}</span>
-               <h3 
-                  @click="startEditColumnTitle(index)"
-                  class="text-xs font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white whitespace-nowrap overflow-hidden transition-all duration-300 cursor-pointer hover:text-primary-500 truncate"
-               >
-                  {{ column.title }}
-               </h3>
-            </div>
-        </div>
+    <!-- Combined Mode Layout -->
+    <template v-if="isCombinedMode && mergedTreeColumn">
+        <!-- Merged Tree Column (The Stack) -->
+        <ProjectStandardColumn 
+            v-if="mergedTreeColumn"
+            :column="mergedTreeColumn as ColumnData"
+            :index="activeStartIndex"
+            :is-collapsed="false"
+            :combined-types="COMBINED_TYPES"
+            :active-start-index="activeStartIndex"
+            :is-merged-stack="true"
+          :is-last="false"
+            @select="(item) => selectInMergedTree(item)"
+            @dblclick="(item) => handleDblClick(0, item)"
+            @toggle-pin="togglePin(0)"
+            @add-item="handleAdd(mergedTreeColumn)"
+            @delete-project="(item) => handleDeleteProject(item)"
+            @toggle-membership="(item) => toggleProjectMembership(mergedTreeColumn, item)"
+            @update-title="(newTitle) => saveColumnTitle(0, newTitle)"
+            @accordion-click="(item, parent) => handleItemClick(item, 0, parent)"
+            @toggle-stack="handleUnstack"
+        />
 
-        <div v-if="appStore.projectManagerMode" class="flex items-center gap-1 shrink-0" :class="isCollapsed(index) ? 'hidden group-hover/col:flex' : 'flex'">
-          <!-- Global Auto-hide Settings (Only on Projects column) -->
-          <button 
-             v-if="column.type === 'projects'"
-             @click.stop="appStore.autoCollapseColumns = !appStore.autoCollapseColumns"
-             class="mr-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all"
-             :class="appStore.autoCollapseColumns ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700'"
-             :title="appStore.autoCollapseColumns ? 'Auto-hide: ON' : 'Auto-hide: OFF'"
-          >
-             {{ appStore.autoCollapseColumns ? 'AUTO-HIDE' : 'STATIC' }}
-          </button>
+        <ProjectStandardColumn 
+          v-for="(column, index) in activeColumns" 
+          :key="column.title"
+          :column="column"
+          :index="activeStartIndex + index"
+          :is-collapsed="isAutoCollapsed(activeStartIndex + index)"
+          :combined-types="COMBINED_TYPES"
+          :active-start-index="activeStartIndex"
+          :is-last="index === activeColumns.length - 1"
+          @select="(item) => selectInColumn(activeStartIndex + index, item)"
+          @dblclick="(item) => handleDblClick(activeStartIndex + index, item)"
+          @toggle-pin="togglePin(activeStartIndex + index)"
+          @add-item="handleAdd(column)"
+          @delete-project="(item) => handleDeleteProject(item)"
+          @toggle-membership="(item) => toggleProjectMembership(column, item)"
+          @update-title="(newTitle) => saveColumnTitle(activeStartIndex + index, newTitle)"
+          @accordion-click="(item, parent) => handleItemClick(item, activeStartIndex + index, parent)"
+          @toggle-stack="handleStack"
+          @stack-to-parent="handleStackToParent"
+        />
+    </template>
 
-          <!-- Pin Toggle -->
-          <button 
-             @click.stop="togglePin(index)"
-             class="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-             :class="column.isPinned ? 'text-primary-500' : 'text-gray-400 hover:text-gray-500'"
-             :title="column.isPinned ? 'Unpin column' : 'Pin column'"
-          >
-             <component :is="column.isPinned ? PinOff : Pin" class="w-3.5 h-3.5" />
-          </button>
-
-          <!-- Add Button (Contextual) -->
-          <button 
-             v-if="['projects', 'connections', 'pairs'].includes(column.type)"
-             @click.stop="handleAdd(column)"
-             class="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 hover:text-primary-500 transition-colors"
-             :title="'New ' + column.title.slice(0, -1)"
-          >
-             <Plus class="w-4 h-4" />
-          </button>
-        </div>
-
-        <div 
-             v-if="isCollapsed(index)" 
-             class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 group-hover/col:opacity-0 transition-opacity pointer-events-none"
-        ></div>
-      </div>
-
-      <!-- Collapsed Vertical Label -->
-      <div 
-          v-if="isCollapsed(index) && column.selectedId"
-          class="absolute inset-x-0 top-14 bottom-0 flex flex-col items-center justify-start pt-6 pb-4 bg-white/50 dark:bg-gray-900/50 group-hover/col:opacity-0 transition-opacity pointer-events-none z-10"
-      >
-        <span class="vertical-label rotate-180 whitespace-nowrap text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white select-none opacity-80">
-            {{ getSelectedName(column) }}
-        </span>
-      </div>
-      
-      <div 
-         class="flex-1 overflow-y-auto slim-scrollbar px-3 py-4 space-y-1.5 transition-opacity duration-200 bg-white dark:bg-gray-950"
-         :class="{ 'opacity-0 group-hover/col:opacity-100': isCollapsed(index) }"
-      >
-        <button
-          v-for="item in column.items"
-          :key="item.id"
-          @click="selectInColumn(index, item)"
-          :class="{
-            'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/20 shadow-xl shadow-primary-500/5 border border-primary-500/10': column.selectedId === item.id,
-            'hover:bg-primary-50/50 dark:hover:bg-primary-900/5 text-gray-700 dark:text-gray-300 border-transparent': column.selectedId !== item.id,
-            'justify-center px-0': isCollapsed(index)
-          }"
-          @dblclick="handleDblClick(index, item)"
-          class="w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center justify-between group border border-transparent"
-          :title="isCollapsed(index) ? item.name : ''"
-        >
-          <div 
-             class="flex items-center min-w-0 transition-all duration-300" 
-             :class="[
-                isCollapsed(index) ? 'justify-center w-full group-hover/col:justify-start group-hover/col:w-auto gap-0 group-hover/col:gap-3' : 'justify-start w-auto gap-3'
-             ]"
-          >
-            <div class="relative shrink-0">
-               <component 
-                 :is="item.icon || Folder" 
-                 class="w-4 h-4 transition-transform duration-300"
-                 :class="{ 'scale-110': column.selectedId === item.id }"
-               />
-               <!-- Status Dot (for connections) -->
-               <div 
-                  v-if="item.host && item.status" 
-                  class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white dark:border-gray-900 shadow-sm"
-                  :class="{
-                    'bg-green-500': item.status === 'connected',
-                    'bg-yellow-500': item.status === 'testing',
-                    'bg-red-500': item.status === 'failed',
-                    'bg-gray-300': item.status === 'idle'
-                  }"
-               ></div>
-            </div>
-            
-            <div 
-               class="flex-1 min-w-0 transition-all duration-300 whitespace-nowrap"
-               :class="isCollapsed(index) ? 'max-w-0 opacity-0 group-hover/col:max-w-[200px] overflow-hidden group-hover/col:opacity-100' : 'opacity-100 overflow-visible'"
-            >
-              <div class="flex items-center gap-1.5 w-full">
-                <span class="text-sm font-bold truncate">{{ item.name }}</span>
-                <span v-if="item.inProject" class="shrink-0 w-1.5 h-1.5 rounded-full bg-primary-500 ring-2 ring-primary-500/20 ml-0.5"></span>
-              </div>
-              <div 
-                v-if="item.description || item.count !== undefined" 
-                class="text-[10px] truncate opacity-70 flex items-center gap-1.5"
-              >
-                <span v-if="item.environment && !isCollapsed(index)" class="shrink-0 font-black text-[8px] px-1 rounded bg-gray-100 dark:bg-gray-800 tracking-tighter">{{ item.environment }}</span>
-                <span class="truncate">{{ item.description || (item.count !== undefined ? `${item.count} items` : '') }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Project Membership Toggle (only if item supports it) -->
-          <button 
-             v-if="['connections', 'pairs'].includes(column.type) && !isCollapsed(index)"
-             @click.stop="toggleProjectMembership(column, item)"
-             class="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 opacity-0 group-hover:opacity-100 transition-all"
-             :class="item.inProject ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600'"
-             :title="item.inProject ? 'Remove from Base' : 'Add to Base'"
-          >
-             <CheckCircle2 v-if="item.inProject" class="w-3.5 h-3.5" />
-             <PlusCircle v-else class="w-3.5 h-3.5" />
-          </button>
-
-          <!-- Project Delete Trigger -->
-          <button 
-             v-if="column.type === 'projects' && item.id !== 'default' && !isCollapsed(index)"
-             @click.stop="handleDeleteProject(item)"
-             class="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-300 dark:text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all ml-1"
-             title="Delete Base"
-          >
-             <Trash2 class="w-3.5 h-3.5" />
-          </button>
-
-          <ChevronRight 
-             v-else-if="column.selectedId === item.id" 
-             class="w-3 h-3 shrink-0 opacity-80"
-             :class="isCollapsed(index) ? 'hidden group-hover/col:block' : 'block'"
-          />
-        </button>
-      </div>
-    </div>
+    <template v-else>
+        <ProjectStandardColumn 
+            v-for="(column, index) in columns" 
+            :key="index"
+            :column="column"
+            :index="index"
+            :is-collapsed="isAutoCollapsed(index)"
+            :combined-types="COMBINED_TYPES"
+            :active-start-index="activeStartIndex"
+            :is-last="index === columns.length - 1"
+            @select="(item) => selectInColumn(index, item)"
+            @dblclick="(item) => handleDblClick(index, item)"
+            @toggle-pin="togglePin(index)"
+            @add-item="handleAdd(column)"
+            @delete-project="(item) => handleDeleteProject(item)"
+            @toggle-membership="(item) => toggleProjectMembership(column, item)"
+            @update-title="(newTitle) => saveColumnTitle(index, newTitle)"
+            @accordion-click="(item, parent) => handleItemClick(item, index, parent)"
+            @toggle-stack="handleStack"
+        />
+    </template>
     
     <div v-if="previewCode || previewObject" class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white dark:bg-gray-950 border-l border-gray-100 dark:border-white/5 shadow-2xl z-10">
       <template v-if="previewLoading">
@@ -288,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, triggerRef, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
@@ -298,25 +189,19 @@ import DDLCodeViewer from '@/components/DDLCodeViewer.vue'
 import ConnectionForm from '@/components/ConnectionForm.vue'
 import CompareWorkbench from '@/components/CompareWorkbench.vue'
 import SchemaDiagram from '@/components/SchemaDiagram.vue'
+import ProjectCombinedStack from '@/components/projects/ProjectCombinedStack.vue'
+import ProjectStandardColumn from '@/components/projects/ProjectStandardColumn.vue'
 import { Andb } from '@/utils/andb'
 import { 
-  Folder, 
   Database,
   GitCompare,
   Link,
   Table,
   Eye,
   Hammer,
-  Pin,
-  PinOff,
   LayoutGrid,
   Globe,
-  Trash2,
-  CheckCircle2,
-  PlusCircle,
-  Plus,
   Zap,
-  ChevronRight,
   Network,
   RefreshCw
 } from 'lucide-vue-next'
@@ -328,7 +213,13 @@ interface ColumnData {
   items: any[]
   selectedId: string | null
   isPinned?: boolean
+  metadata?: any
 }
+
+// Config for what types support inline accordion behavior, and in what order?
+// Actually simpler: if a 'parent' is expanded, we just fetch next level.
+// We label items with 'contextType' to know what to fetch.
+const COMBINED_TYPES = ['environments', 'databases', 'types']
 
 const router = useRouter()
 const projectsStore = useProjectsStore()
@@ -343,15 +234,40 @@ const previewLoading = ref(false)
 const comparisonResults = ref<any[]>([])
 const fetchingResults = ref(false)
 
-const editingColumnIndex = ref<number | null>(null)
-const editingTitle = ref('')
-const titleInput = ref<HTMLInputElement | null>(null)
+const activeStartIndex = ref(0)
 
 const emit = defineEmits(['open', 'create-project', 'update-breadcrumbs'])
 
 // Initialize columns
 onMounted(async () => {
   await projectsStore.reloadData()
+  
+  if (projectsStore.selectedProjectId) {
+      // If a project is already selected, start from there!
+      const project = projectsStore.projects.find(p => p.id === projectsStore.selectedProjectId)
+      if (project) {
+          columns.value = [
+            {
+              level: 0,
+              type: 'projects',
+              title: 'Bases',
+              items: projectsStore.projects,
+              selectedId: project.id,
+              isPinned: true
+            }
+          ]
+          // Manually trigger selection simulation to load next column
+          await selectInColumn(0, project)
+      } else {
+         // Fallback
+         loadRoot()
+      }
+  } else {
+      loadRoot()
+  }
+})
+
+const loadRoot = () => {
   columns.value = [
     {
       level: 0,
@@ -362,46 +278,191 @@ onMounted(async () => {
       isPinned: true
     }
   ]
-})
-
-const isCollapsed = (index: number) => {
-  if (!appStore.projectManagerMode) return false
-  const col = columns.value[index]
-  if (col.isPinned) return false
-  if (!appStore.autoCollapseColumns) return false
-  
-  // Collapse if NOT the last column AND has a selection
-  return index < columns.value.length - 1 && col.selectedId !== null
+  emit('update-breadcrumbs', [{ name: 'Bases', level: 0, id: 'root' }])
 }
 
-const getSelectedName = (column: ColumnData) => {
-  const item = column.items.find(i => i.id === column.selectedId)
-  return item ? item.name : ''
-}
+
+
+
 
 const togglePin = (index: number) => {
-  columns.value[index].isPinned = !columns.value[index].isPinned
+  const col = columns.value[index]
+  col.isPinned = !col.isPinned
+  // Force reactivity if deep mutation isn't picked up (though Ref<Array> usually handles it)
+  triggerRef(columns)
+}
+
+const handleItemClick = async (item: any, level: number, parent: any = null) => {
+    // 1. Identify nature of item
+    // Level 0 items (Columns) handle via selectInColumn usually, but we can unify.
+    // Inner items track 'selected' state on the object itself.
+
+    // Toggle Expansion
+    if (['environments', 'databases', 'types'].includes(item.contextType || (parent ? 'unknown' : columns.value[level].type))) {
+        // Is Combined/Accordion Item
+        item.expanded = !item.expanded
+        
+        // Handle visual selection (Radio behavior among siblings)
+        if (parent && parent.children) {
+            parent.children.forEach((sib: any) => sib.selected = false)
+        } else {
+             // Root level siblings
+             columns.value[level].items.forEach((sib: any) => sib.selected = false)
+        }
+        item.selected = true
+        
+        if (item.expanded && (!item.children || item.children.length === 0)) {
+            await fetchChildren(item)
+        }
+    } else {
+        // Leaf Node (e.g. Table Object)
+        if (parent && parent.children) {
+            parent.children.forEach((sib: any) => sib.selected = false)
+        }
+        item.selected = true
+        handleSelection(item)
+    }
+}
+
+
+const fetchChildren = async (item: any) => {
+    try {
+        if (item.contextType === 'environments' || !item.contextType) { // Root Env -> DBs
+             const res = await getEnvironmentDatabases(columns.value[0].selectedId!, item.name)
+             item.children = res.map((db: any) => ({
+                 ...db,
+                 contextType: 'databases',
+                 environment: item.name
+             }))
+        } else if (item.contextType === 'databases') { // DB -> Types
+             item.children = [
+                { id: 'diagram', name: 'ER Diagram', icon: Network, contextType: 'diagram', environment: item.environment, database: item.name },
+                { id: 'tables', name: 'Tables', icon: Table, count: item.counts?.tables, contextType: 'types', typeId: 'tables', environment: item.environment, database: item.name },
+                { id: 'views', name: 'Views', icon: Eye, count: item.counts?.views, contextType: 'types', typeId: 'views', environment: item.environment, database: item.name },
+                { id: 'procedures', name: 'Procedures', icon: Hammer, count: item.counts?.procedures, contextType: 'types', typeId: 'procedures', environment: item.environment, database: item.name },
+                { id: 'functions', name: 'Functions', icon: Hammer, count: item.counts?.functions, contextType: 'types', typeId: 'functions', environment: item.environment, database: item.name },
+                { id: 'triggers', name: 'Triggers', icon: Zap, count: item.counts?.triggers, contextType: 'types', typeId: 'triggers', environment: item.environment, database: item.name }
+             ]
+        } else if (item.contextType === 'types') { // Type -> Objects
+             if (item.id === 'diagram') return // Leaf
+             const res = await getDatabaseObjects(
+                columns.value[0].selectedId!,
+                item.environment,
+                item.database,
+                item.typeId 
+             )
+             item.children = res.map((obj: any) => ({
+                 ...obj,
+                 contextType: 'object',
+                 environment: item.environment,
+                 database: item.database,
+                 ddlType: item.typeId
+             }))
+        }
+    } catch (error) {
+        console.error("Failed to fetch children", error)
+    }
+}
+
+
+const isCombinedMode = computed(() => activeStartIndex.value > 0)
+
+const mergedTreeColumn = computed<ColumnData | null>(() => {
+    if (!isCombinedMode.value || columns.value.length === 0) return null
+    
+    // Deep clone the root column structure to avoid mutating original state during transformation
+    // We only need shallow clone of items array initially, but objects need new references if we mutate children
+    // Better strategy: Reconstruct the tree from the bottom up or top down using the current 'columns' state.
+    
+    const rootCol = { ...columns.value[0], items: columns.value[0].items.map(i => ({...i})) }
+    let currentLevelItems = rootCol.items
+    
+    // Iterate from 0 to activeStartIndex - 1 (don't include the active column itself in the deep children)
+    for (let i = 0; i < activeStartIndex.value - 1; i++) {
+        const selectedId = columns.value[i].selectedId
+        const selectedItem = currentLevelItems.find(it => it.id === selectedId)
+        
+        if (selectedItem && columns.value[i+1]) {
+            selectedItem.expanded = true
+            selectedItem.children = columns.value[i+1].items.map(it => ({...it}))
+            currentLevelItems = selectedItem.children
+        } else {
+            break 
+        }
+    }
+    
+    // Ensure the last level's selection is maintained in the tree
+    // The last level in the tree is activeStartIndex - 1
+    const lastStackColIndex = activeStartIndex.value - 1
+    if (lastStackColIndex >= 0) {
+        const lastStackCol = columns.value[lastStackColIndex]
+        if (lastStackCol && lastStackCol.selectedId) {
+             const lastSel = currentLevelItems.find(it => it.id === lastStackCol.selectedId)
+             if (lastSel) lastSel.selected = true
+        }
+    }
+
+    return rootCol
+})
+
+const activeColumns = computed(() => {
+    if (!isCombinedMode.value) return columns.value
+    // Show columns STARTING FROM activeStartIndex 
+    return columns.value.slice(activeStartIndex.value)
+})
+
+const selectInMergedTree = (item: any) => {
+    // Find which column level this item belongs to
+    // We search from the stack (0 to activeStartIndex)
+    for (let i = 0; i <= activeStartIndex.value; i++) {
+        const col = columns.value[i]
+        if (col.items.find(it => it.id === item.id)) {
+            // Found the level, select it
+            selectInColumn(i, item)
+            // If we selected a node in the merged tree interaction, we might want to ensure 
+            // the stack stays at the current depth (or expands if we dug deeper).
+            // But since 'selectInColumn' might truncate 'columns', we rely on it.
+            return
+        }
+    }
+}
+
+const isAutoCollapsed = (index: number) => {
+    // Global override
+    if (!appStore.autoCollapseColumns) return false
+
+    const col = columns.value[index]
+    if (!col) return false
+    // Collapse if it's not the last column AND it's not pinned
+    // And ensure we don't collapse the merged stack itself (handled via index 0 anyway)
+    return index < columns.value.length - 1 && !col.isPinned
 }
 
 const selectInColumn = async (level: number, item: any) => {
-  // If clicking same item, just return
-  if (columns.value[level].selectedId === item.id) {
-    // If it's a leaf node, maybe we want to refresh?
-    if (level === columns.value.length - 1) {
+  const currentColumn = columns.value[level]
+  
+  // Standard Column Behavior
+  if (currentColumn.selectedId === item.id) {
        handleSelection(item)
-    }
-    return
+       
+       // If this is the last column, try to fetch the next one (fixes stuck state)
+       if (level === columns.value.length - 1) {
+           const nextColumn = await getNextColumn(level, item)
+           if (nextColumn) {
+               columns.value.push(nextColumn)
+           }
+       }
+       return
   }
-
-  columns.value[level].selectedId = item.id
+  
+  currentColumn.selectedId = item.id
   columns.value = columns.value.slice(0, level + 1)
   
-  // Handle the selection (preview etc)
   handleSelection(item)
-
+  
   const nextColumn = await getNextColumn(level, item)
   if (nextColumn) {
-    columns.value.push(nextColumn)
+      columns.value.push(nextColumn)
   }
 }
 
@@ -498,6 +559,43 @@ const loadComparisonResults = async (pair: any, refresh = false) => {
 const getNextColumn = async (level: number, item: any): Promise<ColumnData | null> => {
   const currentType = columns.value[level].type
   
+  // Dynamic Context Resolution for deep chains
+  // We need to know previous context (Project, Env, DB) to fetch children
+  // In Accordion mode these were passed via closure or parents
+  // In Column mode we must resolve from previous columns
+  
+  const getContext = () => {
+      const ctx: any = {}
+      // Walk backwards to find context
+      for (let i = level; i >= 0; i--) {
+          const col = columns.value[i]
+          const sel = col.items.find(it => it.id === col.selectedId)
+          if (!sel) continue
+          
+          if (col.type === 'projects') ctx.projectId = sel.id
+          if (col.type === 'environments') ctx.environment = sel.name
+          if (col.type === 'databases') ctx.database = sel.name
+      }
+      return ctx
+  }
+
+  // Helper for Types column creation
+  const createTypesColumn = (environment: string, database: string, counts?: any) => ({
+      level: level + 1,
+      type: 'types' as const,
+      title: 'Objects',
+      items: [
+          { id: 'diagram', name: 'ER Diagram', icon: Network, environment, database },
+          { id: 'tables', name: 'Tables', icon: Table, count: counts?.tables, typeId: 'tables' },
+          { id: 'views', name: 'Views', icon: Eye, count: counts?.views, typeId: 'views' },
+          { id: 'procedures', name: 'Procedures', icon: Hammer, count: counts?.procedures, typeId: 'procedures' },
+          { id: 'functions', name: 'Functions', icon: Hammer, count: counts?.functions, typeId: 'functions' },
+          { id: 'triggers', name: 'Triggers', icon: Zap, count: counts?.triggers, typeId: 'triggers' }
+      ],
+      selectedId: null,
+      metadata: { environment, database }
+  })
+
   switch (currentType) {
     case 'projects':
       return {
@@ -566,34 +664,34 @@ const getNextColumn = async (level: number, item: any): Promise<ColumnData | nul
       }
 
     case 'databases':
-      return {
-        level: level + 1,
-        type: 'types',
-        title: item.name,
-        items: [
-          { id: 'diagram', name: 'ER Diagram', icon: Network, environment: item.environment, database: item.name },
-          { id: 'tables', name: 'Tables', icon: Table, count: item.counts?.tables },
-          { id: 'views', name: 'Views', icon: Eye, count: item.counts?.views },
-          { id: 'procedures', name: 'Procedures', icon: Hammer, count: item.counts?.procedures },
-          { id: 'functions', name: 'Functions', icon: Hammer, count: item.counts?.functions },
-          { id: 'triggers', name: 'Triggers', icon: Zap, count: item.counts?.triggers }
-        ],
-        selectedId: null
-      }
+      return createTypesColumn(item.environment || getContext().environment, item.name, item.counts)
 
     case 'types':
       if (item.id === 'diagram') return null
+      
+      const ctx = getContext() || columns.value[level].metadata
+      if (!ctx || !ctx.environment || !ctx.database) {
+          console.warn("Context missing for types expansion", ctx)
+          return null
+      }
+
       const objects = await getDatabaseObjects(
         columns.value[0].selectedId!,
-        columns.value[level - 2].title, // environment
-        columns.value[level - 1].title, // database
-        item.id // type
+        ctx.environment,
+        ctx.database,
+        item.typeId || item.id 
       )
+      
       return {
         level: level + 1,
         type: 'objects',
         title: item.name,
-        items: objects,
+        items: objects.map((obj: any) => ({
+             ...obj, 
+             environment: ctx.environment,
+             database: ctx.database,
+             ddlType: item.typeId || item.id
+        })),
         selectedId: null
       }
 
@@ -692,25 +790,18 @@ const handleAdd = (column: ColumnData) => {
   }
 }
 
-const startEditColumnTitle = (index: number) => {
-  if (columns.value[index].type !== 'projects') return // Only edit project titles for now
-  editingColumnIndex.value = index
-  editingTitle.value = columns.value[index].title
-  setTimeout(() => titleInput.value?.focus(), 0)
-}
-
-const saveColumnTitle = async (index: number) => {
-  if (editingColumnIndex.value === null) return
+const saveColumnTitle = async (index: number, newTitle: string) => {
   const col = columns.value[index]
-  if (editingTitle.value && editingTitle.value !== col.title) {
-    await projectsStore.updateProject(col.items.find(i => i.name === col.title).id, { name: editingTitle.value })
-    col.title = editingTitle.value
+  if (newTitle && newTitle !== col.title) {
+       col.title = newTitle
+       // Attempt to update project if this is a project column (Level 1)
+       if (index > 0 && columns.value[index-1].type === 'projects') {
+           const projectId = columns.value[index-1].selectedId
+           if (projectId) {
+               await projectsStore.updateProject(projectId, { name: newTitle })
+           }
+       }
   }
-  editingColumnIndex.value = null
-}
-
-const cancelEdit = () => {
-  editingColumnIndex.value = null
 }
 
 const handleDblClick = (index: number, item: any) => {
@@ -724,6 +815,45 @@ const handleDblClick = (index: number, item: any) => {
 const handleSaveConnection = async (_conn: any) => {
    // Logic to save connection from preview
    notificationStore.add({ type: 'success', title: 'Saved', message: 'Connection updated successfully' })
+}
+
+const handleStack = (level: number | 'all') => {
+    if (level === 'all') {
+        // Stack All (keep last column)
+        activeStartIndex.value = Math.max(0, columns.value.length - 1)
+    } else if (typeof level === 'number') {
+        // Stack the column at 'level' (move it and predecessors into stack)
+        // Ensure we only stack from left to right strictly
+        if (level >= activeStartIndex.value) {
+            activeStartIndex.value = level + 1
+        }
+    }
+}
+
+const handleUnstack = (level?: number | 'all') => {
+    if (level === 'all') {
+        activeStartIndex.value = 0
+    } else {
+        // Unstack one level (pop from stack)
+        activeStartIndex.value = Math.max(0, activeStartIndex.value - 1)
+    }
+}
+
+const handleStackToParent = (payload: { childIndex: number, parentIndex: number }) => {
+    const { childIndex, parentIndex } = payload
+    
+    // Check if the parent column is currently "inside the stack" (hidden/merged)
+    if (parentIndex < activeStartIndex.value) {
+        // Case 1: Parent is Stacked. Child joins the stack.
+        activeStartIndex.value = childIndex + 1
+    } else {
+        // Case 2: Parent is Visible. Close child D to return focus to C.
+        columns.value = columns.value.slice(0, childIndex)
+        if (columns.value[parentIndex]) {
+             columns.value[parentIndex].selectedId = null
+        }
+        previewObject.value = null
+    }
 }
 
 const fetchDDL = async (item: any) => {
@@ -777,7 +907,7 @@ const compareObject = () => {
     
     if (conn && currentProj) {
         // Try to find a pair
-        const pair = connectionPairsStore.connectionPairs.find(p => currentProj.pairIds.includes(p.id) && (p.sourceId === conn.id || p.targetId === conn.id))
+        const pair = connectionPairsStore.connectionPairs.find(p => currentProj.pairIds.includes(p.id) && (p.sourceConnectionId === conn.id || p.targetConnectionId === conn.id))
         if (pair) {
             router.push(`/compare?pairId=${pair.id}&item=${previewObject.value.name}`)
             return
@@ -785,6 +915,29 @@ const compareObject = () => {
     }
     router.push('/compare')
 }
+
+const jumpToBreadcrumb = (crumb: any) => {
+    if (crumb.id === 'root') {
+        columns.value[0].selectedId = null
+        columns.value = columns.value.slice(0, 1)
+        previewObject.value = null
+        return
+    }
+    
+    // Keep columns up to the one showing the children of the crumb
+    // crumb.level is the column index where the item was selected.
+    // We want to keep that column + the next one (which displays the content).
+    if (columns.value.length > crumb.level + 1) {
+        columns.value = columns.value.slice(0, crumb.level + 2)
+        // Reset selection in the last column
+        columns.value[crumb.level + 1].selectedId = null
+        previewObject.value = null
+    }
+}
+
+defineExpose({
+    jumpToBreadcrumb
+})
 </script>
 
 <style scoped>

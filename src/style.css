@@ -37,6 +37,20 @@
   --code-punctuation: #000000;
 }
 
+/* Vertical Writing Mode for Collapsed Headers */
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 :root[class~="dark"] {
   /* Dark Mode Overrides for Primary Tint Scale */
   /* Reverses/Darkens the lightest shades so they aren't "white" in dark mode */
