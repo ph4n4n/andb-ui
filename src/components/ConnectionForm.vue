@@ -344,7 +344,7 @@
         </button>
         <button
           @click="saveConnection"
-          :disabled="!isFormValid || isSaving"
+          :disabled="isSaving"
           class="flex items-center justify-center px-8 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all active:scale-95 disabled:opacity-50"
         >
           <Loader v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" />
@@ -384,7 +384,7 @@ const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironme
 const templates = computed(() => templatesStore.templates)
 
 interface Props {
-  connection?: DatabaseConnection
+  connection?: Partial<DatabaseConnection>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -429,14 +429,14 @@ const errors = ref<Record<string, string>>({})
 // Initialize form with existing connection
 if (props.connection) {
   form.value = {
-    name: props.connection.name,
-    host: props.connection.host,
-    port: props.connection.port,
-    database: props.connection.database,
-    username: props.connection.username,
+    name: props.connection.name || '',
+    host: props.connection.host || '',
+    port: props.connection.port || 3306,
+    database: props.connection.database || '',
+    username: props.connection.username || '',
     password: props.connection.password || '',
-    environment: props.connection.environment,
-    timeout: 30,
+    environment: props.connection.environment || '',
+    timeout: 30, // Default
     useSSL: false,
     allowSelfSigned: false,
     charset: 'utf8mb4',
@@ -463,10 +463,15 @@ watch(() => form.value.templateId, (newId) => {
     form.value.username = template.username
     form.value.password = template.password || ''
     form.value.type = template.type
+    // Apply database if template has it
+    if (template.database) {
+      form.value.database = template.database
+    }
     // Clear errors for these fields as they are now valid/managed
     delete errors.value.host
     delete errors.value.port
     delete errors.value.username
+    delete errors.value.database
   }
 })
 
@@ -496,6 +501,7 @@ const confirmcreateTemplate = () => {
     name: newTemplateName.value,
     host: form.value.host,
     port: form.value.port,
+    database: form.value.database,
     username: form.value.username,
     password: form.value.password,
     type: form.value.type as 'mysql' | 'postgres' | 'sqlite'
@@ -546,14 +552,24 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
-const isFormValid = computed(() => {
-  return form.value.name.trim() && 
-         form.value.host.trim() && 
-         form.value.port > 0 && 
-         form.value.database.trim() && 
-         form.value.username.trim() && 
-         form.value.environment
-})
+  const isFormValid = computed(() => {
+    // Debug log to see what's missing
+    // console.log('Form validation:', {
+    //   name: !!form.value.name.trim(),
+    //   host: !!form.value.host.trim(),
+    //   port: form.value.port > 0,
+    //   database: !!form.value.database.trim(),
+    //   username: !!form.value.username.trim(),
+    //   environment: !!form.value.environment
+    // })
+    
+    return form.value.name.trim() !== '' && 
+           form.value.host.trim() !== '' && 
+           form.value.port > 0 && 
+           form.value.database.trim() !== '' && 
+           form.value.username.trim() !== '' && 
+           !!form.value.environment
+  })
 
 // Test connection
 const testConnection = async () => {

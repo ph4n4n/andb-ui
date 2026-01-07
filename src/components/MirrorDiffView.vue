@@ -1,5 +1,5 @@
 <template>
-  <div class="mirror-diff-view flex h-full min-h-0 min-w-0 max-w-full overflow-hidden bg-white dark:bg-gray-900 group/view border-t border-gray-200 dark:border-gray-800 relative" :style="{ fontFamily: appStore.fontFamilies.code, fontSize: appStore.fontSizes.code + 'px' }">
+  <div class="mirror-diff-view flex h-full min-h-0 min-w-0 max-w-full overflow-hidden bg-white dark:bg-gray-950 group/view border-t border-gray-200 dark:border-gray-800 relative" :style="{ fontFamily: appStore.fontFamilies.code, fontSize: appStore.fontSizes.code + 'px' }">
     <!-- SPLIT VIEW MODE -->
     <template v-if="viewType === 'split'">
       <!-- Source Pane (Left) -->
@@ -7,12 +7,12 @@
         :style="{ width: leftPaneWidth + '%' }"
         class="shrink-0 flex flex-col min-h-0 min-w-0 max-w-full overflow-hidden border-r border-gray-200 dark:border-[#30363d] relative"
       >
-        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
           <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.source', { label: sourceLabel }) }}</span>
           <span v-if="isEmptySource" class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800/50 font-bold uppercase">{{ $t('compare.diffView.deleted') }}</span>
         </div>
         
-        <div ref="sourcePane" @scroll="handleScroll('source')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
+        <div ref="sourcePane" @scroll="handleScroll('source')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-950">
           <div v-if="isEmptySource" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             {{ $t('compare.diffView.sourceEmpty') }}
           </div>
@@ -50,7 +50,7 @@
       <div 
         class="flex-1 flex flex-col min-h-0 min-w-0 max-w-full overflow-hidden relative"
       >
-        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
+        <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
           <span class="font-bold text-emerald-600 dark:text-emerald-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.target', { label: targetLabel }) }}</span>
           
           <div class="flex items-center gap-3">
@@ -123,7 +123,7 @@
           </div>
         </div>
 
-        <div ref="targetPane" @scroll="handleScroll('target')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-900/10">
+        <div ref="targetPane" @scroll="handleScroll('target')" class="flex-1 overflow-auto custom-scrollbar-diff relative bg-gray-50 dark:bg-gray-950">
           <div v-if="isEmptyTarget" class="placeholder-empty flex items-center justify-center h-full text-gray-600 italic">
             {{ $t('compare.diffView.targetEmpty') }}
           </div>
@@ -156,7 +156,7 @@
       v-else
       class="flex-1 flex flex-col min-h-0 overflow-hidden"
     >
-      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
+      <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 h-10">
         <span class="font-bold text-primary-600 dark:text-primary-400 opacity-80 uppercase tracking-widest text-[10px]">{{ $t('compare.diffView.unified', { source: sourceLabel, target: targetLabel }) }}</span>
         
         <!-- Settings inside header -->
@@ -502,30 +502,30 @@ onUnmounted(() => {
 .ddl-code {
   color: #3b3b3b; /* VS Code Light text */
 }
-.dark .ddl-code {
-  color: #d4d4d4; /* VS Code Dark text */
+/* Navicat-inspired Dark SQL Syntax (Muted & Balanced) */
+:global(.dark) .ddl-code {
+  color: #e4e4e4; /* Brighter base text */
 }
 
-/* Navicat-inspired Dark SQL Syntax (Muted & Balanced) */
-.dark :deep(.token.keyword) { color: #569cd6; font-weight: 500; }
-.dark :deep(.token.string) { color: #ce9178; }
-.dark :deep(.token.comment) { color: #6a9955; font-style: italic; opacity: 0.8; }
-.dark :deep(.token.function) { color: #dcdcaa; }
-.dark :deep(.token.number) { color: #b5cea8; }
-.dark :deep(.token.operator) { color: #d4d4d4; }
-.dark :deep(.token.punctuation) { color: #808080; }
-.dark :deep(.token.boolean) { color: #569cd6; }
-.dark :deep(.token.property) { color: #9cdcfe; }
-.dark :deep(.token.comment *) { color: inherit !important; }
+:global(.dark) :deep(.token.keyword) { color: #569cd6; font-weight: bold; }
+:global(.dark) :deep(.token.string) { color: #ce9178; }
+:global(.dark) :deep(.token.comment) { color: #6a9955; font-style: italic; opacity: 0.8; }
+:global(.dark) :deep(.token.function) { color: #dcdcaa; }
+:global(.dark) :deep(.token.number) { color: #b5cea8; }
+:global(.dark) :deep(.token.operator) { color: #d4d4d4; }
+:global(.dark) :deep(.token.punctuation) { color: #d4d4d4; } /* Brighter punctuation for brackets */
+:global(.dark) :deep(.token.boolean) { color: #569cd6; }
+:global(.dark) :deep(.token.property) { color: #9cdcfe; }
+:global(.dark) :deep(.token.comment *) { color: inherit !important; }
 
 /* Navicat-inspired Light SQL Syntax */
-:deep(.token.keyword) { color: #0000ff; font-weight: 500; }
+:deep(.token.keyword) { color: #0000ff; font-weight: 600; }
 :deep(.token.string) { color: #a31515; }
 :deep(.token.comment) { color: #008000; font-style: italic; opacity: 0.7; }
 :deep(.token.function) { color: #795e26; }
 :deep(.token.number) { color: #098658; }
-:deep(.token.operator) { color: #000000; }
-:deep(.token.punctuation) { color: #000000; }
+:deep(.token.operator) { color: #333333; }
+:deep(.token.punctuation) { color: #333333; }
 :deep(.token.boolean) { color: #0000ff; }
 :deep(.token.property) { color: #001080; }
 

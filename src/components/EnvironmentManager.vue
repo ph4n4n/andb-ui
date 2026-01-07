@@ -43,7 +43,8 @@
               <input
                 type="checkbox"
                 :id="`env-${env.id}`"
-                v-model="env.enabled"
+                :checked="isEnvEnabled(env.id)"
+                @change="toggleEnv(env.id, ($event.target as HTMLInputElement).checked)"
                 class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
 
@@ -128,12 +129,29 @@ import { Plus, GripVertical, Copy, Trash2, Database } from 'lucide-vue-next'
 import draggable from 'vuedraggable/src/vuedraggable'
 import { useConnectionPairsStore, type Environment } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
+import { useProjectsStore } from '@/stores/projects'
 
 const { t: $t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 const appStore = useAppStore()
 
 const environments = computed(() => connectionPairsStore.environments)
+
+const projectsStore = useProjectsStore() // Needs import
+
+const isEnvEnabled = (envId: string) => {
+  const project = projectsStore.currentProject
+  if (project && project.enabledEnvironmentIds) {
+    return project.enabledEnvironmentIds.includes(envId)
+  }
+  // Fallback to global definition if no project context (though unlikely in settings)
+  const env = environments.value.find(e => e.id === envId)
+  return env ? env.enabled : false
+}
+
+const toggleEnv = (envId: string, isChecked: boolean) => {
+  connectionPairsStore.toggleProjectEnvironment(envId, isChecked)
+}
 
 const emit = defineEmits<{
   showConnectionManager: []

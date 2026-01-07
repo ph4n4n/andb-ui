@@ -71,7 +71,10 @@
 
           <!-- Items -->
           <div v-show="!collapsedCategories.has(category.type)" class="relative">
-                         <div v-for="item in category.items" :key="item.name" class="group relative flex items-center py-1">
+                       <div v-for="item in category.items" :key="item.name" 
+                         @click="emit('select', item)"
+                         class="group relative flex items-center py-1 cursor-pointer"
+                       >
                <!-- Row Hover Effect -->
                <div class="absolute inset-0 group-hover:bg-blue-50/50 dark:group-hover:bg-blue-900/10 pointer-events-none rounded transition-colors"></div>
 
@@ -86,7 +89,7 @@
                   <div class="flex-1 min-w-0 pr-2 pl-8 flex items-center justify-start text-left">
                      <template v-if="hasInSource(item)">
                         <component :is="getCategoryIcon(category.type)" class="w-3.5 h-3.5 mr-2 opacity-50 shrink-0" />
-                        <span class="truncate font-mono text-sm" :class="getSourceClass(item)">{{ item.name }}</span>
+                        <span class="truncate font-mono" :class="getSourceClass(item)" :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }">{{ item.name }}</span>
                      </template>
                      <template v-else>
                         <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-6">{{ $t('compare.treeViewData.missingSource') }}</span>
@@ -129,7 +132,7 @@
                   <div class="flex-1 min-w-0 pl-7 flex items-center">
                      <template v-if="hasInTarget(item)">
                         <component :is="getCategoryIcon(category.type)" class="w-3.5 h-3.5 mr-2 opacity-50 shrink-0" />
-                        <span class="truncate font-mono text-sm" :class="getTargetClass(item)">{{ item.name }}</span>
+                        <span class="truncate font-mono" :class="getTargetClass(item)" :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }">{{ item.name }}</span>
                      </template>
                      <template v-else>
                         <span class="text-gray-300 dark:text-gray-600 italic text-[10px] pl-4">{{ $t('compare.treeViewData.missingTarget') }}</span>
@@ -160,6 +163,9 @@ import {
   CheckCircle2,
   ArrowRight
 } from 'lucide-vue-next'
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
 
 const { t } = useI18n()
 
@@ -171,6 +177,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'migrate', item: any): void
+  (e: 'select', item: any): void
 }>()
 
 const collapsedCategories = ref(new Set<string>())

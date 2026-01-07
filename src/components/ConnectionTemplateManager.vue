@@ -42,6 +42,10 @@
                 <Server class="w-3.5 h-3.5 mr-2 opacity-70" />
                 <span class="truncate">{{ template.host }}:{{ template.port }}</span>
             </div>
+            <div v-if="template.database" class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                <Database class="w-3.5 h-3.5 mr-2 opacity-70" />
+                <span class="truncate">{{ template.database }}</span>
+            </div>
             <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
                 <User class="w-3.5 h-3.5 mr-2 opacity-70" />
                 <span class="truncate">{{ template.username }}</span>
@@ -86,6 +90,10 @@
                              <option value="postgres">{{ $t('connections.types.postgres') }}</option>
                              <option value="sqlite">{{ $t('connections.types.sqlite') }}</option>
                          </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ $t('connections.database') }}</label>
+                        <input v-model="form.database" type="text" :placeholder="$t('connections.databasePlaceholder')" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 outline-none" />
                     </div>
                 </div>
 
@@ -137,6 +145,7 @@ const form = ref({
     name: '',
     host: 'localhost',
     port: 3306,
+    database: '',
     username: 'root',
     password: '',
     type: 'mysql' as 'mysql' | 'postgres' | 'sqlite'
@@ -153,6 +162,7 @@ const openModal = (template?: ConnectionTemplate) => {
             name: template.name,
             host: template.host,
             port: template.port,
+            database: template.database || '',
             username: template.username,
             password: template.password || '',
             type: template.type
@@ -163,6 +173,7 @@ const openModal = (template?: ConnectionTemplate) => {
             name: '',
             host: 'localhost',
             port: 3306,
+            database: '',
             username: 'root',
             password: '',
             type: 'mysql'

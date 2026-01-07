@@ -223,6 +223,7 @@ schema:
   snapshotFailed: 'Chụp snapshot thất bại'
   copied: 'Đã sao chép'
   copiedDesc: 'Script DDL đã được sao chép vào clipboard.'
+  visualDiagram: 'Sơ đồ ER tương tác'
 
 compare:
   noPair: 'Chưa chọn cặp'

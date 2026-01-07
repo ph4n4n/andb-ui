@@ -1,5 +1,5 @@
 <template>
-  <nav class="flex items-center text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
+  <nav v-if="!appStore.projectManagerMode" class="flex items-center text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
     <ol class="flex items-center">
       <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center">
         <span v-if="index > 0" class="mx-2 text-gray-300 dark:text-gray-700 select-none">/</span>
@@ -23,12 +23,14 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useProjectsStore } from '@/stores/projects'
+import { useAppStore } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
+const appStore = useAppStore()
 
 const breadcrumbs = computed(() => {
   const crumbs: Array<{ label: string; action?: () => void }> = [

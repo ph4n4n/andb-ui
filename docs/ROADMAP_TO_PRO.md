@@ -8,14 +8,14 @@ _Mục tiêu: Đảm bảo app chạy mượt với MySQL/MariaDB, UX ngon ngh�
 
 ### 1.1 Integrity & Stability
 
-- [ ] **Auto-Update System**: Setup `electron-builder` để app tự động update. (High Priority).
-- [ ] **Form Validation**: Validation chặt chẽ form Connection.
-- [ ] **i18n Completeness**: Đảm bảo không còn key nào bị thiếu.
+- [x] **Auto-Update System**: Setup `electron-builder` để app tự động update. (High Priority).
+- [x] **Form Validation**: Validation chặt chẽ form Connection.
+- [x] **i18n Completeness**: Đảm bảo không còn key nào bị thiếu.
 
 ### 1.2 UX Polish
 
-- [ ] **Dashboard Revamp**: Quick Actions, Recent Activity.
-- [ ] **Data Type Select**: Dropdown chọn loại DB (Hiện tại disable Postgres/SQLite).
+- [x] **Dashboard Revamp**: Quick Actions, Recent Activity.
+- [x] **Data Type Select**: Dropdown chọn loại DB (Hiện tại disable Postgres/SQLite).
 
 ---
 
@@ -45,31 +45,31 @@ _Mục tiêu: Thêm các tính năng mà Dev/DevOps chuyên nghiệp bắt buộ
 - [ ] **SSH Tunneling**:
   - Form config SSH (Host, Port, User, Key/Pass).
   - Tự động dựng tunnel khi connect.
-- [ ] **SSL/TLS Certificates**: UI để upload CA Certs.
+- [ ] **SSL/TLS Certificates**: UI để upload CA Certs. (Basic SSL checkbox available).
 
-### 2.2 Structure & Safety
+### 3.2 Structure & Safety
 
-- [ ] **Project/Workspace**: Gom nhóm Connection theo dự án.
-- [ ] **Environment Tagging**: Label màu (Prod=Red, Dev=Green) để tránh thao tác nhầm trên Prod.
+- [x] **Project/Workspace**: Gom nhóm Connection theo dự án.
+- [x] **Environment Tagging**: Label màu (Prod=Red, Dev=Green) để tránh thao tác nhầm trên Prod.
 - [ ] **Safe Mode**: Cảnh báo xác nhận 2 bước khi chạy query trên môi trường Production.
 
 ---
 
-## 💎 Phase 3: Commercial & Enterprise (Bản thu tiền)
+## 💎 Phase 4: Commercial & Enterprise (Bản thu tiền)
 
 _Mục tiêu: Giải quyết các bài toán quy mô lớn, dữ liệu phức tạp và làm việc nhóm._
 
-### 3.1 Data Management
+### 4.1 Data Management
 
 - [ ] **Data Compare**: So sánh dữ liệu (Data Diff) giữa 2 bảng (dùng cho bảng Config, Lookup).
 - [ ] **Seed Data Generator**: Tạo dữ liệu giả để test.
 
-### 3.2 Advanced Migration
+### 4.2 Advanced Migration
 
 - [ ] **Drift Detection (Manual)**: So sánh state hiện tại với snapshot lần cuối để phát hiện thay đổi ngoài luồng.
 - [ ] **Rollback Assistant**: Hỗ trợ generate script `DOWN` cơ bản (có cảnh báo rủi ro mất dữ liệu).
 
-### 3.3 Collaboration
+### 4.3 Collaboration
 
 - [ ] **Shared Configuration**: Export/Import Connection config (có password protection hoặc exclude password) để share cho team.
 

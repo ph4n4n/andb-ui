@@ -1,23 +1,27 @@
 <template>
-  <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+  <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 shrink-0">
     <div class="flex items-center justify-between gap-4">
       <!-- Left side: Toggle button and title/breadcrumbs -->
       <div class="flex items-center space-x-4 min-w-0">
 
 
         <!-- Logo & Brand -->
-        <div class="flex items-center space-x-3 mr-4">
+        <div class="flex items-center space-x-2 mr-4 cursor-pointer shrink-0" @click="handleLogoClick">
           <img 
             src="/icon.png" 
             alt="Andb" 
-            class="w-8 h-8 rounded-lg shadow-sm"
+            class="w-6 h-6 rounded shadow-sm"
           />
-          <span class="font-bold text-lg text-gray-900 dark:text-white hidden md:block">Andb</span>
+          <span class="font-black text-base text-gray-900 dark:text-white hidden md:block tracking-tight">Andb</span>
         </div>
         
         <div class="flex flex-col min-w-0">
-          <h1 class="text-lg font-bold text-gray-900 dark:text-white leading-tight truncate">
-            {{ currentPageTitle }}
+          <h1 
+             class="text-sm font-black text-gray-900 dark:text-white leading-tight truncate transition-colors uppercase tracking-wider"
+             :class="{ 'cursor-pointer hover:text-primary-500': appStore.projectManagerMode }"
+             @click="handleTitleClick"
+          >
+            {{ headerTitle }}
           </h1>
           <Breadcrumbs />
         </div>
@@ -101,7 +105,7 @@
             class="p-2 text-gray-400 hover:text-primary-500 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all group"
             :title="route.path === '/compare' ? $t('header.managePairs') : $t('header.manageConnections')"
           >
-            <Layers class="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
+            <Layers class="w-4 h-4 transition-transform duration-500" />
           </button>
         </div>
       </div>
@@ -110,7 +114,7 @@
       <div class="flex items-center space-x-1 shrink-0">
         <div class="flex items-center space-x-1">
           <!-- Project Selector -->
-          <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg px-2 mr-2 border border-gray-200 dark:border-gray-600">
+          <div v-if="!appStore.projectManagerMode && route.path !== '/settings'" class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg px-2 mr-2 border border-gray-200 dark:border-gray-600">
             <Folder class="w-4 h-4 text-gray-500 mr-2" />
             <select 
               v-model="selectedProjectModel"
@@ -121,7 +125,7 @@
               </option>
               <hr />
               <option value="__NEW__" class="bg-gray-50 dark:bg-gray-900 font-bold text-primary-500">
-                + {{ $t('projects.newProject') || 'New Project' }}
+                + {{ $t('projects.newProject') || 'New Base' }}
               </option>
             </select>
           </div>
@@ -299,10 +303,11 @@ const selectedProjectModel = computed({
   set: (val: string) => {
     if (val === '__NEW__') {
        const newProject = projectsStore.addProject({
-          name: 'New Project',
+          name: 'New Base',
           description: '',
           connectionIds: [],
-          pairIds: []
+          pairIds: [],
+          enabledEnvironmentIds: ['1', '2', '3', '4']
        })
        projectsStore.selectProject(newProject.id)
        router.push('/projects')
@@ -315,12 +320,31 @@ const selectedProjectModel = computed({
   }
 })
 
+const handleLogoClick = () => {
+   if (appStore.projectManagerMode) {
+      router.push('/projects')
+   } else {
+      router.push('/')
+   }
+}
+
+const handleTitleClick = () => {
+   if (appStore.projectManagerMode) {
+      router.push('/projects')
+   }
+}
+
+const headerTitle = computed(() => {
+   return currentPageTitle.value
+})
+
 const currentPageTitle = computed(() => {
   const routeNames: Record<string, string> = {
     '/': $t('common.dashboard'),
     '/schema': $t('common.schema'),
     '/compare': $t('common.compare'),
-    '/settings': $t('common.settings')
+    '/settings': $t('common.settings'),
+    '/projects': ''
   }
   return routeNames[route.path] || $t('common.dashboard')
 })

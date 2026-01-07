@@ -1,7 +1,6 @@
 <template>
-  <MainLayout>
-    <template #toolbar>
-      <div class="flex items-center justify-between w-full h-full gap-4">
+  <div class="h-full w-full flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between shrink-0 h-16 gap-4">
         <!-- Title & Connection Selection -->
         <div class="flex items-center gap-4">
           <div class="flex flex-col gap-0.5">
@@ -27,7 +26,7 @@
         <div 
           class="flex items-center gap-3 p-1.5 rounded-2xl transition-all duration-300 shadow-sm"
           :class="appStore.buttonStyle === 'full' 
-            ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' 
+            ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm ring-1 ring-black/5' 
             : 'bg-transparent border-transparent px-0'"
         >
           <div v-if="error" class="text-red-500 text-[10px] font-bold uppercase tracking-wider max-w-[150px] truncate px-2" :title="error">{{ error }}</div>
@@ -53,13 +52,12 @@
             <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? $t('schema.fetching') : (appStore.buttonStyle === 'full' ? $t('schema.fetchFromDB') : $t('schema.fetch')) }}</span>
           </button>
         </div>
-      </div>
-    </template>
+    </div>
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden relative">
       <main class="flex-1 flex overflow-hidden relative">
         <!-- Loading Overlay -->
-        <div v-if="loading && !hasResults" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 z-20 flex items-center justify-center backdrop-blur-sm">
+        <div v-if="loading && !hasResults" class="absolute inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
           <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
             <div class="relative w-20 h-20 mx-auto mb-6">
               <div class="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
@@ -73,7 +71,7 @@
 
         <div class="flex-1 flex overflow-hidden relative">
           <!-- Left: Object Categories & List -->
-          <div :style="{ width: resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col shrink-0 relative">
+          <div :style="{ width: resultsWidth + 'px' }" class="border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col shrink-0 relative">
             <div class="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-10 flex items-center shrink-0">
                 <button 
                   v-if="selectedFilterType !== 'all'"
@@ -175,14 +173,18 @@
             </div>
 
             <!-- Right: DDL Viewer (Simplified MirrorDiffView) -->
-            <div class="flex-1 bg-white dark:bg-gray-900 overflow-hidden flex flex-col relative">
+            <div class="flex-1 bg-white dark:bg-gray-950 overflow-hidden flex flex-col relative">
               <div v-if="selectedItem" class="flex-1 flex flex-col overflow-hidden">
                 <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-800 shrink-0">
                   <div class="flex items-center overflow-hidden">
                     <div class="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mr-3">
                       <component :is="getIconForType(selectedItem.type)" class="w-5 h-5" />
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0" v-if="selectedItem.type === 'diagrams'">
+                      <h2 class="font-bold text-gray-900 dark:text-white truncate" :style="{ fontSize: appStore.fontSizes.ddlHeader + 'px' }">{{ $t('schema.visualDiagram') }}</h2>
+                      <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider transition-colors duration-200">{{ activeConnectionName }}</p>
+                    </div>
+                    <div class="min-w-0" v-else>
                       <h2 class="font-bold text-gray-900 dark:text-white truncate" :style="{ fontSize: appStore.fontSizes.ddlHeader + 'px' }">{{ selectedItem.name }}</h2>
                       <div class="flex items-center space-x-2 mt-0.5">
                         <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider transition-colors duration-200">{{ selectedItem.type }}</span>
@@ -194,7 +196,7 @@
                     </div>
                   </div>
                   
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-2" v-if="selectedItem.type !== 'diagrams'">
                     <button 
                       @click="takeSnapshot"
                       :disabled="loading"
@@ -235,7 +237,12 @@
                   </div>
                 </div>
 
+                <SchemaDiagram 
+                  v-if="selectedItem.type === 'diagrams'"
+                  :tables="schemaData.tables"
+                />
                 <DDLViewer 
+                  v-else
                   :content="formattedDDL" 
                   :font-size="appStore.fontSizes.code" 
                   :font-family="appStore.fontFamilies.code"
@@ -254,18 +261,19 @@
           </div>
         </main>
     </div>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import MainLayout from '@/layouts/MainLayout.vue'
+
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 import Andb from '@/utils/andb'
 import DDLViewer from '@/components/DDLViewer.vue'
+import SchemaDiagram from '@/components/SchemaDiagram.vue'
 import { 
   RefreshCw, 
   Folder,
@@ -283,7 +291,8 @@ import {
   Download,
   Camera,
   RotateCcw,
-  History
+  History,
+  Network
 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -301,7 +310,8 @@ const typeIcons = {
   views: Layers,
   procedures: Hammer,
   functions: Hammer,
-  triggers: Zap
+  triggers: Zap,
+  diagrams: Network
 }
 
 const getIconForType = (type: string) => {
@@ -335,13 +345,17 @@ const schemaData = ref({
 })
 
 const allResults = computed(() => {
-  return [
+  const base = [
     ...schemaData.value.tables.map(i => ({ ...i, type: 'tables' })),
     ...schemaData.value.procedures.map(i => ({ ...i, type: 'procedures' })),
     ...schemaData.value.functions.map(i => ({ ...i, type: 'functions' })),
     ...schemaData.value.views.map(i => ({ ...i, type: 'views' })),
     ...schemaData.value.triggers.map(i => ({ ...i, type: 'triggers' }))
   ]
+  if (hasResults.value) {
+    base.unshift({ name: 'Interactive ERD', type: 'diagrams' })
+  }
+  return base
 })
 
 const filteredResults = computed(() => {
@@ -409,10 +423,18 @@ const hasResults = computed(() => allResults.value.length > 0)
 
 const resultsByCategory = computed(() => {
   const categories = ['tables', 'views', 'procedures', 'functions', 'triggers']
-  return categories.map(cat => ({
+  const base = categories.map(cat => ({
     type: cat,
     items: allResults.value.filter(i => i.type === cat)
   })).filter(c => c.items.length > 0)
+  
+  if (hasResults.value) {
+    base.unshift({
+      type: 'diagrams',
+      items: [{ name: 'Interactive ERD', type: 'diagrams' }]
+    })
+  }
+  return base
 })
 
 // Resize Logic

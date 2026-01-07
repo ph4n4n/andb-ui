@@ -155,5 +155,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     offUpdateStatus: () => {
       ipcRenderer.removeAllListeners('update-status')
     }
-  }
+  },
+
+  // Generic invoke for dynamic calls
+  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args)
 })

@@ -158,12 +158,10 @@ import { useI18n } from 'vue-i18n'
 import { Plus, ArrowRight, ShieldQuestion, Star, Copy, Trash2 } from 'lucide-vue-next'
 import { useConnectionPairsStore, type ConnectionPair } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
-import { useProjectsStore } from '@/stores/projects' // Added
 
 const { t } = useI18n()
 const connectionPairsStore = useConnectionPairsStore()
 const appStore = useAppStore()
-const projectsStore = useProjectsStore() // Added
 const route = useRoute()
 const router = useRouter()
 
@@ -176,7 +174,7 @@ onMounted(() => {
   }
 })
 
-const connectionPairs = computed(() => connectionPairsStore.connectionPairs)
+const connectionPairs = computed(() => connectionPairsStore.availablePairs)
 const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironments)
 const connections = computed(() => appStore.connections)
 
@@ -187,7 +185,7 @@ const getConnectionsByEnv = (envName: string) => {
 }
 
 const addConnectionPair = () => {
-  const newPair = connectionPairsStore.addConnectionPair({
+  connectionPairsStore.addConnectionPair({
     name: 'New Pair',
     sourceEnv: '',
     targetEnv: '',
@@ -197,18 +195,10 @@ const addConnectionPair = () => {
     isDefault: false,
     status: 'idle'
   })
-  
-  if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
-     const current = projectsStore.currentProject
-     if (current) {
-        const newIds = [...current.pairIds, newPair.id]
-        projectsStore.updateProject(current.id, { pairIds: newIds })
-     }
-  }
 }
 
 const duplicatePair = (pair: ConnectionPair) => {
-  const newPair = connectionPairsStore.addConnectionPair({
+  connectionPairsStore.addConnectionPair({
     name: `${pair.name}_COPY`,
     sourceEnv: pair.sourceEnv,
     targetEnv: pair.targetEnv,
@@ -218,14 +208,6 @@ const duplicatePair = (pair: ConnectionPair) => {
     isDefault: false,
     status: 'idle'
   })
-
-  if (projectsStore.selectedProjectId && projectsStore.selectedProjectId !== 'default') {
-     const current = projectsStore.currentProject
-     if (current) {
-        const newIds = [...current.pairIds, newPair.id]
-        projectsStore.updateProject(current.id, { pairIds: newIds })
-     }
-  }
 }
 
 const removePair = (pair: ConnectionPair) => {

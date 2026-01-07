@@ -2,73 +2,68 @@
 
 ## 🎯 Target
 
-Build a unified **Project Manager** that serves as the central hub for the application, replacing the standalone Schema view. It features a macOS Finder-style interface with 4 view modes to manage projects, connections, pairs, and explore database schemas deeply.
+Build a unified **Project Manager** that serves as the central hub for the application. It features a macOS Finder-style **Columns View (Miller Columns)** interface to manage projects, connections, pairs, and explore database schemas deeply.
 
 ---
 
 ## 🏗️ Architecture & Views
 
-### 1. View Modes Overview
+### 1. View Strategy (Columns-Only)
 
-The user can switch between these modes instantly.
+**Single View Policy**: To reduce complexity and clutter, the Project Manager strictly uses the **Columns View**.
 
-- **Grid View (Done)**: High-level overview with stats cards.
-- **List View**: Compact table for management (sorting, bulk actions).
-- **Columns View (Miller Columns)**: Deep navigation (Project → Schema/Conn → Env → DDL).
-- **Detail View**: Master-detail layout (Tree on left, Code/Properties on right).
+- **Columns View**: Deep navigation (Project → Schema/Conn → Env → DDL).
+- _Deprecated/Removed_: Grid, List, and Detail views have been removed per user request to streamline the experience.
 
 ### 2. Schema Integration Strategy
 
 Instead of a separate `/schema` page, schema exploration happens **inside** the Project Manager.
 
-- **Components to Extract/Reuse**: `DDLCodeViewer`, `TreeView`, `DDLObjectList` from the current Schema view.
-- **Router Change**: Deprecate `/schema` or redirect it to `/projects?view=detail`.
+- **Components to Extract/Reuse**: `DDLCodeViewer`, `TreeView` (from Compare).
+- **Router Integration**: Project Manager is the entry point for Schema exploration.
 
 ---
 
 ## 📋 Implementation Tasks
 
-### Phase 1: Core Components & List View
+### Phase 1: Core Components
 
-**Goal**: Finish the foundation and basic management views.
-
-- [x] Grid View & Basic Store Logic (Completed)
+- [x] Basic Store Logic (Completed)
 - [ ] **Fix `addProject` return type**: Ensure it returns the new object for selection.
-- [ ] **List View Implementation**:
-  - Table component with columns: Name, Description, Connections count, Pairs count.
-  - Sort logic (asc/desc).
-  - Inline editing support.
+- [ ] **Clean up View Modes**: Remove unused Grid/List code from stores and components.
 
-### Phase 2: Columns View (Finder Style)
+### Phase 2: Columns View (Finder Style) - Core Experience
 
 - [x] **Step 1: Layout & State**
   - [x] Create `ColumnsView` container.
   - [x] Define `ColumnData` interface (level, items, selectedId).
-  - [x] Add horizontal scroll layout.
+  - [x] Add horizontal scroll layout with resize capabilities.
 
-- [x] **Step 2: Column Logic**
-  - [x] Implement selection logic (truncate columns after selection).
-  - [x] Implement data fetching for each level:
-    - [x] Level 1: Projects (Already loaded).
-    - [x] Level 2: Categories (Schema, Connections, Pairs).
-    - [x] Level 3: Environments (derived from Project connections).
-    - [x] Level 4: DDL Types (Tables, Views, etc.).
-    - [x] Level 5: DDL Items (Lazy load from `sidebarStore` or API).
+- [x] **Step 2: Column Logic & Hierarchy**
+  - [x] **Hierarchy**: Project → Categories (Schema, Connections, Pairs) -> Environments -> DDL Types -> DDL Items.
+  - [x] **Columns Behavior**:
+    - [x] Truncate columns after selection.
+    - [x] **Project Focus Mode**: First column (Project List) collapses when a project is selected.
+    - [x] **Rotated Header**: Collapsed columns show vertical text (270 deg) for space efficiency.
+    - [x] **Inline Editing**: Edit project/column names directly in the header.
 
-- [x] **Step 3: Preview Panel**
-  - [x] Show `DDLCodeViewer` in the last column when an item is selected.
-  - [x] Handle loading states.
-- [x] **Schema Data Loading**: lazy-load schema based on selected Environment node.
+- [x] **Step 3: Preview Panels**
+  - [x] **DDL Viewer**: Maximized space usage for code viewing.
+  - [x] **Sync Pair Preview**: Added separate preview template for Sync Pairs.
+    - [x] Summary of Source -> Target.
+    - [x] **"Diff / Mirror" Action**: Navigation to `/compare?pairId=...` for full diff workbench.
+  - [ ] **Connection Preview**: (Pending) Show connection details and status (User Request).
+
+- [x] **Step 4: UI/UX Refinement**
+  - [x] **Breadcrumbs**: Replaced static header title with dynamic breadcrumbs based on column selection.
+  - [x] **Removed Properties Panel**: Simplified UI by moving editing to headers.
+  - [x] **Visual Polish**: Styling updates for dark mode, glassmorphism impacts.
 
 ### Phase 3: Detail View & Tree
 
-**Goal**: A power-user view for simultaneous browsing and editing.
-
-- [x] **TreeView Component**: Recursive component for hierarchical display (Implemented iteratively in `ProjectsDetailView`).
-- [x] **Detail Layout**:
-  - **Left**: Project Tree (Project root > Schema/Conns/Pairs > nested items).
-  - **Center**: `DDLCodeViewer` (syntax highlighting, copy, export).
-  - **Right**: Properties Panel (Live edit project settings - Existing functionality).
+- [x] **TreeView Component**: Recursive component for hierarchical display (Implemented iterative in `ProjectsDetailView` - now deprecated).
+- [ ] **Detail Layout**:
+  - **Status**: `ProjectsDetailView.vue` was removed in favor of the enhanced `ColumnsView`.
 
 ### Phase 4: Polish & Refactor
 
@@ -78,13 +73,35 @@ Instead of a separate `/schema` page, schema exploration happens **inside** the 
 
 ---
 
+## 🔧 User Feedback & Resolution Log
+
+### Resolved
+
+- **"vs mấy cái collaped, cho cái tên vừa active thành header rotate 90 độ hiện ra đi"**: Implemented vertical text header for collapsed columns.
+- **"khi click vào Untitle Base phải editable"**: Implemented inline editing in column headers.
+- **"pane này giờ vơ nghĩa (Properties Panel)"**: Removed Properties Panel from `Projects.vue`.
+- **"code view nên giãn tối đa khoản trống cho phép"**: Optimized `DDLCodeViewer` layout in `ProjectsColumnsView`.
+- **"Chưa thấy Mirror DIF view"**: Added Sync Pair preview with "Diff / Mirror" call-to-action.
+- **"bug grayout khi vào Diff view"**: Fixed `pairId` parameter passing to `Compare.vue`.
+- **"sorry mày, 90 độ có vẻ sai, là 270 độ"**: Corrected rotation to `vertical-rl`.
+- **"Breadcrumbs support"**: Added breadcrumbs path in header (e.g., `Base One > Schema > ...`).
+- **"giữ Columns view thôi"**: Removed Grid/List/Detail views from plan.
+
+### Outstanding / To-Do
+
+- **"PM focus chưa xem được thông tin connection"**: Need to implement Connection Preview template in `ColumnsView`.
+- **"chưa xem được list ENV"**: Environment list is technically visible in "Schema" path, but direct "Environments" column under Project might be unclear if hidden under Schema. (Need clarification if user wants top-level Env list).
+- **Clean up Code**: Remove unused `ProjectsGrid.vue`, `ProjectsList.vue` if they exist, and store viewMode logic.
+
+---
+
 ## 🔧 Technical Details
 
 ### State Management (Pinia)
 
 ```typescript
 interface ProjectViewStore {
-  viewMode: 'list' | 'grid' | 'columns' | 'detail'
+  // viewMode removed - defaulting to Columns View
   selectedSelection: any[] // For multi-select
   //...
 }
@@ -115,21 +132,16 @@ _Purpose: Quick switching and global state filtering like a Master Switch._
   - The entire application state filters based on the `selectedProjectId`.
   - **Dashboard**: "Adaptive Dashboard" - morphs to show metrics _only_ for the selected project.
   - **Schema/Compare/History**: Lists and resources are strictly filtered to the active project context.
-  - **Constraints**:
-    - **Settings Page**: Maintains full Global Settings capability (100% current features).
-    - This mode respects KISS by **reusing existing views** but just filtering the data.
 
-### Mode 2: Project Explorer (Finder Style)
+### Mode 2: Project Explorer (Focus Mode)
 
 _Purpose: Focused work within a specific project boundary._
 
 - **Context**: Triggered when a Project is active (not 'default').
-- **Settings Handling (Strict KISS)**:
-  - Global Connection/Pair management in Settings is **VISIBLE** (User Request) to avoid confusion.
-  - Connection/Pair management happens **in-context** (e.g., via the Project's own "Properties" panel or "Add Connection" flow inside the Dashboard), NOT by reusing the global Settings page if it creates confusion or duplication.
-  - _Correction_: If we follow KISS "absolute no duplicate", we should likely **redirect** management to the existing Global Settings page but pre-filtered, OR if the user wants separate isolated flows, we hide the global ones.
-  - _User Decision_: "Project view mode -> connection/pair belongs to project -> setting hide them".
-  - **Implementation**: When `selectedProjectId` is active, the Sidebar/Settings tabs for "Connections" and "Pairs" remain **VISIBLE** (User Request: "Don't hide them") to ensure accessibility.
+- **Implementation**:
+  - **ProjectsColumnsView** becomes the primary interface.
+  - Sidebar is hidden (in strict Focus Mode) to maximize space.
+  - Columns collapse to provide context while focusing on deep content.
 
 ### Adaptive Dashboard
 
@@ -139,17 +151,4 @@ The `Dashboard.vue` handles the "Landing":
 2.  **Project State (`selected`)**: Shows Project Health & Project Resources.
     - **No new pages**. Just strict data filtering and widget swapping.
 
----
-
-## 🚀 Execution Order
-
-1.  **Refine Projects View (Done)**: Grid, List, Columns view implemented.
-2.  **Enforce Global Context (The Filter)**:
-    - [x] Update `Dashboard.vue` for Adaptive Data.
-    - [x] Update Stores (`app.ts`, `connectionPairs.ts`) to provide filtered `computed` lists based on `projectsStore.selectedProjectId` (Implicitly done via store updates in previous turns).
-    - [x] **Settings Visibility**: Connection/Pair tabs remain visible (Reverted strict hiding).
-3.  **Detail View**: Implement Tree View.
-    - [x] Tree Navigation and Schema Integration.
-    - [x] DDL Viewer integration.
-
-_Plan consolidated from previous discussions on 2026-01-06._
+_Last Updated: 2026-01-07_

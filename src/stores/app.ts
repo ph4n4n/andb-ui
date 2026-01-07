@@ -62,6 +62,8 @@ export const FONT_SIZE_PROFILES = {
 export const useAppStore = defineStore('app', () => {
   // State
   const sidebarCollapsed = ref(false)
+  const projectManagerMode = ref(false)
+  const autoCollapseColumns = ref(true)
   const buttonStyle = ref<'full' | 'minimal' | 'icons'>('full')
   const navStyle = ref<'vertical-list' | 'horizontal-tabs'>('vertical-list')
   const fontSizes = ref({
@@ -100,18 +102,45 @@ export const useAppStore = defineStore('app', () => {
       lastCustomFontSizes.value = { ...lastCustomFontSizes.value, ...savedSettings.lastCustomFontSizes }
     }
 
-    fontSizeProfile.value = savedSettings.fontSizeProfile || 'medium'
+    projectManagerMode.value = savedSettings.projectManagerMode || false
+    autoCollapseColumns.value = savedSettings.autoCollapseColumns !== undefined ? savedSettings.autoCollapseColumns : true
 
-    // If we loaded 'custom', we should ensure fontSizes reflects the loaded values (already done by fontSizes loading)
-    // If we loaded a profile, apply it to ensure consistency, UNLESS we want to respect the exact saved numbers 
-    // which might differ if the profile definition changed in code. 
-    // For now, let's respect savedSettings.fontSizes as the truth.
+    // If we loaded 'custom', we should ensure fontSizes reflects the loaded values (already done by fontSizes loading logic above)
+    // If we loaded a profile, apply it to ensure consistency.
 
     selectedConnectionId.value = savedSettings.lastSelectedConnectionId || '1' // Fallback to DEV (id 1) if none
 
     const savedConnections = await storage.getConnections()
     if (savedConnections.length > 0) {
       connections.value = savedConnections
+
+      // Migration: Claim orphan connections for "The Base One"
+      // Since we moved from Global View to Atomic, old connections might not be linked to 'default' explicitly.
+      const projectsStore = useProjectsStore()
+      // Ensure projects are loaded
+      if (projectsStore.projects.length === 0) {
+        await projectsStore.reloadData()
+      }
+
+      const allLinkedConnectionIds = new Set<string>()
+      projectsStore.projects.forEach(p => {
+        p.connectionIds.forEach(id => allLinkedConnectionIds.add(id))
+      })
+
+      const orphanConnectionIds = connections.value
+        .filter(c => !allLinkedConnectionIds.has(c.id))
+        .map(c => c.id)
+
+      if (orphanConnectionIds.length > 0) {
+        const defaultProject = projectsStore.projects.find(p => p.id === 'default')
+        if (defaultProject) {
+          // Direct mutation of store state to trigger watchers/reactivity
+          defaultProject.connectionIds.push(...orphanConnectionIds)
+          // Force save just in case watcher deep check misses array mutation (though it shouldn't)
+          storage.saveProjects(projectsStore.projects)
+        }
+      }
+
     } else {
       // Default demo connections
       connections.value = [
@@ -160,6 +189,17 @@ export const useAppStore = defineStore('app', () => {
           environment: 'PROD'
         }
       ]
+
+      // Auto-assign demo connections to default project if new
+      const projectsStore = useProjectsStore()
+      if (projectsStore.projects.length === 0) {
+        await projectsStore.reloadData()
+      }
+      const defaultProject = projectsStore.projects.find(p => p.id === 'default')
+      if (defaultProject && defaultProject.connectionIds.length === 0) {
+        defaultProject.connectionIds = connections.value.map(c => c.id)
+        storage.saveProjects(projectsStore.projects)
+      }
     }
   }
 
@@ -187,12 +227,8 @@ export const useAppStore = defineStore('app', () => {
     const projectsStore = useProjectsStore()
     const project = projectsStore.currentProject
 
-    // Default project or no project selected -> show all
-    if (!project || project.id === 'default') {
-      return connections.value
-    }
-
-    // Specific project -> filter by IDs (even if empty)
+    // Specific project -> filter by IDs (even if empty or default)
+    if (!project) return []
     return connections.value.filter(conn => project.connectionIds.includes(conn.id))
   })
 
@@ -213,6 +249,14 @@ export const useAppStore = defineStore('app', () => {
 
   watch(sidebarCollapsed, newValue => {
     storage.updateSettings({ sidebarCollapsed: newValue })
+  })
+
+  watch(projectManagerMode, newValue => {
+    storage.updateSettings({ projectManagerMode: newValue })
+  })
+
+  watch(autoCollapseColumns, newValue => {
+    storage.updateSettings({ autoCollapseColumns: newValue })
   })
 
   watch(navStyle, newValue => {
@@ -240,11 +284,15 @@ export const useAppStore = defineStore('app', () => {
       // Ideally the UI inputs should trigger a "switchToCustom" first, OR we detect deviation here.
       const currentProfileTarget = FONT_SIZE_PROFILES[fontSizeProfile.value]
       if (currentProfileTarget) {
+        // Use loose equality or String comparison to avoid type issues (number vs string from inputs/storage)
         const isMatch = Object.keys(newValue).every(k => {
           const key = k as keyof typeof newValue
-          return newValue[key] === currentProfileTarget[key]
+          // eslint-disable-next-line eqeqeq
+          return newValue[key] == currentProfileTarget[key]
         })
+
         if (!isMatch) {
+          // console.log('Font size deviation detected, switching to custom', newValue, currentProfileTarget)
           fontSizeProfile.value = 'custom'
           // And now that we are custom, save this new state as the custom preference
           lastCustomFontSizes.value = { ...newValue }
@@ -286,6 +334,11 @@ export const useAppStore = defineStore('app', () => {
       id: Date.now().toString()
     }
     connections.value.push(newConnection)
+
+    // Register to current project
+    const projectsStore = useProjectsStore()
+    projectsStore.addItemToProject('connection', newConnection.id)
+
     return newConnection
   }
 
@@ -302,7 +355,29 @@ export const useAppStore = defineStore('app', () => {
       // Clear cached data for this connection
       await Andb.clearConnectionData(conn)
     }
-    connections.value = connections.value.filter(conn => conn.id !== id)
+
+    const projectsStore = useProjectsStore()
+    const currentProjectId = projectsStore.selectedProjectId
+
+    // 1. Unlink from Current Project (Atomic Delete)
+    if (currentProjectId) {
+      const currentProject = projectsStore.projects.find(p => p.id === currentProjectId)
+      if (currentProject) {
+        currentProject.connectionIds = currentProject.connectionIds.filter(cid => cid !== id)
+        // Trigger reactivity and save
+        // Note: projectsStore watcher watches 'projects', so mutation triggers save.
+        // But to be safe and explicit given the bug report:
+        // We rely on the watcher in projects.ts
+      }
+    }
+
+    // 2. User requested NO Garbage Collection.
+    // Connections remain in the system even if no project claims them.
+    // They can be reclaimed by "The Base One" or future features.
+    // const isUsed = projectsStore.projects.some(p => p.connectionIds.includes(id))
+    // if (!isUsed) {
+    //   connections.value = connections.value.filter(conn => conn.id !== id)
+    // }
   }
 
   const testConnection = async (id: string) => {
@@ -386,10 +461,22 @@ export const useAppStore = defineStore('app', () => {
       fontSizes.value = { ...FONT_SIZE_PROFILES[profileKey] }
     }
   }
+  const isDark = ref(false)
+
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    isDark.value = true
+  }
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    isDark.value = event.matches
+  })
 
   return {
     // State
     sidebarCollapsed,
+    projectManagerMode,
+    autoCollapseColumns,
+    isDark,
     buttonStyle,
     navStyle,
     fontSizes,

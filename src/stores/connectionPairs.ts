@@ -47,6 +47,30 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     const savedPairs = await storage.getConnectionPairs()
     if (savedPairs.length > 0) {
       connectionPairs.value = savedPairs
+
+      // Migration: Claim orphan pairs for "The Base One"
+      const projectsStore = useProjectsStore()
+      if (projectsStore.projects.length === 0) {
+        await projectsStore.reloadData()
+      }
+
+      const allLinkedPairIds = new Set<string>()
+      projectsStore.projects.forEach(p => {
+        p.pairIds.forEach(id => allLinkedPairIds.add(id))
+      })
+
+      const orphanPairIds = connectionPairs.value
+        .filter(p => !allLinkedPairIds.has(p.id))
+        .map(p => p.id)
+
+      if (orphanPairIds.length > 0) {
+        const defaultProject = projectsStore.projects.find(p => p.id === 'default')
+        if (defaultProject) {
+          defaultProject.pairIds.push(...orphanPairIds)
+          storage.saveProjects(projectsStore.projects)
+        }
+      }
+
     } else {
       connectionPairs.value = [
         {
@@ -77,6 +101,17 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
           status: 'idle'
         }
       ]
+
+      // Auto-assign demo pairs to default project if new
+      const projectsStore = useProjectsStore()
+      if (projectsStore.projects.length === 0) {
+        await projectsStore.reloadData()
+      }
+      const defaultProject = projectsStore.projects.find(p => p.id === 'default')
+      if (defaultProject && defaultProject.pairIds.length === 0) {
+        defaultProject.pairIds = connectionPairs.value.map(p => p.id)
+        storage.saveProjects(projectsStore.projects)
+      }
     }
 
     // Set default selection
@@ -110,6 +145,14 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
 
   // Getters
   const enabledEnvironments = computed(() => {
+    const projectsStore = useProjectsStore()
+    const project = projectsStore.currentProject
+
+    if (project && project.enabledEnvironmentIds) {
+      return environments.value.filter(env => project.enabledEnvironmentIds.includes(env.id))
+    }
+
+    // Fallback to global enabled state if no project or legacy data
     return environments.value.filter(env => env.enabled)
   })
 
@@ -117,12 +160,8 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     const projectsStore = useProjectsStore()
     const project = projectsStore.currentProject
 
-    // Default project or no project selected -> show all
-    if (!project || project.id === 'default') {
-      return connectionPairs.value
-    }
-
     // Specific project -> filter by IDs
+    if (!project) return []
     return connectionPairs.value.filter(pair => project.pairIds.includes(pair.id))
   })
 
@@ -222,6 +261,11 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
       id: Date.now().toString()
     }
     connectionPairs.value.push(newPair)
+
+    // Register to current project
+    const projectsStore = useProjectsStore()
+    projectsStore.addItemToProject('pair', newPair.id)
+
     return newPair
   }
 
@@ -233,7 +277,19 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
   }
 
   const removeConnectionPair = (id: string) => {
-    connectionPairs.value = connectionPairs.value.filter(pair => pair.id !== id)
+    const projectsStore = useProjectsStore()
+    const currentProjectId = projectsStore.selectedProjectId
+
+    // 1. Unlink from Current Project
+    if (currentProjectId) {
+      const currentProject = projectsStore.projects.find(p => p.id === currentProjectId)
+      if (currentProject) {
+        currentProject.pairIds = currentProject.pairIds.filter(pid => pid !== id)
+        // Trigger save via watcher
+      }
+    }
+
+    // 2. User requested NO Garbage Collection.
   }
 
   const setDefaultPair = (pairId: string) => {
@@ -380,6 +436,21 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
     reorderEnvironments,
     resetEnvironments,
     resetConnectionPairs,
+    toggleProjectEnvironment: (envId: string, isEnabled: boolean) => {
+      const projectsStore = useProjectsStore()
+      const project = projectsStore.currentProject
+      if (!project) return
+
+      let ids = [...project.enabledEnvironmentIds]
+      if (isEnabled) {
+        if (!ids.includes(envId)) ids.push(envId)
+      } else {
+        ids = ids.filter(id => id !== envId)
+      }
+
+      // Update via store action to ensure persistence
+      projectsStore.updateProject(project.id, { enabledEnvironmentIds: ids })
+    },
     reloadData: init
   }
 })

@@ -598,6 +598,11 @@ const comparePair = (pair: any) => {
 
 import { onMounted } from 'vue'
 onMounted(async () => {
+  if (appStore.projectManagerMode) {
+    router.push('/projects')
+    return
+  }
+
   // Load data from store (which loads from storage)
   if ((window as any).electronAPI) {
     await Promise.all([

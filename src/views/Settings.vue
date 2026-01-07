@@ -6,13 +6,23 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex overflow-hidden">
       <!-- App Sidebar (The main navigation) -->
-      <Sidebar />
+      <Sidebar v-if="!appStore.projectManagerMode" />
       
       <!-- Settings Workspace -->
       <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
         <!-- Settings Category Sidebar -->
         <div class="w-64 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-md flex flex-col shrink-0">
           <div class="p-8 pb-4">
+             <!-- Back to Project Button (Focus Mode) -->
+             <button 
+                v-if="appStore.projectManagerMode"
+                @click="router.push('/projects')"
+                class="w-full mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all duration-300 group"
+             >
+                <ChevronLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Back to View
+             </button>
+
             <h1 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 mb-1">
               <SettingsIcon class="w-5 h-5 text-primary-500" />
               {{ $t('settings.title') }}
@@ -66,6 +76,51 @@
 
               <!-- Main UI Settings -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <!-- Project Focus Mode Feature Card -->
+                  <div class="md:col-span-2 mb-2 animate-in slide-in-from-bottom-2 fade-in duration-700">
+                     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 p-[1px] shadow-xl shadow-indigo-500/10 transition-all hover:shadow-indigo-500/20 group">
+                        <div class="relative bg-white dark:bg-gray-900 rounded-[15px] p-6 pr-8 h-full flex items-center justify-between z-10 transition-colors">
+                           
+                           <!-- Background Decoration -->
+                           <div class="absolute -right-6 -bottom-6 opacity-5 dark:opacity-10 rotate-12 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                              <Maximize class="w-48 h-48 text-indigo-500" />
+                           </div>
+
+                           <div class="flex-1 mr-8">
+                              <div class="flex items-center gap-2 mb-3">
+                                 <div class="px-2 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 uppercase tracking-widest animate-pulse">
+                                    {{ $t('common.new') || 'CHECK' }} THIS OUT
+                                 </div>
+                              </div>
+                              <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Project Focus Mode</h3>
+                              <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                                 Hide the sidebar and header clutter to maximize your workspace. 
+                                 Perfect for managing complex connection matrices on smaller screens.
+                              </p>
+                           </div>
+
+                           <div class="flex flex-col items-center gap-3 relative z-20">
+                              <button 
+                                 @click="toggleFocusMode"
+                                 class="relative w-20 h-10 rounded-full transition-all duration-300 focus:outline-none shadow-inner ring-offset-2 dark:ring-offset-gray-900 focus:ring-2 focus:ring-indigo-500"
+                                 :class="appStore.projectManagerMode ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-800'"
+                              >
+                                 <div 
+                                    class="absolute top-1 left-1 bg-white w-8 h-8 rounded-full shadow-lg transform transition-transform duration-300 flex items-center justify-center border border-gray-100"
+                                    :class="appStore.projectManagerMode ? 'translate-x-10' : 'translate-x-0'"
+                                 >
+                                    <Maximize v-if="appStore.projectManagerMode" class="w-4 h-4 text-indigo-600" />
+                                    <Minimize v-else class="w-4 h-4 text-gray-400" />
+                                 </div>
+                              </button>
+                               <span class="text-[9px] font-black uppercase tracking-[0.2em] transition-colors duration-300" :class="appStore.projectManagerMode ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'">
+                                  {{ appStore.projectManagerMode ? 'Active' : 'Disabled' }}
+                               </span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
                 <div class="md:col-span-2 space-y-6">
                     <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
                     <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.theme.label') }}</label>
@@ -170,7 +225,10 @@
 
                 <!-- Navigation Style -->
                 <div class="md:col-span-2 space-y-4 pt-4">
-                   <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.navigation.label') }}</label>
+                   <div class="flex items-center justify-between">
+                      <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.navigation.label') }}</label>
+                   </div>
+
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <button 
                        @click="appStore.navStyle = 'vertical-list'"
@@ -359,6 +417,58 @@
                 </div>
               </div>
               <ConnectionTemplateManager />
+            </div>
+
+            <!-- SECURITY SECTION -->
+            <div v-if="activeCategory === 'security'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shadow-inner">
+                  <Shield class="w-6 h-6 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{{ $t('settings.security.title') }}</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.security.subtitle') }}</p>
+                </div>
+              </div>
+              
+              <div class="space-y-6">
+                 <!-- Public Key Display -->
+                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{{ $t('settings.security.publicKey') }}</label>
+                         <div class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                            <Check class="w-3 h-3" />
+                            {{ $t('settings.security.active') }}
+                         </div>
+                    </div>
+                    <div class="relative group">
+                        <textarea 
+                           readonly 
+                           :value="publicKey" 
+                           class="w-full h-32 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-mono text-gray-600 dark:text-gray-300 resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
+                        ></textarea>
+                    </div>
+                    <p class="mt-2 text-[10px] text-gray-400">{{ $t('settings.security.publicKeyDesc') }}</p>
+                 </div>
+
+                 <!-- Regenerate Actions -->
+                 <div class="bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-6">
+                     <h3 class="text-xs font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-2">{{ $t('settings.security.dangerZone') }}</h3>
+                     <p class="text-[11px] text-rose-600/80 dark:text-rose-300/80 mb-6 leading-relaxed max-w-2xl">
+                        {{ $t('settings.security.regenerateWarning') }}
+                     </p>
+
+                     <button 
+                        @click="regenerateKeys"
+                        :disabled="isRegeneratingKeys"
+                        class="px-6 py-3 bg-white dark:bg-gray-800 text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-800 hover:border-rose-300 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                     >
+                        <Key v-if="!isRegeneratingKeys" class="w-4 h-4" />
+                        <span v-if="isRegeneratingKeys" class="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></span>
+                        {{ isRegeneratingKeys ? $t('common.processing') : $t('settings.security.regenerateKeys') }}
+                     </button>
+                 </div>
+              </div>
             </div>
 
             <!-- BACKUP SECTION -->
@@ -553,9 +663,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   ChevronDown, 
+  ChevronLeft,
   Zap, 
   Check, 
   MousePointer2, 
@@ -570,7 +681,11 @@ import {
   Activity,
   Type,
   DownloadCloud,
-  LayoutTemplate
+  LayoutTemplate,
+  Shield,
+  Key,
+  Maximize,
+  Minimize
 } from 'lucide-vue-next'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
@@ -581,6 +696,7 @@ import { useAppStore } from '@/stores/app'
 import { useSettingsStore, themeOptions } from '@/stores/settings'
 import { useOperationsStore } from '@/stores/operations'
 import { useUpdaterStore } from '@/stores/updater'
+import { useProjectsStore } from '@/stores/projects'
 
 import { setLanguage } from '@/i18n'
 
@@ -589,6 +705,17 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const projectsStore = useProjectsStore()
+const router = useRouter()
+
+const toggleFocusMode = () => {
+   appStore.projectManagerMode = !appStore.projectManagerMode
+   
+   if (appStore.projectManagerMode) {
+      projectsStore.viewMode = 'columns'
+      router.push('/projects')
+   }
+}
 
 const connectionPairsStore = useConnectionPairsStore()
 const settingsStore = useSettingsStore()
@@ -596,12 +723,55 @@ const operationsStore = useOperationsStore()
 const updaterStore = useUpdaterStore()
 const route = useRoute()
 
+// Active Category State (Declared early for usage in watchers)
+const activeCategory = ref('interface')
 
+// Security Logic
+const publicKey = ref('')
+const isRegeneratingKeys = ref(false)
+
+const loadPublicKey = async () => {
+  if ((window as any).electronAPI && (window as any).electronAPI.invoke) {
+    const res = await (window as any).electronAPI.invoke('security-get-public-key')
+    if (res.success) {
+      publicKey.value = res.data
+    }
+  }
+}
+
+const regenerateKeys = async () => {
+    if (!confirm(t('settings.security.regenerateConfirm'))) return
+    
+    isRegeneratingKeys.value = true
+    try {
+        if ((window as any).electronAPI && (window as any).electronAPI.invoke) {
+            const res = await (window as any).electronAPI.invoke('security-regenerate-keys')
+            if (res.success) {
+                await loadPublicKey()
+                alert(t('settings.security.regenerateSuccess'))
+            } else {
+                alert(t('settings.security.regenerateError') + ': ' + res.error)
+            }
+        }
+    } catch (e: any) {
+        console.error(e)
+        alert('Error: ' + e.message)
+    } finally {
+        isRegeneratingKeys.value = false
+    }
+}
+
+watch(activeCategory, (newVal) => {
+    if (newVal === 'security') {
+        loadPublicKey()
+    }
+})
 
 const categories = computed(() => {
   const appCats = [
     { id: 'interface', label: t('settings.categories.interface'), icon: MonitorSmartphone },
     { id: 'templates', label: t('settings.categories.templates'), icon: LayoutTemplate },
+    { id: 'security', label: t('settings.categories.security'), icon: Shield },
     { id: 'backup', label: t('settings.categories.backup'), icon: Database },
     { id: 'update', label: t('settings.categories.update'), icon: DownloadCloud }
   ]
@@ -611,7 +781,7 @@ const categories = computed(() => {
 
 const appSettings = computed(() => categories.value)
 
-const activeCategory = ref('interface')
+
 
 // Handle deep linking from query params
 const handleDeepLink = (query: any) => {

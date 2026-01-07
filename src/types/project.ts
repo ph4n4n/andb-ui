@@ -6,6 +6,8 @@ export interface Project {
   color?: string
   connectionIds: string[]
   pairIds: string[]
+  enabledEnvironmentIds: string[]
+  pinnedColumnTypes?: string[]
   createdAt: string
   updatedAt: string
 }

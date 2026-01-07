@@ -194,7 +194,7 @@
                   <div 
                     v-for="cat in resultsByCategory" :key="cat.type"
                     @click="selectedFilterType = cat.type; showMigrateModal = false"
-                    class="rounded-xl transition-all cursor-pointer group flex items-center relative"
+                    class="rounded-xl transition-all cursor-pointer group flex flex-col relative"
                     :class="showMigrateModal 
                       ? 'p-2 justify-center hover:bg-gray-100 dark:hover:bg-gray-800' 
                       : 'p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-primary-500/30'"
@@ -214,29 +214,29 @@
                           <div class="text-[10px] text-gray-400">{{ cat.items.length }} items</div>
                         </div>
                       </div>
-                      <div v-if="!showMigrateModal" class="flex items-center">
+                      <div v-if="!showMigrateModal" class="flex items-center gap-3">
                         <button 
                           v-if="cat.changes > 0"
                           @click.stop.prevent="openBatchMigrateModal(cat.type)"
-                          class="mr-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-500 hover:text-white hover:border-orange-600 hover:shadow-md dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/50 dark:hover:bg-orange-600 dark:hover:text-white transition-all group/badge"
+                          class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-500 hover:text-white hover:border-orange-600 hover:shadow-md dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/50 dark:hover:bg-orange-600 dark:hover:text-white transition-all group/badge shadow-sm"
                           title="Click to Migrate All Changes"
                         >
                           <div class="flex items-center justify-center bg-orange-100 dark:bg-orange-900/50 rounded w-4 h-4 group-hover/badge:bg-white/20 group-hover/badge:text-white transition-colors">
-                            <Zap class="w-3 h-3 fill-current" />
+                            <Zap class="w-2.5 h-2.5 fill-current" />
                           </div>
-                          <span class="font-bold text-[11px]">{{ cat.changes }}</span>
+                          <span class="font-bold text-[10px] tracking-wider">{{ cat.changes }}</span>
                         </button>
-                        <ChevronRight class="w-3 h-3 text-gray-300 group-hover:text-primary-500" />
+                        <ChevronRight class="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500 transition-all group-hover:translate-x-0.5" />
                       </div>
                     </div>
                     <!-- Micro progress bar -->
-                    <div v-if="!showMigrateModal" class="mt-3 h-1 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden flex">
+                    <div v-if="!showMigrateModal" class="mt-3 h-1.5 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden flex ring-1 ring-inset ring-black/5">
                       <div 
-                        class="h-full bg-amber-500" 
+                        class="h-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" 
                         :style="{ width: (cat.changes / cat.items.length * 100) + '%' }"
                       ></div>
                       <div 
-                        class="h-full bg-gray-300 dark:bg-gray-600" 
+                        class="h-full bg-gray-200 dark:bg-gray-600" 
                         :style="{ width: ((cat.items.length - cat.changes) / cat.items.length * 100) + '%' }"
                       ></div>
                     </div>

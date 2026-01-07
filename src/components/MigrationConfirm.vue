@@ -139,6 +139,7 @@
                     :font-size="appStore.fontSizes.code + 1" 
                     :font-family="appStore.fontFamilies.code"
                     :show-line-numbers="true"
+                    :is-dark="appStore.isDark"
                     class="flex-1"
                   />
                 </div>

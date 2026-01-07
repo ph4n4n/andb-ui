@@ -148,6 +148,7 @@
                       class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
                       :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800/50': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
                       @click="selectCategory(env.name, db.name, type.key)"
+                      :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
                     >
                       <span 
                         class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
@@ -197,7 +198,8 @@
                       >
                         <component :is="type.icon" class="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
                         <span 
-                          class="truncate font-mono text-sm leading-tight flex-1"
+                          class="truncate font-mono leading-tight flex-1"
+                          :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }"
                           :class="{ 
                             'text-amber-600 dark:text-amber-400': isCompareView && isModified(type.key, item.name), 
                             'text-green-600 dark:text-green-400': isCompareView && isNew(type.key, item.name) 

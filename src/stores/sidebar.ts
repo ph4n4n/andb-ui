@@ -37,25 +37,24 @@ export const useSidebarStore = defineStore('sidebar', () => {
   async function loadSchemas(force = false) {
     const now = Date.now()
     if (!force && environments.value.length > 0 && (now - lastFetchTime.value < CACHE_TTL)) {
-      return
+      return environments.value
     }
 
-    if (loading.value) return
+    if (loading.value && !force) return environments.value
 
     loading.value = true
     try {
       const result = await Andb.getSchemas()
-
-      // ... logic will be moved from Sidebar.vue to here for better state management
-      // For now, I'll just store the raw result and let Sidebar handle the grouping
-      // Actually, better to move the grouping logic here too.
-      // But let's keep it simple first: just the fetch and loading state.
-
-      // Wait, let's actually move the logic from Sidebar.vue to here.
-      return result
+      if (result) {
+        environments.value = result
+        lastFetchTime.value = Date.now()
+      }
+      return environments.value
+    } catch (err) {
+      console.error('Failed to load schemas in store:', err)
+      return environments.value
     } finally {
       loading.value = false
-      lastFetchTime.value = now
     }
   }
 

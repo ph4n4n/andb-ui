@@ -224,6 +224,7 @@ schema:
   snapshotFailed: 'Snapshot Failed'
   copied: 'Copied'
   copiedDesc: 'DDL script copied to clipboard.'
+  visualDiagram: 'Interactive ER Diagram'
 
 compare:
   noPair: 'No Pair Selected'
@@ -393,9 +394,9 @@ environments:
 projects:
   title: 'Project Manager'
   subtitle: 'Organize your database clusters'
-  newProject: 'New Project'
+  newProject: 'New Base'
   editTitle: 'Edit Project'
-  createTitle: 'Create New Project'
+  createTitle: 'Create New Base'
   connections: 'Connections'
   active: 'Active'
   select: 'Select'
@@ -424,6 +425,19 @@ settings:
     backup: 'Backups'
     update: 'Updates'
     templates: 'Global Connections'
+    security: 'Security'
+  security:
+    title: 'Security Keys'
+    subtitle: 'Manage encryption and access validation'
+    publicKey: 'Public Key'
+    active: 'Active'
+    publicKeyDesc: 'This public key is used to encrypt your connection passwords locally. It is unique to this installation.'
+    dangerZone: 'Danger Zone'
+    regenerateWarning: 'Regenerating encryption keys will invalidate ALL password data currently saved in your connections. You will need to re-enter credentials for every connection. Use only if you suspect your keys are compromised.'
+    regenerateKeys: 'Regenerate & Rotate Keys'
+    regenerateConfirm: 'CRITICAL WARNING: Regenerating keys will make all saved passwords unreadable. You will have to manually re-enter passwords for all connections. Are you sure?'
+    regenerateSuccess: 'System keys regenerated. Please update your connection passwords.'
+    regenerateError: 'Failed to regenerate keys'
   sections:
     app: 'Application Settings'
     project: 'Project Settings'

@@ -7,6 +7,7 @@ export interface ConnectionTemplate {
   name: string
   host: string
   port: number
+  database?: string
   username: string
   password?: string
   type: 'mysql' | 'postgres' | 'sqlite'
@@ -35,6 +36,7 @@ export const useConnectionTemplatesStore = defineStore('connectionTemplates', ()
       if (excludeId && t.id === excludeId) return false
       return t.host === template.host &&
         t.port === template.port &&
+        t.database === template.database &&
         t.username === template.username
     })
   }
