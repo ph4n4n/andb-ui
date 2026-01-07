@@ -9,7 +9,7 @@
     >
       <!-- Column Header (Luxury) -->
       <div 
-         class="px-5 py-4 border-b border-gray-100 dark:border-white/5 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl flex items-center justify-between h-14 transition-all" 
+         class="relative px-5 py-4 border-b border-gray-100 dark:border-white/5 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl flex items-center justify-between h-14 transition-all" 
          :class="isCollapsed(index) ? 'justify-center px-0 group-hover/col:justify-between group-hover/col:px-4' : ''"
       >
         <!-- Title / Edit Input -->
@@ -73,16 +73,16 @@
 
         <div 
              v-if="isCollapsed(index)" 
-             class="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 absolute left-1/2 -translate-x-1/2 group-hover/col:opacity-0 transition-opacity pointer-events-none"
+             class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 group-hover/col:opacity-0 transition-opacity pointer-events-none"
         ></div>
       </div>
 
       <!-- Collapsed Vertical Label -->
       <div 
           v-if="isCollapsed(index) && column.selectedId"
-          class="absolute inset-x-0 top-14 bottom-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 group-hover/col:opacity-0 transition-opacity pointer-events-none z-10"
+          class="absolute inset-x-0 top-20 bottom-0 flex flex-col items-center justify-start pb-4 bg-white/50 dark:bg-gray-900/50 group-hover/col:opacity-0 transition-opacity pointer-events-none z-10"
       >
-        <span class="vertical-label -rotate-90 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.4em] text-primary-500/40 dark:text-primary-400/40 select-none">
+        <span class="vertical-label rotate-180 whitespace-nowrap text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white select-none opacity-80">
             {{ getSelectedName(column) }}
         </span>
       </div>
@@ -263,12 +263,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
-import { useSidebarStore } from '@/stores/sidebar'
 import { useNotificationStore } from '@/stores/notification'
 import DDLCodeViewer from '@/components/DDLCodeViewer.vue'
 import ConnectionForm from '@/components/ConnectionForm.vue'
@@ -319,6 +318,8 @@ const fetchingResults = ref(false)
 const editingColumnIndex = ref<number | null>(null)
 const editingTitle = ref('')
 const titleInput = ref<HTMLInputElement | null>(null)
+
+const emit = defineEmits(['open', 'create-project', 'update-breadcrumbs'])
 
 // Initialize columns
 onMounted(async () => {
@@ -375,6 +376,21 @@ const selectInColumn = async (level: number, item: any) => {
     columns.value.push(nextColumn)
   }
 }
+
+// Breadcrumb emission
+watch(columns, (newCols) => {
+  const breadcrumbs = newCols
+    .filter(c => c.selectedId)
+    .map(c => {
+      const item = c.items.find(i => i.id === c.selectedId)
+      return {
+        id: c.selectedId as string,
+        name: item?.name || c.title,
+        level: c.level
+      }
+    })
+  emit('update-breadcrumbs', breadcrumbs)
+}, { deep: true, immediate: true })
 
 const handleSelection = async (item: any) => {
   previewObject.value = item

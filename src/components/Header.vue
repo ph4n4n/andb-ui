@@ -344,7 +344,7 @@ const currentPageTitle = computed(() => {
     '/schema': $t('common.schema'),
     '/compare': $t('common.compare'),
     '/settings': $t('common.settings'),
-    '/projects': ''
+    '/projects': 'BASES'
   }
   return routeNames[route.path] || $t('common.dashboard')
 })

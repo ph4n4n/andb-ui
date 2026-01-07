@@ -6,8 +6,8 @@
     <div class="flex-1 flex overflow-hidden">
       <!-- Global Sidebar -->
       <div 
-        :style="{ width: displaySidebarWidth + 'px' }" 
-        class="shrink-0 relative transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+        :style="{ width: displaySidebarWidth + 'px', borderRightWidth: displaySidebarWidth === 0 ? '0' : '1px' }" 
+        class="shrink-0 relative transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
       >
         <Sidebar ref="sidebarRef" style="width: 100%" />
         <!-- Sidebar Resizer -->
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Header from '@/components/Header.vue'
 import Sidebar from '@/components/Sidebar.vue'
@@ -82,6 +83,7 @@ import { PanelBottom } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 
+const route = useRoute()
 const appStore = useAppStore()
 const consoleStore = useConsoleStore()
 const { t: $t } = useI18n()
@@ -89,7 +91,10 @@ const { t: $t } = useI18n()
 // Sidebar Resizing
 const isCollapsed = computed(() => appStore.sidebarCollapsed)
 const sidebarWidth = ref(280)
-const displaySidebarWidth = computed(() => isCollapsed.value ? 64 : sidebarWidth.value)
+const displaySidebarWidth = computed(() => {
+  if (appStore.projectManagerMode && route.path === '/projects') return 0
+  return isCollapsed.value ? 64 : sidebarWidth.value
+})
 const isResizingSidebar = ref(false)
 
 const startSidebarResize = () => {

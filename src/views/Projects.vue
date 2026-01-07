@@ -42,14 +42,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
+import { useAppStore } from '@/stores/app'
 import MainLayout from '@/layouts/MainLayout.vue'
 import ProjectsColumnsView from '@/components/ProjectsColumnsView.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const projectsStore = useProjectsStore()
+const appStore = useAppStore()
 
 // Header Title Editing
 const isEditingTitle = ref(false)
@@ -65,6 +67,16 @@ const openProject = (id: string) => {
 // Reset viewMode logic to always be columns (implicitly) in UI, but explicit in store if needed for other components
 onMounted(() => {
    projectsStore.viewMode = 'columns'
+   appStore.projectManagerMode = true
+   // Default to auto-collapse for that 'Peak UI' feel
+   appStore.autoCollapseColumns = true
+})
+
+onUnmounted(() => {
+  // Optional: Reset mode or keep it. For now, let's allow it to persist 
+  // or clear it if we consider 'PM Mode' specific to this page.
+  // Given the MainLayout logic, keeping it false elsewhere might be safer for sidebar.
+  appStore.projectManagerMode = false
 })
 
 
