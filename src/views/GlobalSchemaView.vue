@@ -272,8 +272,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
 import Andb from '@/utils/andb'
-import DDLViewer from '@/components/DDLViewer.vue'
-import SchemaDiagram from '@/components/SchemaDiagram.vue'
+import DDLViewer from '@/components/ddl/DDLViewer.vue'
+import SchemaDiagram from '@/components/ddl/SchemaDiagram.vue'
 import { 
   RefreshCw, 
   Folder,

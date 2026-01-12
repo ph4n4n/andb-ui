@@ -34,13 +34,19 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
   const init = async () => {
     const savedEnvironments = await storage.getEnvironments()
     if (savedEnvironments.length > 0) {
-      environments.value = savedEnvironments
+      // Emergency Migration: Convert numeric IDs to Tags if they exist
+      const idMap: Record<string, string> = { '1': 'DEV', '2': 'STAGE', '3': 'UAT', '4': 'PROD' }
+      environments.value = savedEnvironments.map(e => ({
+        ...e,
+        id: idMap[e.id] || e.id,
+        name: idMap[e.id] || e.name
+      }))
     } else {
       environments.value = [
-        { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
-        { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
-        { id: '3', name: 'UAT', description: 'User Acceptance Testing', enabled: true, order: 3 },
-        { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
+        { id: 'DEV', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
+        { id: 'STAGE', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
+        { id: 'UAT', name: 'UAT', description: 'User Acceptance Testing', enabled: true, order: 3 },
+        { id: 'PROD', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
       ]
     }
 
@@ -365,10 +371,10 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
 
   const resetEnvironments = async () => {
     environments.value = [
-      { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
-      { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
-      { id: '3', name: 'UAT', description: 'UAT environment', enabled: true, order: 3 },
-      { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
+      { id: 'DEV', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
+      { id: 'STAGE', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
+      { id: 'UAT', name: 'UAT', description: 'UAT environment', enabled: true, order: 3 },
+      { id: 'PROD', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
     ]
     await storage.saveEnvironments(environments.value)
   }

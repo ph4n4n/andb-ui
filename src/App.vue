@@ -9,7 +9,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useUpdaterStore } from '@/stores/updater'
-import UpdateModal from '@/components/UpdateModal.vue'
+import UpdateModal from '@/components/general/UpdateModal.vue'
 
 const appStore = useAppStore()
 const updaterStore = useUpdaterStore()

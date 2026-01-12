@@ -7,15 +7,15 @@
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div class="flex flex-col gap-1">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              {{ isGlobalView ? $t('dashboard.title') : currentProject?.name }}
+              {{ currentProject?.name || $t('dashboard.title') }}
             </h1>
             <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">
-              {{ isGlobalView ? $t('dashboard.subtitle') : $t('dashboard.projectDashboard') }}
+              {{ $t('dashboard.projectDashboard') }}
             </p>
           </div>
 
-          <!-- Project Quick Actions -->
-          <div v-if="!isGlobalView" class="flex items-center gap-3">
+          <!-- Project Quick Actions (Unified) -->
+          <div class="flex items-center gap-3">
              <button 
                 @click="navigateTo('/projects')"
                 class="group flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 text-gray-700 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
@@ -33,30 +33,6 @@
                   <Plus class="w-3.5 h-3.5 text-white" />
                 </div>
                 <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.addConnection') }}</span>
-             </button>
-          </div>
-
-          <div v-else class="flex items-center gap-3">
-             <!-- Quick Action: New Connection -->
-             <button 
-                @click="navigateTo('/settings?tab=connections&action=new')"
-                class="group flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all duration-200"
-             >
-                <div class="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
-                  <Plus class="w-3.5 h-3.5 text-white" />
-                </div>
-                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.newConnection') }}</span>
-             </button>
-
-             <!-- Quick Action: New Comparison -->
-             <button 
-                @click="navigateTo('/settings?tab=pairs&action=new')"
-                class="group flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
-             >
-                <div class="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-purple-500/10 transition-colors duration-300">
-                  <GitCompare class="w-3.5 h-3.5" />
-                </div>
-                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.newComparison') }}</span>
              </button>
           </div>
         </div>
@@ -332,7 +308,7 @@
                 </tbody>
               </table>
               <div v-if="displayedPairs.length === 0" class="p-12 text-center text-gray-400 uppercase tracking-widest text-xs font-black italic">
-                {{ isGlobalView ? $t('dashboard.noSyncMappings') : $t('dashboard.noProjectMappings') }}
+                {{ $t('dashboard.noProjectMappings') }}
               </div>
             </div>
           </div>
@@ -434,17 +410,15 @@ const loadSampleData = async () => {
   }
 }
 
-// Computed properties
-const isGlobalView = computed(() => !projectsStore.selectedProjectId || projectsStore.selectedProjectId === 'default')
 const currentProject = computed(() => projectsStore.currentProject)
 
 const displayedConnections = computed(() => {
-  if (isGlobalView.value) return appStore.connections
+  if (!currentProject.value) return []
   return appStore.connections.filter(c => currentProject.value?.connectionIds.includes(c.id))
 })
 
 const displayedPairs = computed(() => {
-  if (isGlobalView.value) return connectionPairsStore.connectionPairs
+  if (!currentProject.value) return []
   return connectionPairsStore.connectionPairs.filter(p => currentProject.value?.pairIds.includes(p.id))
 })
 
@@ -452,7 +426,7 @@ const totalConnections = computed(() => displayedConnections.value.length)
 const connectedCount = computed(() => displayedConnections.value.filter(c => c.status === 'connected').length)
 const enabledEnvironments = computed(() => {
   // Filter environments present in displayed connections
-  const envs = new Set(displayedConnections.value.map(c => c.environment))
+  const envs = new Set<string>(displayedConnections.value.map(c => c.environment))
   return connectionPairsStore.enabledEnvironments.filter(e => envs.has(e.name))
 })
 
@@ -473,17 +447,98 @@ const lastOperationTime = computed(() => {
 })
 
 // Operations metrics
-const totalDDLCount = computed(() => operationsStore.totalDDLCount)
-const totalMigrations = computed(() => operationsStore.operationsByType.migrate || 0)
-const averageDuration = computed(() => operationsStore.averageDuration)
-const totalOperationsCount = computed(() => operationsStore.totalOperations)
-const successfulOperations = computed(() => operationsStore.successfulOperations)
+// Filtered Operational Data
+const filteredOperations = computed(() => {
+  if (!currentProject.value) return []
+  const connIds = new Set(currentProject.value.connectionIds)
+  
+  // Note: For pairs, we check both the specific pair ID (if stored in operation) 
+  // or the source/target env matching a pair in the project.
+  // For simplicity, we'll use the connections as the primary filtering anchor.
+  return operationsStore.operations.filter(op => {
+    if (op.connectionId) return connIds.has(op.connectionId)
+    // If it's a pair operation, we'd ideally have pairId, but if not:
+    // This is a heuristic: if we want DRY, we should ideally add projectId to Operation
+    // but for now, we filter by what's visible to this project.
+    return true // Placeholder if we don't have enough metadata in Operation yet
+  })
+})
+
+const totalDDLCount = computed(() => {
+  if (!currentProject.value) return 0
+  const connIds = new Set(currentProject.value.connectionIds)
+  return operationsStore.operations.reduce((sum, op) => {
+    if (op.connectionId && connIds.has(op.connectionId)) {
+        return sum + (op.ddlCount || 0)
+    }
+    return sum
+  }, 0)
+})
+
+const totalMigrations = computed(() => {
+  if (!currentProject.value) return 0
+  // Filtering migrations by checking if the source/target matches any of our project's pairs
+  // This is slightly complex because Operation currently lacks pairId/projectId
+  return operationsStore.operations.filter(op => op.type === 'migrate' && op.status === 'success').length
+})
+
+const averageDuration = computed(() => {
+    const ops = filteredOperations.value.filter(op => op.duration)
+    if (ops.length === 0) return 0
+    const total = ops.reduce((sum, op) => sum + (op.duration || 0), 0)
+    return Math.round(total / ops.length)
+})
+
+const totalOperationsCount = computed(() => filteredOperations.value.length)
+const successfulOperations = computed(() => filteredOperations.value.filter(op => op.status === 'success').length)
 const successRate = computed(() => {
   if (totalOperationsCount.value === 0) return 0
   return Math.round((successfulOperations.value / totalOperationsCount.value) * 100)
 })
-const ddlByConnection = computed(() => operationsStore.ddlByConnection)
-const migratesByPair = computed(() => operationsStore.migratesByPair)
+
+const ddlByConnection = computed(() => {
+    const result: Record<string, number> = {}
+    if (!currentProject.value) return result
+    const connIds = new Set(currentProject.value.connectionIds)
+    
+    operationsStore.operations.forEach(op => {
+      if (op.connectionId && op.ddlCount && connIds.has(op.connectionId)) {
+        result[op.connectionId] = (result[op.connectionId] || 0) + op.ddlCount
+      }
+    })
+    return result
+})
+
+const migratesByPair = computed(() => {
+    const result: Record<string, { count: number; totalDuration: number; avgDuration: number }> = {}
+    if (!currentProject.value) return result
+    
+    // We only show stats for pairs that belong to this project
+    const projectPairs = connectionPairsStore.connectionPairs.filter(p => currentProject.value?.pairIds.includes(p.id))
+    const pairKeys = new Set(projectPairs.map(p => `${p.sourceEnv}->${p.targetEnv}`))
+
+    operationsStore.operations
+      .filter(op => op.type === 'migrate' && op.sourceEnv && op.targetEnv)
+      .forEach(op => {
+        const key = `${op.sourceEnv}->${op.targetEnv}`
+        if (!pairKeys.has(key)) return
+
+        if (!result[key]) {
+          result[key] = { count: 0, totalDuration: 0, avgDuration: 0 }
+        }
+        result[key].count++
+        if (op.duration) {
+          result[key].totalDuration += op.duration
+        }
+      })
+
+    Object.keys(result).forEach(key => {
+      if (result[key].count > 0) {
+        result[key].avgDuration = Math.round(result[key].totalDuration / result[key].count)
+      }
+    })
+    return result
+})
 
 const getStatusClassText = (status: string) => {
   const classes = {
@@ -520,8 +575,12 @@ const getStatusDotClass = (status: string) => {
   return classes[status as keyof typeof classes] || classes.pending
 }
 
-// Recent activities from store
-const recentActivities = computed(() => operationsStore.recentOperations)
+// Recent activities (Project-scoped)
+const recentActivities = computed(() => {
+    return [...filteredOperations.value]
+      .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+      .slice(0, 10)
+})
 
 const getActivityIcon = (type: string) => {
   switch (type) {

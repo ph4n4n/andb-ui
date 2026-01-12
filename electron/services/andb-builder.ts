@@ -3,7 +3,7 @@ import path from 'path'
 
 // Import dependencies safely
 // @ts-ignore
-const { Container } = require('@andb/core')
+const { Container } = require('@the-andb/core')
 // @ts-ignore
 const Logger = require('andb-logger')
 
@@ -65,7 +65,7 @@ export class AndbBuilder {
    */
   public static getSQLiteStorage() {
     if (!this.sqliteStorage) {
-      const { SQLiteStorage } = require('@andb/core/core/utils/storage.strategy')
+      const { SQLiteStorage } = require('@the-andb/core/core/utils/storage.strategy')
       const dbPath = path.join(app.getPath('userData'), 'andb-storage.db')
       this.sqliteStorage = new SQLiteStorage(dbPath, app.getPath('userData'))
     }
@@ -191,8 +191,8 @@ export class AndbBuilder {
 
   public static getCorePath() {
     try {
-      require.resolve('@andb/core');
-      require.resolve('@andb/core/package.json');
+      require.resolve('@the-andb/core');
+      require.resolve('@the-andb/core/package.json');
     } catch (e) {
       // Quietly fail
     }
@@ -621,7 +621,7 @@ export class AndbBuilder {
    */
   static async test(): Promise<boolean> {
     try {
-      const { Container } = require('@andb/core')
+      const { Container } = require('@the-andb/core')
       return !!Container
     } catch (error) {
       return false

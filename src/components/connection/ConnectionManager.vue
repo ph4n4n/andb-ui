@@ -62,19 +62,16 @@
             <table class="w-full">
               <thead class="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th class="px-4 py-2 text-left text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     {{ $t('connections.connectionName') }}
                   </th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th class="px-4 py-2 text-left text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     {{ $t('connections.host') }}
                   </th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {{ $t('connections.status') }}
+                  <th class="px-4 py-2 text-left text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                    {{ $t('connections.database') }}
                   </th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {{ $t('connections.lastTested') }}
-                  </th>
-                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th class="px-4 py-2 text-right text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     {{ $t('common.actions') }}
                   </th>
                 </tr>
@@ -108,9 +105,6 @@
                                 {{ connection.environment }}
                             </span>
                         </div>
-                        <div class="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          {{ connection.database }}
-                        </div>
                       </div>
                     </div>
                   </td>
@@ -123,24 +117,27 @@
                     </div>
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-2 w-2 rounded-full mr-2"
-                           :class="getStatusColor(connection.status)"></div>
-                      <span class="text-sm text-gray-900 dark:text-white">
-                        {{ $t(`connections.${connection.status}`) }}
-                      </span>
+                    <div v-if="connection.database" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md w-fit font-bold">
+                        <Database class="w-3.5 h-3.5 text-gray-400" />
+                        {{ connection.database }}
                     </div>
-                  </td>
-                  <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {{ formatLastTested(connection.lastTested) }}
+                    <span v-else class="text-xs text-gray-400 italic">No DB</span>
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex items-center justify-end gap-2">
                       <button @click="testConnection(connection.id)"
-                              :disabled="connection.status === 'testing'"
-                              class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                              :title="$t('connections.testConnection')">
-                        <ShieldQuestion class="w-4 h-4" />
+                              class="relative p-1 rounded-lg transition-all"
+                              :class="{
+                                  'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20': connection.status === 'idle',
+                                  'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20': connection.status === 'connected',
+                                  'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20': connection.status === 'failed',
+                                  'animate-pulse': connection.status === 'testing'
+                              }"
+                              :title="$t('connections.testConnection') + (connection.lastTested ? ' - ' + formatLastTested(connection.lastTested) : '')">
+                        <RefreshCw v-if="connection.status === 'testing'" class="w-4 h-4 animate-spin" />
+                        <CheckCircle2 v-else-if="connection.status === 'connected'" class="w-4 h-4" />
+                        <AlertCircle v-else-if="connection.status === 'failed'" class="w-4 h-4" />
+                        <ShieldQuestion v-else class="w-4 h-4" />
                       </button>
                       <button @click="editConnection(connection)"
                               class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
@@ -216,27 +213,54 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Plus, Database, ShieldQuestion, Edit, Trash2, X, Copy, LayoutGrid, List } from 'lucide-vue-next'
+import { Plus, Database, ShieldQuestion, Edit, Trash2, X, Copy, LayoutGrid, List, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import ConnectionForm from './ConnectionForm.vue'
 import type { DatabaseConnection } from '@/stores/app'
 
+import { useConnectionTemplatesStore } from '@/stores/connectionTemplates'
+
 const { t: $t } = useI18n()
 const appStore = useAppStore()
+const templatesStore = useConnectionTemplatesStore()
 const connectionPairsStore = useConnectionPairsStore()
 const route = useRoute()
 const router = useRouter()
 
-// Handle deep linking for actions
-onMounted(() => {
+onMounted(async () => {
+  // 1. Fetch latest templates to ensure we have fresh data for sync
+  await templatesStore.reloadData()
+
+  // 2. Sync connections that have templateId
+  appStore.connections.forEach((conn, index) => {
+    if (conn.templateId) {
+      const template = templatesStore.templates.find(t => t.id === conn.templateId)
+      if (template) {
+        // Sync fields from template
+        appStore.connections[index] = {
+          ...conn,
+          name: template.name, // Keep name in sync too? User might prefer local name, but usually template name is the "standard"
+          host: template.host,
+          port: template.port,
+          type: template.type,
+          username: template.username,
+          password: template.password || conn.password // Fallback to local if template has no pass
+        }
+      }
+    }
+  })
+
+  // Deep link handling
   if (route.query.action === 'new') {
     showAddForm.value = true
-    // Optional: Clear query param to avoid reopening on refresh, 
-    // but usually user might want to see it. 
-    // Let's clear it to keep URL clean.
     router.replace({ query: { ...route.query, action: undefined } })
   }
+
+  // 3. Auto-test all displayed connections on mount (after sync)
+  displayedConnections.value.forEach(conn => {
+    appStore.testConnection(conn.id)
+  })
 })
 
 // State
@@ -268,15 +292,6 @@ const getEnvironmentBadgeClass = (environment: string) => {
 
 const getConnectionCount = (environmentName: string) => {
   return appStore.connections.filter(conn => conn.environment === environmentName).length
-}
-
-const getStatusColor = (status: string) => {
-  const colors = {
-    connected: 'bg-green-400',
-    testing: 'bg-yellow-400',
-    failed: 'bg-red-400'
-  }
-  return colors[status as keyof typeof colors] || 'bg-gray-400'
 }
 
 const formatLastTested = (lastTested?: string | Date) => {

@@ -207,11 +207,11 @@ import {
   Activity,
   RotateCcw
 } from 'lucide-vue-next'
-import Sidebar from '@/components/Sidebar.vue'
-import Header from '@/components/Header.vue'
-import EnvironmentManager from '@/components/EnvironmentManager.vue'
-import ConnectionPairManager from '@/components/ConnectionPairManager.vue'
-import ConnectionManager from '@/components/ConnectionManager.vue'
+import Sidebar from '@/components/general/Sidebar.vue'
+import Header from '@/components/general/Header.vue'
+import EnvironmentManager from '@/components/connection/EnvironmentManager.vue'
+import ConnectionPairManager from '@/components/connection/ConnectionPairManager.vue'
+import ConnectionManager from '@/components/connection/ConnectionManager.vue'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
 import { useProjectsStore } from '@/stores/projects' 

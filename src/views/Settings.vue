@@ -1,28 +1,33 @@
 <template>
   <div class="h-screen flex flex-col pt-0 bg-gray-50 dark:bg-gray-900" :style="{ fontFamily: appStore.fontFamilies.general, fontSize: appStore.fontSizes.main + 'px' }">
     <!-- Header -->
-    <Header v-if="!appStore.projectManagerMode" />
+    <Header />
 
     <!-- Main Content Area -->
     <div class="flex-1 flex overflow-hidden">
       <!-- App Sidebar (The main navigation) -->
-      <Sidebar v-if="!appStore.projectManagerMode" />
+      <div 
+        class="transition-all duration-300 ease-in-out overflow-hidden"
+        :class="!appStore.projectManagerMode ? 'w-auto opacity-100' : 'w-0 opacity-0'"
+      >
+         <Sidebar class="h-full" />
+      </div>
       
       <!-- Settings Workspace -->
       <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
         <!-- Settings Category Sidebar -->
         <div class="w-64 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-md flex flex-col shrink-0">
-          <div class="p-8 pb-4">
-             <!-- Back to Project Button (Focus Mode) -->
-             <button 
-                v-if="appStore.projectManagerMode"
-                @click="router.push('/projects')"
-                class="w-full mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all duration-300 group"
-             >
-                <ChevronLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Back to View
-             </button>
+          <!-- Back to Project Button (Moved to Top) -->
+          <button 
+            v-if="appStore.projectManagerMode"
+            @click="router.push('/projects')"
+            class="w-full flex items-center gap-3 px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-100/50 dark:bg-gray-950/30 hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all group"
+          >
+            <ChevronLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span class="text-xs font-black uppercase tracking-widest">Back</span>
+          </button>
 
+          <div class="p-8 pb-4">
             <h1 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 mb-1">
               <SettingsIcon class="w-5 h-5 text-primary-500" />
               {{ $t('settings.title') }}
@@ -37,13 +42,13 @@
               <button 
                 v-for="cat in appSettings" :key="cat.id"
                 @click="activeCategory = cat.id"
-                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden text-left"
                 :class="activeCategory === cat.id 
                   ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 active:scale-95' 
                   : 'text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
               >
                 <component :is="cat.icon" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                <span class="text-[11px] font-bold uppercase tracking-widest">{{ cat.label }}</span>
+                <span class="text-xs font-bold uppercase tracking-widest leading-tight block">{{ cat.label }}</span>
                  <div v-if="activeCategory === cat.id" class="absolute inset-0 bg-white/10 translate-x-[-100%] animate-[shimmer_3s_infinite] pointer-events-none"></div>
               </button>
             </div>
@@ -88,33 +93,30 @@
 
                            <div class="flex-1 mr-8">
                               <div class="flex items-center gap-2 mb-3">
-                                 <div class="px-2 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 uppercase tracking-widest animate-pulse">
-                                    {{ $t('common.new') || 'CHECK' }} THIS OUT
+                                 <div class="px-2 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 uppercase tracking-widest">
+                                    COMING SOON
                                  </div>
                               </div>
-                              <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Project Focus Mode</h3>
-                              <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                              <h3 class="text-xl font-black text-gray-400 dark:text-gray-600 mb-2 tracking-tight transition-colors">Project Focus Mode</h3>
+                              <p class="text-xs text-gray-500 dark:text-gray-600 leading-relaxed font-medium">
                                  Hide the sidebar and header clutter to maximize your workspace. 
                                  Perfect for managing complex connection matrices on smaller screens.
                               </p>
                            </div>
 
-                           <div class="flex flex-col items-center gap-3 relative z-20">
+                           <div class="flex flex-col items-center gap-3 relative z-20 opacity-50 grayscale cursor-not-allowed">
                               <button 
-                                 @click="toggleFocusMode"
-                                 class="relative w-20 h-10 rounded-full transition-all duration-300 focus:outline-none shadow-inner ring-offset-2 dark:ring-offset-gray-900 focus:ring-2 focus:ring-indigo-500"
-                                 :class="appStore.projectManagerMode ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-800'"
+                                 disabled
+                                 class="relative w-20 h-10 rounded-full transition-all duration-300 focus:outline-none shadow-inner bg-gray-200 dark:bg-gray-800"
                               >
                                  <div 
-                                    class="absolute top-1 left-1 bg-white w-8 h-8 rounded-full shadow-lg transform transition-transform duration-300 flex items-center justify-center border border-gray-100"
-                                    :class="appStore.projectManagerMode ? 'translate-x-10' : 'translate-x-0'"
+                                    class="absolute top-1 left-1 bg-white w-8 h-8 rounded-full shadow-lg transform transition-transform duration-300 flex items-center justify-center border border-gray-100 translate-x-0"
                                  >
-                                    <Maximize v-if="appStore.projectManagerMode" class="w-4 h-4 text-indigo-600" />
-                                    <Minimize v-else class="w-4 h-4 text-gray-400" />
+                                    <Minimize class="w-4 h-4 text-gray-400" />
                                  </div>
                               </button>
-                               <span class="text-[9px] font-black uppercase tracking-[0.2em] transition-colors duration-300" :class="appStore.projectManagerMode ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'">
-                                  {{ appStore.projectManagerMode ? 'Active' : 'Disabled' }}
+                               <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
+                                  Disabled
                                </span>
                            </div>
                         </div>
@@ -123,25 +125,25 @@
 
                 <div class="md:col-span-2 space-y-6">
                     <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.theme.label') }}</label>
+                     <label class="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.theme.label') }}</label>
                     <div class="flex items-center gap-6 bg-gray-50/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-800">
                       <button 
                         @click="settingsStore.setTheme('system')"
-                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all"
                         :class="settings.theme === 'system' ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'"
                       >
-                         <div class="w-3 h-3 rounded-full border-2 flex items-center justify-center" :class="settings.theme === 'system' ? 'border-primary-500' : 'border-gray-300'">
-                           <div v-if="settings.theme === 'system'" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                         <div class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center" :class="settings.theme === 'system' ? 'border-primary-500' : 'border-gray-300'">
+                           <div v-if="settings.theme === 'system'" class="w-2 h-2 bg-primary-500 rounded-full"></div>
                          </div>
                          {{ $t('settings.interface.theme.sync') }}
                       </button>
                       <button 
                         @click="settingsStore.setTheme(settings.theme === 'system' ? 'dark' : settings.theme)"
-                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all"
                         :class="settings.theme !== 'system' ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'"
                       >
-                         <div class="w-3 h-3 rounded-full border-2 flex items-center justify-center" :class="settings.theme !== 'system' ? 'border-primary-500' : 'border-gray-300'">
-                           <div v-if="settings.theme !== 'system'" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                         <div class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center" :class="settings.theme !== 'system' ? 'border-primary-500' : 'border-gray-300'">
+                           <div v-if="settings.theme !== 'system'" class="w-2 h-2 bg-primary-500 rounded-full"></div>
                          </div>
                          {{ $t('settings.interface.theme.manual') }}
                       </button>
@@ -195,14 +197,14 @@
                         <div class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors" :class="settings.theme === t.id ? 'border-primary-500' : 'border-gray-300 dark:border-gray-700'">
                            <div v-if="settings.theme === t.id" class="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
                         </div>
-                        <span class="text-[10px] font-black uppercase tracking-widest transition-colors" :class="settings.theme === t.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-gray-600'">{{ $t('settings.themes.' + t.id) }}</span>
+                        <span class="text-xs font-black uppercase tracking-widest transition-colors" :class="settings.theme === t.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-gray-600'">{{ $t('settings.themes.' + t.id) }}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="space-y-2">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.language.label') }}</label>
+                  <label class="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.language.label') }}</label>
                   <div class="relative group">
                     <select v-model="settings.language" @change="updateLanguage" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold appearance-none outline-none focus:ring-2 focus:ring-primary-500/20 group-hover:border-primary-500 transition-all">
                       <option value="en">English (Global)</option>
@@ -214,7 +216,7 @@
 
                 <!-- Timezone Select -->
                 <div class="md:col-span-2 space-y-2 pt-2">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.timezone.label') }}</label>
+                  <label class="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.timezone.label') }}</label>
                   <div class="relative group">
                     <select v-model="settings.timezone" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold appearance-none outline-none focus:ring-2 focus:ring-primary-500/20 group-hover:border-primary-500 transition-all">
                       <option v-for="tz in timezones" :key="tz.value" :value="tz.value">{{ tz.label }}</option>
@@ -224,9 +226,9 @@
                 </div>
 
                 <!-- Navigation Style -->
-                <div class="md:col-span-2 space-y-4 pt-4">
+                <div v-if="!appStore.projectManagerMode" class="md:col-span-2 space-y-4 pt-4 animate-in fade-in slide-in-from-bottom-2">
                    <div class="flex items-center justify-between">
-                      <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.navigation.label') }}</label>
+                      <label class="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">{{ $t('settings.interface.navigation.label') }}</label>
                    </div>
 
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -242,7 +244,7 @@
                       </div>
                        <div class="text-left">
                          <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">{{ $t('settings.interface.navigation.vertical') }}</div>
-                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.verticalDesc') }}</div>
+                         <div class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.verticalDesc') }}</div>
                        </div>
                      </button>
 
@@ -258,7 +260,7 @@
                        </div>
                        <div class="text-left">
                          <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">{{ $t('settings.interface.navigation.horizontal') }}</div>
-                         <div class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.horizontalDesc') }}</div>
+                         <div class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.navigation.horizontalDesc') }}</div>
                        </div>
                      </button>
                    </div>
@@ -290,7 +292,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.mainFont') }}</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.mainFont') }}</label>
                     <select v-model="appStore.fontFamilies.general" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500/10 outline-none shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-900">
                       <option value="'Inter', sans-serif">Inter (Modern)</option>
                       <option value="'Roboto', sans-serif">Roboto (Legacy)</option>
@@ -300,7 +302,7 @@
                   </div>
 
                   <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.codeFont') }}</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-tight">{{ $t('settings.interface.typography.codeFont') }}</label>
                     <select v-model="appStore.fontFamilies.code" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold font-mono focus:ring-2 focus:ring-primary-500/10 outline-none shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-900">
                       <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
                       <option value="'Fira Code', monospace">Fira Code</option>
@@ -313,7 +315,7 @@
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{{ $t('settings.interface.typography.granularMatrix') }}</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       <div v-for="(_, key) in appStore.fontSizes" :key="key" class="p-3 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-2 truncate">{{ $t('settings.interface.typography.sizeLabels.' + key) }}</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-tight mb-2 truncate">{{ $t('settings.interface.typography.sizeLabels.' + key) }}</label>
                         <select v-model.number="appStore.fontSizes[key]" class="w-full px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg text-xs font-black outline-none focus:ring-1 focus:ring-primary-500">
                           <option v-for="s in getFontSizeRange(key)" :key="s" :value="s">{{ s }}px</option>
                         </select>
@@ -324,10 +326,10 @@
               </div>
 
               <!-- Button Style / Visual Density -->
-              <div class="pt-8 border-t border-gray-100 dark:border-gray-800">
+              <div v-if="!appStore.projectManagerMode" class="pt-8 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-bottom-2">
                 <div class="mb-8">
-                  <h3 class="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">{{ $t('settings.interface.buttons.title') }}</h3>
-                  <p class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.buttons.subtitle') }}</p>
+                  <h3 class="text-sm font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">{{ $t('settings.interface.buttons.title') }}</h3>
+                  <p class="text-xs text-gray-400 uppercase tracking-tighter">{{ $t('settings.interface.buttons.subtitle') }}</p>
                 </div>
 
                 <div class="flex flex-col lg:flex-row gap-8">
@@ -346,7 +348,7 @@
                         </div>
                         <div class="text-left">
                           <div class="text-xs font-black text-gray-900 dark:text-white uppercase leading-none mb-1">{{ style.label }}</div>
-                          <div class="text-[9px] text-gray-500 uppercase tracking-tighter">{{ style.desc }}</div>
+                          <div class="text-[10px] text-gray-500 uppercase tracking-tighter">{{ style.desc }}</div>
                         </div>
                       </div>
                       <div v-if="appStore.buttonStyle === style.id" class="w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
@@ -362,7 +364,7 @@
                     
                     <div class="flex flex-col items-center gap-10 w-full max-w-sm">
                       <div class="w-full flex flex-col items-center">
-                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">{{ $t('settings.interface.preview.primary') }}</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 opacity-60">{{ $t('settings.interface.preview.primary') }}</span>
                         <button 
                           class="flex items-center justify-center font-black uppercase transition-all duration-300 active:scale-95"
                           :class="[
@@ -433,10 +435,10 @@
               
               <div class="space-y-6">
                  <!-- Public Key Display -->
-                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                  <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{{ $t('settings.security.publicKey') }}</label>
-                         <div class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{{ $t('settings.security.publicKey') }}</label>
+                         <div class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
                             <Check class="w-3 h-3" />
                             {{ $t('settings.security.active') }}
                          </div>
@@ -445,23 +447,23 @@
                         <textarea 
                            readonly 
                            :value="publicKey" 
-                           class="w-full h-32 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-mono text-gray-600 dark:text-gray-300 resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
+                           class="w-full h-32 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-600 dark:text-gray-300 resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
                         ></textarea>
                     </div>
-                    <p class="mt-2 text-[10px] text-gray-400">{{ $t('settings.security.publicKeyDesc') }}</p>
+                    <p class="mt-2 text-xs text-gray-400">{{ $t('settings.security.publicKeyDesc') }}</p>
                  </div>
 
                  <!-- Regenerate Actions -->
                  <div class="bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-6">
-                     <h3 class="text-xs font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-2">{{ $t('settings.security.dangerZone') }}</h3>
-                     <p class="text-[11px] text-rose-600/80 dark:text-rose-300/80 mb-6 leading-relaxed max-w-2xl">
+                     <h3 class="text-sm font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-2">{{ $t('settings.security.dangerZone') }}</h3>
+                     <p class="text-sm text-rose-600/80 dark:text-rose-300/80 mb-6 leading-relaxed max-w-2xl font-medium">
                         {{ $t('settings.security.regenerateWarning') }}
                      </p>
 
                      <button 
                         @click="regenerateKeys"
                         :disabled="isRegeneratingKeys"
-                        class="px-6 py-3 bg-white dark:bg-gray-800 text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-800 hover:border-rose-300 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                        class="px-6 py-3 bg-white dark:bg-gray-800 text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-800 hover:border-rose-300 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm hover:shadow active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
                      >
                         <Key v-if="!isRegeneratingKeys" class="w-4 h-4" />
                         <span v-if="isRegeneratingKeys" class="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></span>
@@ -685,19 +687,25 @@ import {
   Shield,
   Key,
   Maximize,
-  Minimize
+  Minimize,
+  RotateCcw,
+  LayoutList,
+  Columns as ColumnsIcon,
+  RefreshCw,
+  GitCompare
 } from 'lucide-vue-next'
-import Sidebar from '@/components/Sidebar.vue'
-import Header from '@/components/Header.vue'
-import BackupManager from '@/components/BackupManager.vue'
-import ConnectionTemplateManager from '@/components/ConnectionTemplateManager.vue'
+import Sidebar from '@/components/general/Sidebar.vue'
+import Header from '@/components/general/Header.vue'
+import BackupManager from '@/components/general/BackupManager.vue'
+import ConnectionTemplateManager from '@/components/connection/ConnectionTemplateManager.vue'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
 import { useSettingsStore, themeOptions } from '@/stores/settings'
 import { useOperationsStore } from '@/stores/operations'
 import { useUpdaterStore } from '@/stores/updater'
-import { useProjectsStore } from '@/stores/projects'
 
+
+import { useConnectionTemplatesStore } from '@/stores/connectionTemplates'
 import { setLanguage } from '@/i18n'
 
 
@@ -705,17 +713,9 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const projectsStore = useProjectsStore()
 const router = useRouter()
 
-const toggleFocusMode = () => {
-   appStore.projectManagerMode = !appStore.projectManagerMode
-   
-   if (appStore.projectManagerMode) {
-      projectsStore.viewMode = 'columns'
-      router.push('/projects')
-   }
-}
+
 
 const connectionPairsStore = useConnectionPairsStore()
 const settingsStore = useSettingsStore()
@@ -748,6 +748,24 @@ const regenerateKeys = async () => {
             const res = await (window as any).electronAPI.invoke('security-regenerate-keys')
             if (res.success) {
                 await loadPublicKey()
+                
+                // CRITICAL: Clear all passwords in memory to force re-entry
+                // This ensures the regeneration of keys "invalidates" existing session data immediately.
+                if (appStore.connections) {
+                    appStore.connections.forEach(conn => {
+                        conn.password = ''
+                        conn.status = 'idle'
+                    })
+                }
+
+                // Also clear templates
+                const templatesStore = useConnectionTemplatesStore()
+                if (templatesStore.templates) {
+                    templatesStore.templates.forEach(t => {
+                        t.password = ''
+                    })
+                }
+
                 alert(t('settings.security.regenerateSuccess'))
             } else {
                 alert(t('settings.security.regenerateError') + ': ' + res.error)

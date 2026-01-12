@@ -1,34 +1,55 @@
 <template>
-  <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 shrink-0">
-    <div class="flex items-center justify-between gap-4">
+  <header 
+     class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 transition-all duration-300 ease-in-out shrink-0"
+     :class="appStore.projectManagerMode ? 'py-1 h-10' : 'py-2 h-14'"
+  >
+    <div class="flex items-center justify-between gap-4 h-full">
       <!-- Left side: Toggle button and title/breadcrumbs -->
-      <div class="flex items-center space-x-4 min-w-0">
+      <div class="flex items-center space-x-4 min-w-0 h-full">
 
 
         <!-- Logo & Brand -->
-        <div class="flex items-center space-x-2 mr-4 cursor-pointer shrink-0" @click="handleLogoClick">
+        <div class="flex items-center space-x-2 mr-4 cursor-pointer shrink-0 transition-opacity duration-300" 
+             @click="handleLogoClick"
+        >
           <img 
             src="/icon.png" 
             alt="Andb" 
-            class="w-6 h-6 rounded shadow-sm"
+            class="rounded shadow-sm transition-all duration-300"
+            :class="appStore.projectManagerMode ? 'w-5 h-5' : 'w-6 h-6'"
           />
-          <span class="font-black text-base text-gray-900 dark:text-white hidden md:block tracking-tight">Andb</span>
+          <span 
+             class="font-black text-gray-900 dark:text-white hidden md:block tracking-tight transition-all duration-300"
+             :class="appStore.projectManagerMode ? 'text-sm' : 'text-base'"
+          >Andb</span>
         </div>
         
-        <div class="flex flex-col min-w-0">
+        <div class="flex flex-col min-w-0 justify-center">
           <h1 
-             class="text-sm font-black text-gray-900 dark:text-white leading-tight truncate transition-colors uppercase tracking-wider"
-             :class="{ 'cursor-pointer hover:text-primary-500': appStore.projectManagerMode }"
+             class="font-black text-gray-900 dark:text-white leading-none truncate transition-all duration-300 uppercase tracking-wider"
+             :class="[
+               appStore.projectManagerMode ? 'text-xs cursor-pointer hover:text-primary-500' : 'text-sm',
+               { 'cursor-pointer hover:text-primary-500': appStore.projectManagerMode }
+             ]"
              @click="handleTitleClick"
           >
             {{ headerTitle }}
           </h1>
-          <Breadcrumbs />
+          <div 
+             class="overflow-hidden transition-all duration-300 origin-top"
+             :class="appStore.projectManagerMode ? 'h-0 opacity-0' : 'h-auto opacity-100'"
+          >
+             <Breadcrumbs />
+          </div>
         </div>
       </div>
 
       <!-- Central Toolbar (Contextual Pair or Single Selector) -->
-      <div v-if="['/compare', '/schema', '/history'].includes(route.path)" class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-950 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+      <div 
+         v-if="['/compare', '/schema', '/history'].includes(route.path)" 
+         class="hidden lg:flex items-center bg-gray-50 dark:bg-gray-950 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300"
+         :class="{'opacity-0 pointer-events-none scale-95': appStore.projectManagerMode}"
+      >
         <!-- Dropdown Portion -->
         <div class="flex items-center pl-2 space-x-2 border-r border-gray-200 dark:border-gray-700 pr-2">
           <!-- PAIR SELECTOR (Available in Compare, Schema, History) -->
@@ -114,7 +135,11 @@
       <div class="flex items-center space-x-1 shrink-0">
         <div class="flex items-center space-x-1">
           <!-- Project Selector -->
-          <div v-if="!appStore.projectManagerMode && route.path !== '/settings'" class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg px-2 mr-2 border border-gray-200 dark:border-gray-600">
+          <div 
+            v-if="!appStore.projectManagerMode && route.path !== '/settings'" 
+            class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg px-2 mr-2 border border-gray-200 dark:border-gray-600 transition-all duration-300"
+            :class="{'opacity-0 pointer-events-none w-0 overflow-hidden pr-0 mr-0 border-0': appStore.projectManagerMode}"
+          >
             <Folder class="w-4 h-4 text-gray-500 mr-2" />
             <select 
               v-model="selectedProjectModel"
@@ -139,7 +164,10 @@
         <!-- App Settings -->
         <button
           @click="router.push('/settings')"
-          class="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          class="p-2 rounded-lg transition-colors"
+          :class="route.path === '/settings' 
+            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-500' 
+            : 'text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'"
           :title="$t('common.settings')"
         >
           <Settings class="w-5 h-5" />
@@ -307,15 +335,11 @@ const selectedProjectModel = computed({
           description: '',
           connectionIds: [],
           pairIds: [],
-          enabledEnvironmentIds: ['1', '2', '3', '4']
+          enabledEnvironmentIds: ['DEV', 'STAGE', 'UAT', 'PROD']
        })
        projectsStore.selectProject(newProject.id)
-       router.push('/projects')
     } else {
-       projectsStore.selectedProjectId = val
-       if (val !== 'default') {
-          router.push('/projects') // Auto-navigate to project view on selection? Optional but nice.
-       }
+      projectsStore.selectedProjectId = val
     }
   }
 })

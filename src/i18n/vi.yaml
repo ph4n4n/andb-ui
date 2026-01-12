@@ -32,6 +32,8 @@ common:
   selected: 'đã chọn'
   clear: 'Xóa'
   actions: 'Thao tác'
+  copyScript: 'Sao chép Script'
+  download: 'Tải xuống'
   previous: 'Trước'
   next: 'Tiếp'
   showing: 'Hiển thị {from} đến {to} trong tổng số {total} kết quả'
@@ -217,6 +219,9 @@ schema:
   refreshedDesc: 'Đã làm mới thành công lược đồ cho {name} từ nguồn.'
   refreshSuccess: 'Làm mới lược đồ hoàn tất thành công.'
   errorLoading: 'Không thể tải lược đồ'
+  refresh: 'Làm mới đối tượng'
+  takeSnapshot: 'Chụp snapshot'
+  viewHistory: 'Xem lịch sử'
   takingSnapshot: 'Đang chụp snapshot...'
   snapshotCreated: 'Snapshot đã được tạo'
   snapshotSuccess: 'Snapshot thủ công của {name} đã được lưu vào lịch sử.'
@@ -526,6 +531,7 @@ migration:
   migrating: 'Đang di trú...'
   sqlPreview: 'Xem trước SQL Di trú'
   noPreview: 'Không có bản xem trước SQL cho thao tác này.'
+  comingSoonTooltip: 'Tính năng tự động di trú đang được tạm khóa để ổn định hệ thống. Vui lòng sao chép và thực thi SQL bên dưới thủ công trong trình quản lý CSDL của bạn.'
 
 ddlDetail:
   details: 'Chi tiết {type}'

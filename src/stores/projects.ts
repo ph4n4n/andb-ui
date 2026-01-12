@@ -9,63 +9,68 @@ export const useProjectsStore = defineStore('projects', () => {
   const projects = ref<Project[]>([])
   const selectedProjectId = ref<string | null>(null)
   const viewMode = ref<'list' | 'grid' | 'columns' | 'detail'>('grid')
-  const isPropertiesPanelOpen = ref(true)
 
   // Initialize
   const init = async () => {
     const savedProjects = await storage.getProjects()
-    if (savedProjects.length > 0) {
-      // Ensure strict schema for legacy data
-      projects.value = savedProjects.map(p => ({
-        ...p,
-        connectionIds: Array.isArray(p.connectionIds) ? p.connectionIds : [],
-        pairIds: Array.isArray(p.pairIds) ? p.pairIds : [],
-        enabledEnvironmentIds: Array.isArray(p.enabledEnvironmentIds) ? p.enabledEnvironmentIds : ['1', '2', '3', '4'] // Default to all standard envs
-      }))
 
-      // Migration: Rename "Default Project" or "Nexus" to "The Base One"
-      const defaultProj = projects.value.find(p => p.id === 'default')
-      if (defaultProj && (defaultProj.name === 'Default Project' || defaultProj.name === 'Nexus')) {
-        defaultProj.name = 'The Base One'
-        defaultProj.description = 'System default project (cannot be deleted)'
+    // 1. Load existing projects
+    if (savedProjects && savedProjects.length > 0) {
+      const envIdMap: Record<string, string> = {
+        '1': 'DEV',
+        '2': 'STAGE',
+        '3': 'UAT',
+        '4': 'PROD'
       }
-    } else {
-      // Create Default Project if none exists
-      const defaultProject: Project = {
-        id: 'default',
-        name: 'The Base One',
-        description: 'System default project (cannot be deleted)',
-        connectionIds: [], // Will be populated by existing connections if needed
-        pairIds: [],
-        enabledEnvironmentIds: ['1', '2', '3', '4'],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      projects.value = [defaultProject]
-      selectedProjectId.value = 'default'
+
+      projects.value = savedProjects.map(p => {
+        let envs = Array.isArray(p.enabledEnvironmentIds) ? p.enabledEnvironmentIds.map(String) : ['DEV', 'STAGE', 'PROD']
+
+        // Migrate numeric IDs to Named IDs
+        envs = envs.map(id => envIdMap[id] || id)
+
+        return {
+          ...p,
+          connectionIds: Array.isArray(p.connectionIds) ? p.connectionIds : [],
+          pairIds: Array.isArray(p.pairIds) ? p.pairIds : [],
+          enabledEnvironmentIds: envs
+        }
+      })
     }
 
-    // Ensure "default" project exists if list is empty (double safety)
-    if (projects.value.length === 0) {
-      const defaultProject: Project = {
+    // 2. Ensure Default Project
+    if (!projects.value.some(p => p.id === 'default')) {
+      projects.value.push({
         id: 'default',
         name: 'The Base One',
-        description: 'System default project (cannot be deleted)',
+        description: 'System default project',
         connectionIds: [],
         pairIds: [],
-        enabledEnvironmentIds: ['1', '2', '3', '4'],
+        enabledEnvironmentIds: ['DEV', 'STAGE', 'PROD'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      }
-      projects.value = [defaultProject]
-      selectedProjectId.value = 'default'
+      })
     }
 
+    // 3. Ensure Miller Sample (Always for now to test)
+    if (!projects.value.some(p => p.id === 'miller-sample-blueprint')) {
+      projects.value.unshift({
+        id: 'miller-sample-blueprint',
+        name: '✨ Miller Blueprint Sample',
+        description: 'Mock data for Miller Column testing',
+        connectionIds: [],
+        pairIds: [],
+        enabledEnvironmentIds: ['DEV'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+    }
+
+    // 4. Set Selection
     const lastSelected = await storage.get('settings').then(s => s?.lastSelectedProjectId)
     if (lastSelected && projects.value.some(p => p.id === lastSelected)) {
       selectedProjectId.value = lastSelected
     } else {
-      // Always fallback to default or first
       selectedProjectId.value = projects.value[0]?.id || 'default'
     }
   }
@@ -104,11 +109,6 @@ export const useProjectsStore = defineStore('projects', () => {
     }
 
     projects.value.push(newProject)
-    // The watch effect on 'projects' will handle saving to storage.
-    // If a direct save is needed, a helper function 'saveProjects' would be defined.
-    // For now, relying on the watcher.
-    // saveProjects() // This line was in the instruction snippet, but 'saveProjects' is not defined.
-    // The watcher on 'projects' already handles persistence.
     return newProject
   }
 

@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('execute-andb-command', command, args)
   },
 
-  testConnection: (connection: DatabaseConnection): Promise<{ success: boolean; stdout?: string; stderr?: string; error?: string }> => {
+  testConnection: (connection: DatabaseConnection): Promise<{ success: boolean; message?: string; stdout?: string; stderr?: string; error?: string }> => {
     return ipcRenderer.invoke('test-connection', connection)
   },
 

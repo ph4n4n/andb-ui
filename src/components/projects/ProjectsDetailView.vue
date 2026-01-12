@@ -217,7 +217,7 @@ import {
   Code2,
   Loader2
 } from 'lucide-vue-next'
-import DDLViewer from '@/components/DDLViewer.vue'
+import DDLViewer from '@/components/ddl/DDLViewer.vue'
 
 const projectsStore = useProjectsStore()
 const appStore = useAppStore()

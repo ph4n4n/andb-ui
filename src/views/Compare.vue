@@ -403,8 +403,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
-import DDLDetailModal from '@/components/DDLDetailModal.vue'
-import MirrorDiffView from '@/components/MirrorDiffView.vue'
+import DDLDetailModal from '@/components/ddl/DDLDetailModal.vue'
+import MirrorDiffView from '@/components/compare/MirrorDiffView.vue'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'
 import { useAppStore } from '@/stores/app'
 import { useConsoleStore } from '@/stores/console'
@@ -433,11 +433,11 @@ import {
   ArrowRightLeft,
   GitCompare
 } from 'lucide-vue-next'
-import MigrationConfirm from '@/components/MigrationConfirm.vue'
+import MigrationConfirm from '@/components/compare/MigrationConfirm.vue'
 import { useOperationsStore } from '@/stores/operations'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
-import CompareTreeMode from '@/components/CompareTreeMode.vue'
+import CompareTreeMode from '@/components/compare/CompareTreeMode.vue'
 
 const connectionPairsStore = useConnectionPairsStore()
 const appStore = useAppStore()

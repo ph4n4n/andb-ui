@@ -355,7 +355,7 @@ ipcMain.handle('test-connection', async (event, connection: any) => {
   } catch (error: any) {
     return {
       success: false,
-      error: error.message || 'Connection failed'
+      message: error.message || 'Connection failed'
     }
   }
 })
@@ -483,8 +483,8 @@ ipcMain.handle('storage-get', async (event, key: string) => {
   try {
     let data = store.get(key)
 
-    // Decrypt passwords if connections
-    if (key === 'connections' && Array.isArray(data)) {
+    // Decrypt passwords if connections or templates
+    if ((key === 'connections' || key === 'connectionTemplates') && Array.isArray(data)) {
       const security = SecurityService.getInstance()
       data = data.map((conn: any) => {
         if (conn.password) {
@@ -505,11 +505,11 @@ ipcMain.handle('storage-get', async (event, key: string) => {
  */
 ipcMain.handle('storage-set', async (event, key: string, value: any) => {
   try {
-    // Encrypt passwords if connections
-    if (key === 'connections' && Array.isArray(value)) {
+    // Encrypt passwords if connections or templates
+    if ((key === 'connections' || key === 'connectionTemplates') && Array.isArray(value)) {
       const security = SecurityService.getInstance()
       value = value.map((conn: any) => {
-        // Clone to avoid mutating original object if it's reused in memory (though IPC serialization/deserialization usually handles copy)
+        // Clone to avoid mutating original object
         const c = { ...conn }
         if (c.password) {
           c.password = security.encrypt(c.password)
@@ -539,36 +539,44 @@ ipcMain.handle('security-get-public-key', async () => {
 ipcMain.handle('security-regenerate-keys', async () => {
   try {
     SecurityService.getInstance().generateKeys()
-    // Note: This effectively invalidates all currently encrypted passwords unless we implement re-encryption flow.
-    // The basic request asked for "setting private/public key", implying generation.
-    // A robust implementation would decrypt all, gen new keys, encrypt all.
-
-    // Let's implement robust re-encryption:
-    const store = new Store()
-    const rawConnections = store.get('connections')
-    if (Array.isArray(rawConnections)) {
-      // 1. We cannot decrypt with new key. We must assume the caller (UI) sends the decrypted data to be saved 
-      // OR we do it here. 
-      // But we just overwrote the keys!
-      // Uh oh. 
-
-      // Correct flow: 
-      // 1. Load, Decrypt (Old Key).
-      // 2. Generate New Key.
-      // 3. Encrypt (New Key).
-      // 4. Save.
-
-      // But 'generateKeys' overwrites files immediately. 
-      // This implies 'security-regenerate-keys' should be 'security-rotate-keys'.
-
-      // However, simpler for now: Just regenerate. The User accepts data loss or we assume they will re-enter.
-      // Or, better, the UI calls this.
-    }
     return { success: true }
   } catch (e: any) {
     return { success: false, error: e.message }
   }
 })
+
+ipcMain.handle('backup-encrypt', async (event, data: string, password: string) => {
+  try {
+    const crypto = require('crypto');
+    const algorithm = 'aes-256-cbc';
+    const key = crypto.scryptSync(password, 'salt-andb', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return { success: true, data: iv.toString('hex') + ':' + encrypted };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('backup-decrypt', async (event, encryptedData: string, password: string) => {
+  try {
+    const crypto = require('crypto');
+    const algorithm = 'aes-256-cbc';
+    const parts = encryptedData.split(':');
+    if (parts.length < 2) throw new Error('Invalid backup format');
+    const iv = Buffer.from(parts.shift() || '', 'hex');
+    const encryptedText = parts.join(':');
+    const key = crypto.scryptSync(password, 'salt-andb', 32);
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return { success: true, data: decrypted };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
 
 /**
  * Generic Storage Delete

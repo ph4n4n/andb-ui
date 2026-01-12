@@ -15,7 +15,7 @@ import { computed } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import MainLayout from '@/layouts/MainLayout.vue'
 import GlobalSchemaView from '@/views/GlobalSchemaView.vue'
-import ProjectsDetailView from '@/components/ProjectsDetailView.vue'
+import ProjectsDetailView from '@/components/projects/ProjectsDetailView.vue'
 
 const projectsStore = useProjectsStore()
 

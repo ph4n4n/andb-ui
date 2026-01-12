@@ -387,12 +387,12 @@ export const useAppStore = defineStore('app', () => {
     updateConnection(id, { status: 'testing' })
 
     try {
-      const success = await Andb.testConnection(connection)
+      const result = await Andb.testConnection(connection)
       updateConnection(id, {
-        status: success ? 'connected' : 'failed',
+        status: result.success ? 'connected' : 'failed',
         lastTested: new Date().toISOString()
       })
-      return success
+      return result.success
     } catch (error: any) {
       if (window.electronAPI) {
         window.electronAPI.log.send('error', `Connection test error for connection ID: ${id}`, error.message)

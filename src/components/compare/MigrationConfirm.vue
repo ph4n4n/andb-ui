@@ -1,18 +1,26 @@
 <template>
-  <div v-if="isOpen" class="absolute inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col h-full w-full overflow-hidden">
+  <div 
+    class="flex flex-col overflow-hidden bg-white dark:bg-gray-900 transition-all duration-300"
+    :class="[
+      inline ? 'flex-1 h-full' : 'absolute inset-0 z-50'
+    ]"
+  >
     <!-- Header -->
-    <div class="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 h-10 flex items-center justify-between shadow-sm z-10 box-border">
+    <div 
+      class="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 flex items-center justify-between shadow-sm z-10 box-border transition-colors duration-200"
+      :class="inline ? 'py-2' : 'h-10'"
+    >
       <div class="flex items-center gap-3 overflow-hidden">
         <!-- Title & Breadcrumbs -->
         <div class="flex items-center gap-2 min-w-0">
-           <h2 class="text-xs font-bold leading-6 text-gray-900 dark:text-white uppercase tracking-wider whitespace-nowrap">
+           <h2 class="text-[10px] sm:text-xs font-black leading-6 text-gray-900 dark:text-white uppercase tracking-tight sm:tracking-wider whitespace-nowrap opacity-80">
             {{ isBatchMode ? $t('migration.titleBatch') : $t('migration.titleSingle') }}
           </h2>
-          <div class="h-3 w-px bg-gray-300 dark:bg-gray-600 shrink-0"></div>
+          <div class="h-3 w-px bg-gray-300 dark:bg-gray-600 shrink-0 mx-1 sm:mx-0"></div>
           <div class="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5 font-mono truncate">
-            <span class="font-bold text-blue-600 dark:text-blue-400 truncate max-w-[100px]">{{ sourceName }}</span>
+            <span class="font-bold text-blue-600 dark:text-blue-400 truncate max-w-[80px] sm:max-w-[120px]">{{ sourceName }}</span>
             <ArrowRight class="w-3 h-3 opacity-40 shrink-0" />
-            <span class="font-bold text-green-600 dark:text-green-400 truncate max-w-[100px]">{{ targetName }}</span>
+            <span class="font-bold text-green-600 dark:text-green-400 truncate max-w-[80px] sm:max-w-[120px]">{{ targetName }}</span>
           </div>
         </div>
       </div>
@@ -35,12 +43,12 @@
         </button>
         <button
           type="button"
-          class="flex items-center justify-center rounded-md bg-primary-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-primary-500 transition-all disabled:opacity-50 disabled:shadow-none items-center gap-1.5"
-          :disabled="loading"
-          @click="$emit('confirm')"
+          class="flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 transition-all border border-gray-200 dark:border-gray-700 cursor-not-allowed items-center gap-1.5"
+          disabled
+          :title="$t('migration.comingSoonTooltip') || 'Auto-migration coming soon. Please copy and run SQL manually.'"
         >
-          <RefreshCw v-if="loading" class="w-3 h-3 animate-spin" />
-          {{ loading ? $t('migration.migrating') : (isBatchMode ? $t('migration.confirmBtnBatch', { count: itemsToProcess.length }) : $t('migration.confirmBtnSingle')) }}
+          <Hammer class="w-3 h-3 opacity-50" />
+          {{ $t('common.comingSoon') || 'COMING SOON' }}
         </button>
       </div>
     </div>
@@ -160,10 +168,9 @@
 import { computed, ref, watch } from 'vue' // Added watch
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import DDLViewer from '@/components/DDLViewer.vue'
+import DDLViewer from '@/components/ddl/DDLViewer.vue'
 import { 
   Zap, 
-  RefreshCw, 
   ArrowRight, 
   AlertTriangle,
   Table,
@@ -190,7 +197,8 @@ const props = defineProps<{
   targetName: string
   sqlScript?: string
   fetchingSql?: boolean
-  sqlMap?: Record<string, string> // NEW: Expect map of itemKey -> sql
+  sqlMap?: Record<string, string>
+  inline?: boolean
 }>()
 
 const copied = ref(false)

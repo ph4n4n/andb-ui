@@ -128,10 +128,10 @@ export const storage = {
     // Return defaults if empty
     if (!result.success || !result.data || result.data.length === 0) {
       return [
-        { id: '1', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
-        { id: '2', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
-        { id: '3', name: 'UAT', description: 'UAT environment', enabled: true, order: 3 },
-        { id: '4', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
+        { id: 'DEV', name: 'DEV', description: 'Development environment', enabled: true, order: 1 },
+        { id: 'STAGE', name: 'STAGE', description: 'Staging environment', enabled: true, order: 2 },
+        { id: 'UAT', name: 'UAT', description: 'UAT environment', enabled: true, order: 3 },
+        { id: 'PROD', name: 'PROD', description: 'Production environment', enabled: true, order: 4 }
       ]
     }
     return result.data

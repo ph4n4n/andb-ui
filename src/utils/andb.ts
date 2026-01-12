@@ -5,14 +5,6 @@ import type { DatabaseConnection } from '@/stores/app'
  * 
  * New approach: Direct integration with andb-core via IPC
  * No subprocess, no command injection risks
- * 
- * Flow:
- * 1. User selects connection pair in UI
- * 2. Call andb.execute() with connections + operation
- * 3. Main process builds config dynamically
- * 4. andb-core.commander.build() with config
- * 5. Execute operation programmatically
- * 6. Return results
  */
 
 // Check if running in Electron
@@ -41,15 +33,31 @@ export interface MigrateOptions {
   dryRun?: boolean
 }
 
+export interface ConnectionTestResult {
+  success: boolean
+  message?: string
+  version?: string
+}
+
 export class Andb {
+  /**
+   * Helper to sanitize objects for IPC (removes Proxies, functions, etc)
+   */
+  private static sanitize<T>(obj: T): T {
+    if (!obj) return obj
+    try {
+      return JSON.parse(JSON.stringify(obj))
+    } catch (e) {
+      // Fallback to shallow clone if JSON fails (e.g. circular)
+      return { ...obj }
+    }
+  }
+
   /**
    * Test if andb-core is available
    */
   static async test(): Promise<boolean> {
-    if (!isElectron) {
-      return false
-    }
-
+    if (!isElectron) return false
     try {
       const result = await window.electronAPI.andbTest()
       return result.success && result.available === true
@@ -66,27 +74,17 @@ export class Andb {
     targetConnection: DatabaseConnection,
     options: ExportOptions
   ): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) throw new Error('Not in Electron environment')
     try {
-      // Sanitize connections to remove Vue proxies/observers
-      const cleanSource = sourceConnection ? { ...sourceConnection } : null
-      const cleanTarget = targetConnection ? { ...targetConnection } : null
-
-      const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource as any,
-        targetConnection: cleanTarget as any,
+      const result = await window.electronAPI.andbExecute(this.sanitize({
+        sourceConnection,
+        targetConnection,
         operation: 'export',
         options
-      })
+      }))
 
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Export failed')
-      }
+      if (result.success) return result.data
+      throw new Error(result.error || 'Export failed')
     } catch (error: any) {
       throw new Error(`Export failed: ${error.message}`)
     }
@@ -100,27 +98,17 @@ export class Andb {
     targetConnection: DatabaseConnection,
     options: CompareOptions
   ): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) throw new Error('Not in Electron environment')
     try {
-      // Sanitize connections
-      const cleanSource = sourceConnection ? { ...sourceConnection } : null
-      const cleanTarget = targetConnection ? { ...targetConnection } : null
-
-      const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource as any,
-        targetConnection: cleanTarget as any,
+      const result = await window.electronAPI.andbExecute(this.sanitize({
+        sourceConnection,
+        targetConnection,
         operation: 'compare',
         options
-      })
+      }))
 
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Compare failed')
-      }
+      if (result.success) return result.data
+      throw new Error(result.error || 'Compare failed')
     } catch (error: any) {
       throw new Error(`Compare failed: ${error.message}`)
     }
@@ -134,22 +122,16 @@ export class Andb {
     targetConnection: DatabaseConnection,
     type: string
   ): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) throw new Error('Not in Electron environment')
     try {
-      const result = await window.electronAPI.andbGetSavedComparisonResults({
+      const result = await window.electronAPI.andbGetSavedComparisonResults(this.sanitize({
         sourceConnection,
         targetConnection,
         type
-      })
+      }))
 
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Failed to fetch saved results')
-      }
+      if (result.success) return result.data
+      throw new Error(result.error || 'Failed to fetch saved results')
     } catch (error: any) {
       throw new Error(`Failed to fetch saved results: ${error.message}`)
     }
@@ -163,120 +145,83 @@ export class Andb {
     targetConnection: DatabaseConnection,
     options: MigrateOptions
   ): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) throw new Error('Not in Electron environment')
     try {
-      // Sanitize connections
-      const cleanSource = sourceConnection ? { ...sourceConnection } : null
-      const cleanTarget = targetConnection ? { ...targetConnection } : null
-
-      const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource as any,
-        targetConnection: cleanTarget as any,
+      const result = await window.electronAPI.andbExecute(this.sanitize({
+        sourceConnection,
+        targetConnection,
         operation: 'migrate',
         options
-      })
+      }))
 
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Migration failed')
-      }
+      if (result.success) return result.data
+      throw new Error(result.error || 'Migration failed')
     } catch (error: any) {
       throw new Error(`Migration failed: ${error.message}`)
     }
   }
 
   /**
-   * Generate scripts
+   * Generate Migration Script (SQL)
    */
   static async generate(
     sourceConnection: DatabaseConnection,
     targetConnection: DatabaseConnection,
-    options: any = {}
+    options: any
   ): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) throw new Error('Not in Electron environment')
     try {
-      const cleanSource = sourceConnection ? { ...sourceConnection } : null
-      const cleanTarget = targetConnection ? { ...targetConnection } : null
-
-      const result = await window.electronAPI.andbExecute({
-        sourceConnection: cleanSource as any,
-        targetConnection: cleanTarget as any,
+      const result = await window.electronAPI.andbExecute(this.sanitize({
+        sourceConnection,
+        targetConnection,
         operation: 'generate',
         options
-      })
+      }))
 
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Generate failed')
-      }
+      if (result.success) return result.data
+      throw new Error(result.error || 'Generation failed')
     } catch (error: any) {
-      throw new Error(`Generate failed: ${error.message}`)
+      throw new Error(`Generation failed: ${error.message}`)
     }
   }
 
   /**
-   * Test database connection
-   * Uses old IPC method (testConnection)
+   * Test a single database connection
    */
-  static async testConnection(connection: DatabaseConnection): Promise<boolean> {
-    if (!isElectron) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return Math.random() > 0.2
-    }
-
+  static async testConnection(connection: DatabaseConnection): Promise<ConnectionTestResult> {
+    if (!isElectron) return { success: false, message: 'Not in Electron' }
     try {
-      const result = await window.electronAPI.testConnection({
-        host: connection.host,
-        port: connection.port,
-        database: connection.database,
-        username: connection.username,
-        password: connection.password
-      })
-
-      return result.success
-    } catch (error) {
-      return false
+      const result = await window.electronAPI.testConnection(this.sanitize(connection))
+      if (!result.message && (result as any).error) {
+        result.message = (result as any).error
+      }
+      return result
+    } catch (error: any) {
+      return { success: false, message: error.message }
     }
   }
 
   /**
-   * Get all schemas from exported DDL
+   * Get all registered schemas from core
    */
   static async getSchemas(): Promise<any> {
-    if (!isElectron) {
-      throw new Error('Not in Electron environment')
-    }
-
+    if (!isElectron) return []
     try {
-      const result = await window.electronAPI.andbGetSchemas({})
-
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error || 'Failed to load schemas')
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to load schemas: ${error.message}`)
+      const result = await window.electronAPI.andbGetSchemas()
+      if (result.success) return result.data
+      return []
+    } catch (error) {
+      return []
     }
   }
 
   /**
-   * Clear cached data for a specific connection
+   * Clear connection data (force reload)
    */
   static async clearConnectionData(connection: DatabaseConnection): Promise<boolean> {
     if (!isElectron) return false
     try {
-      // Sanitize connection (remove Vue proxies)
-      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
-      const result = await window.electronAPI.andbClearConnectionData(cleanConn)
+      const result = await window.electronAPI.andbClearConnectionData(this.sanitize(connection))
       return result.success
     } catch (error) {
       return false
@@ -284,66 +229,65 @@ export class Andb {
   }
 
   /**
-   * Get snapshots for an object
+   * Get snapshots for a table
    */
-  static async getSnapshots(environment: string, database: string, type: string, name: string): Promise<any> {
-    if (!isElectron) throw new Error('Not in Electron environment')
+  static async getSnapshots(environment: string, database: string, type: string, name: string): Promise<any[]> {
+    if (!isElectron) return []
     try {
-      const result = await (window as any).electronAPI.getSnapshots(environment, database, type, name)
+      const result = await window.electronAPI.getSnapshots(environment, database, type, name)
       if (result.success) return result.data
-      throw new Error(result.error || 'Failed to fetch snapshots')
-    } catch (error: any) {
-      throw new Error(`Failed to fetch snapshots: ${error.message}`)
+      return []
+    } catch (error) {
+      return []
     }
   }
 
   /**
-   * Get all snapshots globally
+   * Get global snapshots list
    */
-  static async getAllSnapshots(limit: number = 200): Promise<any> {
-    if (!isElectron) throw new Error('Not in Electron environment')
+  static async getAllSnapshots(limit: number = 50): Promise<any[]> {
+    if (!isElectron) return []
     try {
-      const result = await (window as any).electronAPI.getAllSnapshots(limit)
+      const result = await window.electronAPI.getAllSnapshots(limit)
       if (result.success) return result.data
-      throw new Error(result.error || 'Failed to fetch all snapshots')
-    } catch (error: any) {
-      throw new Error(`Failed to fetch all snapshots: ${error.message}`)
+      return []
+    } catch (error) {
+      return []
     }
   }
 
   /**
-   * Create manual snapshot
+   * Create a new snapshot for an object
    */
   static async createSnapshot(connection: DatabaseConnection, type: string, name: string): Promise<any> {
-    if (!isElectron) throw new Error('Not in Electron environment')
+    if (!isElectron) throw new Error('Not in Electron')
     try {
-      // Be extremely specific with sanitization
-      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
-      const cleanType = type ? String(type) : ''
-      const cleanName = name ? String(name) : ''
-
-      const result = await (window as any).electronAPI.createSnapshot(cleanConn, cleanType, cleanName)
+      const result = await window.electronAPI.andbCreateSnapshot({
+        connection: this.sanitize(connection),
+        type,
+        name
+      })
       if (result.success) return result.data
       throw new Error(result.error || 'Failed to create snapshot')
     } catch (error: any) {
-      throw new Error(`Failed to create snapshot: ${error.message}`)
+      throw new Error(`Snapshot failed: ${error.message}`)
     }
   }
 
   /**
-   * Restore a DDL snapshot to a connection
+   * Restore a snapshot to a connection
    */
   static async restoreSnapshot(connection: DatabaseConnection, snapshot: any): Promise<any> {
-    if (!isElectron) throw new Error('Not in Electron environment')
+    if (!isElectron) throw new Error('Not in Electron')
     try {
-      const cleanConn = connection ? JSON.parse(JSON.stringify(connection)) : null
-      const cleanSnapshot = snapshot ? JSON.parse(JSON.stringify(snapshot)) : null
-
-      const result = await (window as any).electronAPI.restoreSnapshot(cleanConn, cleanSnapshot)
+      const result = await window.electronAPI.andbRestoreSnapshot({
+        connection: this.sanitize(connection),
+        snapshot
+      })
       if (result.success) return result.data
       throw new Error(result.error || 'Failed to restore snapshot')
     } catch (error: any) {
-      throw new Error(`Failed to restore snapshot: ${error.message}`)
+      throw new Error(`Restore failed: ${error.message}`)
     }
   }
 
@@ -353,7 +297,7 @@ export class Andb {
   static async openBackupFolder(): Promise<boolean> {
     if (!isElectron) return false
     try {
-      const result = await (window as any).electronAPI.openBackupFolder()
+      const result = await window.electronAPI.openBackupFolder()
       return result.success
     } catch (error) {
       return false

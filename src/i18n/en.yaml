@@ -21,6 +21,7 @@ common:
   add: 'Add'
   create: 'Create'
   test: 'Test'
+  new: 'New'
 
   refresh: 'Refresh'
   loading: 'Loading...'
@@ -32,6 +33,8 @@ common:
   selected: 'selected'
   clear: 'Clear'
   actions: 'Actions'
+  copyScript: 'Copy Script'
+  download: 'Download'
   previous: 'Previous'
   next: 'Next'
   showing: 'Showing {from} to {to} of {total} results'
@@ -40,6 +43,7 @@ common:
   copy: 'Copy'
   duplicate: 'Duplicate'
   copied: 'Copied'
+  comingSoon: 'Coming Soon'
   tooltips:
     refreshSchema: 'Force Refresh Schema'
     refreshCategory: 'Force Refresh Category'
@@ -218,6 +222,9 @@ schema:
   refreshedDesc: 'Successfully refreshed schema for {name} from source.'
   refreshSuccess: 'Schema refresh completed successfully.'
   errorLoading: 'Failed to load schema'
+  refresh: 'Refresh Object'
+  takeSnapshot: 'Take Snapshot'
+  viewHistory: 'View History'
   takingSnapshot: 'Taking snapshot...'
   snapshotCreated: 'Snapshot Created'
   snapshotSuccess: 'Manual snapshot of {name} saved to history.'
@@ -572,6 +579,7 @@ migration:
   itemsToMigrate: 'Items to Migrate'
   sqlPreview: 'Migration SQL Preview'
   noPreview: 'No SQL preview available for this operation.'
+  comingSoonTooltip: 'Auto-migration is currently disabled for stabilization. Please copy and run the SQL below manually in your database client.'
 
 ddlDetail:
   details: '{type} Details'

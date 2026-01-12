@@ -60,7 +60,7 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
 import MainLayout from '@/layouts/MainLayout.vue'
-import ProjectsColumnsView from '@/components/ProjectsColumnsView.vue'
+import ProjectsColumnsView from '@/components/projects/ProjectsColumnsView.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -81,9 +81,6 @@ const openProject = (id: string) => {
 // Reset viewMode logic to always be columns (implicitly) in UI, but explicit in store if needed for other components
 onMounted(() => {
    projectsStore.viewMode = 'columns'
-   appStore.projectManagerMode = true
-   // Default to auto-collapse for that 'Peak UI' feel
-   appStore.autoCollapseColumns = true
 })
 
 const selectedProject = computed(() => {
@@ -102,7 +99,7 @@ const createNewProject = () => {
     description: '',
     connectionIds: [],
     pairIds: [],
-    enabledEnvironmentIds: ['1', '2', '3', '4']
+    enabledEnvironmentIds: ['DEV', 'STAGE', 'UAT', 'PROD']
   })
   
   projectsStore.selectProject(newProject.id)

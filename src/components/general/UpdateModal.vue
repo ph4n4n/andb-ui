@@ -60,7 +60,7 @@
                 ></div>
              </div>
              <div class="flex justify-between text-xs text-gray-400">
-                <span>{{ formatBytes(store.progress?.connections || 0) }}/s</span> <!-- Actually bytesPerSecond -->
+                <span>{{ formatBytes(store.progress?.bytesPerSecond || 0) }}/s</span> <!-- Actually bytesPerSecond -->
                 <span>{{ formatBytes(store.progress?.transferred || 0) }} / {{ formatBytes(store.progress?.total || 0) }}</span>
              </div>
           </div>

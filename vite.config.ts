@@ -16,7 +16,7 @@ export default defineConfig({
         'electron',
         'electron-store',
         'better-sqlite3',
-        '@andb/core',
+        '@the-andb/core',
         'mysql2',
         'path',
         'fs'

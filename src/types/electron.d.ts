@@ -16,9 +16,11 @@ export interface CommandResult {
 
 export interface ConnectionTestResult {
   success: boolean
+  message?: string
   stdout?: string
   stderr?: string
   error?: string
+  version?: string
 }
 
 declare global {
@@ -66,6 +68,9 @@ declare global {
       andbClearConnectionData: (connection: any) => Promise<{ success: boolean; error?: string }>
       getSnapshots: (environment: string, database: string, type: string, name: string) => Promise<{ success: boolean; data?: any; error?: string }>
       getAllSnapshots: (limit?: number) => Promise<{ success: boolean; data?: any; error?: string }>
+      andbCreateSnapshot: (args: { connection: any; type: string; name: string }) => Promise<{ success: boolean; data?: any; error?: string }>
+      andbRestoreSnapshot: (args: { connection: any; snapshot: any }) => Promise<{ success: boolean; data?: any; error?: string }>
+      openBackupFolder: () => Promise<{ success: boolean; error?: string }>
 
       loadMockCompareData: () => Promise<{ success: boolean; message?: string; error?: string }>
 
