@@ -44,6 +44,7 @@ common:
   duplicate: 'Duplicate'
   copied: 'Copied'
   comingSoon: 'Coming Soon'
+  back: 'Back'
   tooltips:
     refreshSchema: 'Force Refresh Schema'
     refreshCategory: 'Force Refresh Category'
@@ -85,6 +86,7 @@ navigation:
 dashboard:
   title: 'Dashboard'
   subtitle: 'Operational Overview'
+  projectDashboard: 'Project Dashboard'
   newConnection: 'New Connection'
   newComparison: 'New Comparison'
   loadSamples: 'Load Samples'
@@ -114,7 +116,9 @@ dashboard:
   topology: 'Topology'
   condition: 'Condition'
   actions: 'Actions'
+  addConnection: 'Add Connection'
   noSyncMappings: 'No active sync mappings'
+  noProjectMappings: 'No project mappings found'
   operationalFeed: 'Operational Feed'
   clearFeed: 'Clear Feed'
   noOpsHistory: 'No Operational History'
@@ -128,7 +132,7 @@ dashboard:
     relative: 'Relative'
 
 splash:
-  tagline: 'The Simplest Database Migration Tool'
+  tagline: 'Keep Going. Keep Syning.'
   builtWith: 'Built with ❤️ for backend developers'
   status:
     init: 'Initializing application...'

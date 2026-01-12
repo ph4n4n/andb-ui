@@ -8,6 +8,13 @@ export interface Project {
   pairIds: string[]
   enabledEnvironmentIds: string[]
   pinnedColumnTypes?: string[]
+  settings?: {
+    domainNormalization?: {
+      pattern: string
+      replacement: string
+    }
+    isNotMigrateCondition?: string
+  }
   createdAt: string
   updatedAt: string
 }

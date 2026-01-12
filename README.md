@@ -13,6 +13,7 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 - **Export Preview**: Live SQL preview with syntax highlighting (Rainbow brackets + Line numbers)
 - **Migration Management**: Create and track database migrations
 - **Script Generator**: Generate andb-core CLI scripts
+- **High-Performance Storage**: SQLite-backed metadata and snapshot management
 - **Dark/Light Theme**: Modern UI with theme support
 
 ## 🛠️ Tech Stack
@@ -25,6 +26,7 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 - **Routing**: Vue Router
 - **Build Tool**: Vite
 - **Database Tool**: andb-core
+- **Metadata Storage**: SQLite (better-sqlite3)
 
 ## 📦 Installation
 
@@ -44,6 +46,9 @@ npm run electron:dev
 
 # Build for production
 npm run electron:build
+
+# Build and Publish to GitHub Releases
+GH_TOKEN=your_token npm run electron:publish
 ```
 
 ## 🎯 Usage
@@ -66,6 +71,9 @@ npm run build
 
 # Package for distribution
 npm run electron:build
+
+# Package and Publish to GitHub
+GH_TOKEN=your_token npm run electron:publish
 ```
 
 ## 📁 Project Structure

@@ -117,6 +117,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Product Configuration -->
+    <div class="space-y-6">
+        <div class="pb-2 border-b border-gray-100 dark:border-gray-800">
+            <h3 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Product Configuration (Pre-env)</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Project Domain</label>
+                <input 
+                    :value="modelValue.productSettings?.domain"
+                    @input="updateField('productSettings', { ...(modelValue.productSettings || {}), domain: ($event.target as HTMLInputElement).value })"
+                    type="text"
+                    placeholder="e.g. abc.com"
+                    class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                />
+            </div>
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Server Domain</label>
+                <input 
+                    :value="modelValue.productSettings?.emailServer"
+                    @input="updateField('productSettings', { ...(modelValue.productSettings || {}), emailServer: ($event.target as HTMLInputElement).value })"
+                    type="text"
+                    placeholder="e.g. @abc.net"
+                    class="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                />
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 

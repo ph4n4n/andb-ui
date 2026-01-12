@@ -1,7 +1,7 @@
 {
   "name": "andb",
   "productName": "The Andb",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Simplest Database Migration Tool by ph4n4n",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -12,6 +12,8 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "electron:dev": "npm run build:electron && NODE_ENV=development concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "npm run build && npm run build:electron && electron-builder",
+    "electron:publish": "npm run build && npm run build:electron && electron-builder --publish always",
+    "test:prod": "npm run build && npm run build:electron && NODE_ENV=production electron .",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .eslintignore",
     "lint:fix": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .eslintignore",
     "format": "prettier --write \"src/**/*.{js,ts,vue,css,scss,json}\"",
@@ -67,11 +69,23 @@
     "wait-on": "^8.0.4"
   },
   "build": {
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*"
+    ],
     "appId": "com.anph.andb",
-    "productName": "Andb",
+    "productName": "The Andb",
     "copyright": "Copyright © 2026 ph4n4n",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "!dist-electron/main.ts",
+      "package.json",
+      "public/**/*"
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
+      "icon": "public/icon.png",
       "target": [
         "dmg",
         "zip"
@@ -93,11 +107,12 @@
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
-    "@the-andb/core": "^2.1.0",
+    "@the-andb/core": "^2.1.1",
     "@types/prismjs": "^1.26.5",
     "@vueuse/core": "^10.7.1",
     "andb-logger": "^1.0.3",
     "better-sqlite3": "^12.4.1",
+    "electron-serve": "^1.1.0",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.6.2",
     "html-to-image": "^1.11.13",

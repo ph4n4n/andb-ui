@@ -26,6 +26,11 @@ interface Settings {
   theme: Theme
   language: Language
   timezone: string
+  domainNormalization: {
+    pattern: string
+    replacement: string
+  }
+  isNotMigrateCondition: string
 }
 
 const STORAGE_KEY = 'andb-ui-settings'
@@ -33,7 +38,12 @@ const STORAGE_KEY = 'andb-ui-settings'
 const defaultSettings: Settings = {
   theme: 'system',
   language: 'en',
-  timezone: 'UTC'
+  timezone: 'UTC',
+  domainNormalization: {
+    pattern: '@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}',
+    replacement: '@<EMAIL_DOMAIN>'
+  },
+  isNotMigrateCondition: 'test|OTE_'
 }
 
 const loadSettings = (): Settings => {

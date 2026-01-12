@@ -20,6 +20,10 @@ export interface DatabaseConnection {
     from: string  // e.g., '@dev.example.com'
     to: string    // e.g., '@prod.example.com'
   }
+  productSettings?: {
+    domain?: string
+    emailServer?: string
+  }
   type?: 'mysql' | 'postgres' | 'sqlite'
   templateId?: string // Optional link to a ConnectionTemplate
 }

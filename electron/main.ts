@@ -2,7 +2,24 @@ import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { AndbBuilder } from './services/andb-builder'
 
+const serve = require('electron-serve')
+const loadURL = serve({ directory: 'dist' })
+
+let loadURL_unused: any; // Keep this to avoid breaking previous logic check
+
 const isDev = process.env.NODE_ENV === 'development'
+
+// Set separate app name and userData path for development to isolate data (DB, Logs)
+if (isDev) {
+  app.name = 'The Andb Dev'
+  // Force a different userData path for dev to be 100% sure
+  const userDataPath = app.getPath('userData')
+  if (!userDataPath.endsWith('_dev')) {
+    app.setPath('userData', userDataPath + '_dev')
+  }
+} else {
+  app.name = 'The Andb'
+}
 
 // Initialize Logger early
 const Logger = require('andb-logger')
@@ -40,7 +57,7 @@ if (isDev) {
   }
 }
 
-app.name = 'The Andb'
+
 
 import { autoUpdater } from 'electron-updater'
 
@@ -75,28 +92,41 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: join(__dirname, 'preload.js')
+      preload: join(__dirname, 'preload.js'),
+      webSecurity: false,
+      allowRunningInsecureContent: true
     },
     icon: join(__dirname, '../public/icon.png'),
     titleBarStyle: 'default',
     show: false
   })
 
+
+
   // Load the app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173/#/splash')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(join(app.getAppPath(), 'dist/index.html'))
-    // Navigate to splash after loading
-    mainWindow.webContents.once('did-finish-load', () => {
-      mainWindow.webContents.executeJavaScript('window.location.hash = "#/splash"')
+    loadURL(mainWindow).then(() => {
+      mainWindow.loadURL('app://-/index.html#splash')
+      mainWindow.webContents.openDevTools() // DEBUG
     })
   }
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
+    // Force dock icon on macOS (especially for dev mode)
+    if (process.platform === 'darwin') {
+      try {
+        app.dock.setIcon(join(__dirname, '../public/icon.png'))
+      } catch (e) {
+        // ignore icon error
+      }
+    }
+
     mainWindow.show()
+
     // Check for updates on startup (in production)
     if (!isDev) {
       autoUpdater.checkForUpdatesAndNotify()

@@ -1,4 +1,6 @@
 import type { DatabaseConnection } from '@/stores/app'
+import { useSettingsStore } from '@/stores/settings'
+import { useProjectsStore } from '@/stores/projects'
 
 /**
  * Andb Service - Programmatic API Wrapper
@@ -54,6 +56,27 @@ export class Andb {
   }
 
   /**
+   * Helper to get core settings from store
+   */
+  private static getCoreSettings() {
+    try {
+      const settingsStore = useSettingsStore()
+      const projectsStore = useProjectsStore()
+
+      const projectSettings = projectsStore.currentProject?.settings || {}
+      const globalSettings = settingsStore.settings
+
+      return {
+        domainNormalization: projectSettings.domainNormalization || globalSettings.domainNormalization,
+        isNotMigrateCondition: projectSettings.isNotMigrateCondition || globalSettings.isNotMigrateCondition
+      }
+    } catch (e) {
+      // Pinia might not be ready in some edge cases
+      return {}
+    }
+  }
+
+  /**
    * Test if andb-core is available
    */
   static async test(): Promise<boolean> {
@@ -80,7 +103,7 @@ export class Andb {
         sourceConnection,
         targetConnection,
         operation: 'export',
-        options
+        options: { ...options, ...this.getCoreSettings() }
       }))
 
       if (result.success) return result.data
@@ -104,7 +127,7 @@ export class Andb {
         sourceConnection,
         targetConnection,
         operation: 'compare',
-        options
+        options: { ...options, ...this.getCoreSettings() }
       }))
 
       if (result.success) return result.data
@@ -151,7 +174,7 @@ export class Andb {
         sourceConnection,
         targetConnection,
         operation: 'migrate',
-        options
+        options: { ...options, ...this.getCoreSettings() }
       }))
 
       if (result.success) return result.data
@@ -175,7 +198,7 @@ export class Andb {
         sourceConnection,
         targetConnection,
         operation: 'generate',
-        options
+        options: { ...options, ...this.getCoreSettings() }
       }))
 
       if (result.success) return result.data

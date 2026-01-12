@@ -2,22 +2,13 @@
   <div class="fixed inset-0 bg-primary-900 flex items-center justify-center z-50">
     <div class="text-center">
       <!-- Logo -->
-      <div class="mb-8 animate-pulse-slow">
+      <div class="animate-pulse-slow">
         <img 
-          src="/icon.png" 
-          alt="ANDB Logo" 
-          class="w-32 h-32 mx-auto"
+          src="/andb-logo.png" 
+          alt="The Andb Logo" 
+          class="w-64 h-auto mx-auto"
         />
       </div>
-
-      <!-- App Name -->
-      <h1 class="text-5xl font-bold text-white mb-2 tracking-tight">
-        Andb
-      </h1>
-      <p class="text-xl text-primary-100 mb-8 font-light">
-        {{ $t('splash.tagline') }}
-      </p>
-
       <!-- Loading Bar -->
       <div class="w-64 h-1.5 bg-primary-800 rounded-full mx-auto mb-8 overflow-hidden">
         <div 
@@ -56,9 +47,9 @@ const router = useRouter()
 const { t } = useI18n()
 
 // App metadata from package.json
-const version = '2.0.0'
+const version = '2.1.0'
 const author = 'ph4n4n'
-const license = 'MIT'
+const license = 'AGPL-3.0'
 
 // Loading state
 const progress = ref(0)

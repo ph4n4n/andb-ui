@@ -27,6 +27,10 @@ interface DatabaseConnection {
     from: string
     to: string
   }
+  productSettings?: {
+    domain?: string
+    emailServer?: string
+  }
 }
 
 interface ConnectionPair {
@@ -49,6 +53,8 @@ interface AndbConfig {
   storagePath?: string
   enableFileOutput?: boolean  // Deprecated, use storage config instead
   dataStore?: any  // Deprecated, use storage config instead
+  domainNormalization?: { pattern: string | RegExp, replacement: string }
+  isNotMigrateCondition?: string | RegExp
 }
 
 export class AndbBuilder {
@@ -77,7 +83,8 @@ export class AndbBuilder {
    */
   static buildConfig(
     sourceConn: DatabaseConnection,
-    targetConn: DatabaseConnection | null
+    targetConn: DatabaseConnection | null,
+    extraConfig: any = {}
   ): AndbConfig {
     // Build ENVIRONMENTS object dynamically with uppercase keys
     const sEnv = sourceConn.environment.toUpperCase()
@@ -175,6 +182,26 @@ export class AndbBuilder {
           )
         }
 
+        /**
+         * Dynamic Product Settings Replacement
+         * Replaces values based on Source vs Target configuration
+         */
+        if (targetConn && targetConn.productSettings && sourceConn.productSettings) {
+          // 1. Email Server Domain Replacement
+          // e.g. Replace @dev.abc.net with @prod.abc.net
+          if (sourceConn.productSettings.emailServer && targetConn.productSettings.emailServer) {
+            // Create regex escaping special chars
+            const escapedSource = sourceConn.productSettings.emailServer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            result = result.replace(new RegExp(escapedSource, 'g'), targetConn.productSettings.emailServer);
+          }
+
+          // 2. Project Domain Replacement
+          // e.g. Replace dev.abc.com with prod.abc.com
+          if (sourceConn.productSettings.domain && targetConn.productSettings.domain) {
+            const escapedSource = sourceConn.productSettings.domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            result = result.replace(new RegExp(escapedSource, 'g'), targetConn.productSettings.domain);
+          }
+        }
         return result
       },
 
@@ -185,7 +212,8 @@ export class AndbBuilder {
       // Storage Configuration - Use SQLite for better performance
       storage: 'sqlite',
       storagePath: require('path').join(app.getPath('userData'), 'andb-storage.db'),
-      enableFileOutput: false  // Disable file output, use SQLite only
+      enableFileOutput: false,  // Disable file output, use SQLite only
+      ...extraConfig
     }
   }
 
@@ -224,7 +252,10 @@ export class AndbBuilder {
       process.chdir(userDataDir)
 
       // Build config from pair
-      const config = this.buildConfig(sourceConn, targetConn)
+      const config = this.buildConfig(sourceConn, targetConn, {
+        domainNormalization: options.domainNormalization,
+        isNotMigrateCondition: options.isNotMigrateCondition
+      })
 
       // Initialize global logger
       try {

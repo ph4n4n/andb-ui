@@ -421,6 +421,79 @@
               <ConnectionTemplateManager />
             </div>
 
+            <!-- ENGINE SECTION -->
+            <div v-if="activeCategory === 'engine'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+               <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shadow-inner">
+                  <Cpu class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Engine Configuration</h2>
+                  <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">Core behavior settings</p>
+                </div>
+              </div>
+
+               <div class="space-y-8">
+                 <!-- Domain Normalization -->
+                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                       <GitCompare class="w-32 h-32" />
+                    </div>
+                    <div class="relative z-10">
+                       <h3 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-1">Domain Normalization</h3>
+                       <p class="text-xs text-gray-500 mb-6 max-w-lg leading-relaxed">
+                          Use this to ignore differences that vary by environment (like hardcoded email domains defining <code>@dev.local</code> vs <code>@prod.com</code>). This ensures the comparison tool focuses on <strong>structure</strong> changes, not environment configuration.
+                       </p>
+                       
+                       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div class="space-y-2">
+                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Regex Pattern</label>
+                             <input 
+                                v-model="settingsStore.settings.domainNormalization.pattern" 
+                                type="text"
+                                class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
+                                placeholder="e.g. @[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                             />
+                          </div>
+                          <div class="space-y-2">
+                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Replacement</label>
+                             <input 
+                                v-model="settingsStore.settings.domainNormalization.replacement" 
+                                type="text"
+                                class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
+                                placeholder="e.g. @<EMAIL_DOMAIN>"
+                             />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <!-- Migration Exclusions -->
+                 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 relative overflow-hidden">
+                     <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                       <Shield class="w-32 h-32" />
+                    </div>
+                    <div class="relative z-10">
+                       <h3 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-1">Migration Exclusions</h3>
+                       <p class="text-xs text-gray-500 mb-6 max-w-lg leading-relaxed">
+                          Prevent accidental deployment of temporary or test objects. Any table, procedure, or view matching this pattern will be <strong>strictly skipped</strong> during migration, keeping your production environment clean.
+                       </p>
+
+                       <div class="space-y-2">
+                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Exclusion Pattern (Regex)</label>
+                             <input 
+                                v-model="settingsStore.settings.isNotMigrateCondition" 
+                                type="text"
+                                class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
+                                placeholder="e.g. test|OTE_"
+                             />
+                             <p class="text-[10px] text-gray-400 font-medium pt-1">Objects matching this regex will be ignored during migration.</p>
+                       </div>
+                    </div>
+                 </div>
+               </div>
+            </div>
+
             <!-- SECURITY SECTION -->
             <div v-if="activeCategory === 'security'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div class="flex items-center gap-4 mb-12">
@@ -692,7 +765,8 @@ import {
   LayoutList,
   Columns as ColumnsIcon,
   RefreshCw,
-  GitCompare
+  GitCompare,
+  Cpu
 } from 'lucide-vue-next'
 import Sidebar from '@/components/general/Sidebar.vue'
 import Header from '@/components/general/Header.vue'
