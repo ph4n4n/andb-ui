@@ -2,7 +2,7 @@
 
 All notable changes to the **andb-ui** project will be documented in this file.
 
-## [Unreleased] - 2026-01-12
+## [Released] - 2026-01-12
 
 ### ✨ Features
 

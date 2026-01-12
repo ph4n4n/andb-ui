@@ -40,7 +40,7 @@ if (isDev) {
   }
 }
 
-app.name = 'Andb'
+app.name = 'The Andb'
 
 import { autoUpdater } from 'electron-updater'
 
@@ -71,7 +71,7 @@ function createWindow() {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    title: 'Andb',
+    title: 'The Andb',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -87,7 +87,7 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173/#/splash')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'))
+    mainWindow.loadFile(join(app.getAppPath(), 'dist/index.html'))
     // Navigate to splash after loading
     mainWindow.webContents.once('did-finish-load', () => {
       mainWindow.webContents.executeJavaScript('window.location.hash = "#/splash"')
