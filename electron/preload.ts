@@ -134,11 +134,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openBackupFolder: () => {
     return ipcRenderer.invoke('open-backup-folder')
   },
-  createSnapshot: (connection: any, type: string, name: string) => {
-    return ipcRenderer.invoke('create-snapshot', connection, type, name)
+  andbCreateSnapshot: (args: { connection: any, type: string, name: string }) => {
+    return ipcRenderer.invoke('andb-create-snapshot', args)
   },
-  restoreSnapshot: (connection: any, snapshot: any) => {
-    return ipcRenderer.invoke('restore-snapshot', connection, snapshot)
+  andbRestoreSnapshot: (args: { connection: any, snapshot: any }) => {
+    return ipcRenderer.invoke('andb-restore-snapshot', args)
   },
   // Load mock compare data for testing
   loadMockCompareData: () => ipcRenderer.invoke('load-mock-compare-data'),

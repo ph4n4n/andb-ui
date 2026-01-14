@@ -1,221 +1,285 @@
 <template>
   <aside 
     :class="[
-      'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out select-none text-sm',
-      isCollapsed ? 'w-12' : 'w-72'
+      'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out select-none text-sm relative group',
+      isCollapsed ? 'w-12' : 'w-72',
+      shouldBlur ? 'blur-[2px] opacity-40 grayscale-[0.8] cursor-pointer' : ''
     ]"
+    @click="shouldBlur && router.push('/')"
   >
-    <!-- Navigation Menu (Side Activity Bar style if collapsed, or just top menu) -->
-    <!-- Navigation Menu (Dynamic Style) -->
-    <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700 p-2 overflow-hidden">
-      <div 
-        :class="[
-          appStore.navStyle === 'horizontal-tabs' 
-            ? 'flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 -mb-1.5 px-0.5' 
-            : 'space-y-1'
-        ]"
-      >
-        <router-link
-          v-for="item in navItems" :key="item.path"
-          :to="item.path"
-          class="flex items-center rounded-lg transition-all duration-200 group relative"
-          :class="[
-            appStore.navStyle === 'horizontal-tabs' ? 'py-2 px-3 flex-shrink-0' : 'px-3 py-2',
-            $route.path === item.path 
-              ? (appStore.navStyle === 'horizontal-tabs' ? 'text-primary-600 dark:text-primary-400' : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700')
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          ]"
-          :style="{ fontSize: appStore.fontSizes.menu + 'px' }"
-          :title="item.name"
-        >
-          <div 
-            class="rounded-md transition-all duration-300" 
-            :class="[
-               appStore.navStyle === 'horizontal-tabs' ? 'p-0.5' : 'p-1.5',
-               $route.path === item.path && appStore.navStyle !== 'horizontal-tabs' ? 'bg-primary-50 dark:bg-primary-900/30' : ''
-            ]"
-          >
-            <component :is="item.icon" :class="appStore.navStyle === 'horizontal-tabs' ? 'w-5 h-5' : 'w-4 h-4'" />
-          </div>
-          <span v-if="appStore.navStyle !== 'horizontal-tabs'" class="ml-3 font-bold tracking-tight">{{ item.name }}</span>
-          <ChevronRight v-if="$route.path === item.path && appStore.navStyle !== 'horizontal-tabs'" class="ml-auto w-3.5 h-3.5 opacity-50" />
-          
-          <!-- Active Indicator for horizontal mode -->
-          <div v-if="appStore.navStyle === 'horizontal-tabs' && $route.path === item.path" class="absolute -bottom-2 left-2 right-2 h-0.5 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.3)]"></div>
-        </router-link>
-      </div>
-    </nav>
-
-    <!-- Explorer Header -->
-    <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0" :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px', fontWeight: 'bold' }">
-      <span>{{ route.path === '/compare' ? $t('navigation.explorer.source') : (route.path === '/history' ? $t('navigation.explorer.history') : $t('navigation.explorer.schema')) }}</span>
-      <div class="flex items-center space-x-1">
-        <button @click="sidebarStore.requestRefresh()" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.refresh')">
-          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
-        </button>
-        <button @click="expandAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.expandAll')">
-          <PlusSquare class="w-3.5 h-3.5" />
-        </button>
-        <button @click="collapseAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.collapseAll')">
-          <MinusSquare class="w-3.5 h-3.5" />
-        </button>
-      </div>
+    <!-- Click to Close Overlay (Visual Hint) -->
+    <div v-if="shouldBlur" class="absolute inset-0 z-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+       <div class="p-3 rounded-2xl bg-white/90 dark:bg-gray-800/90 shadow-2xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white flex items-center gap-2 scale-90 group-hover:scale-100 transition-transform">
+         <X class="w-4 h-4 text-red-500" />
+         <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('common.close') }}</span>
+       </div>
     </div>
 
-    <!-- Tree Content -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-white dark:bg-gray-900">
-      <!-- Loading State (Only if no data or requested refresh) -->
-      <div v-if="sidebarStore.loading && sidebarStore.environments.length === 0" class="p-4 space-y-2 opacity-50">
-        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
-        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
-        <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
+    <!-- Content Wrapper -->
+    <div :class="['flex-1 flex flex-col min-h-0', shouldBlur ? 'pointer-events-none' : '']">
+      <!-- Navigation Menu (Side Activity Bar style if collapsed, or just top menu) -->
+      <!-- Navigation Menu (Dynamic Style) -->
+      <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center px-4 overflow-hidden">
+        <div 
+          :class="[
+            appStore.navStyle === 'horizontal-tabs' 
+              ? 'flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 -mb-1.5 px-0.5' 
+              : 'space-y-1'
+          ]"
+        >
+          <router-link
+            v-for="item in navItems" :key="item.path"
+            :to="item.path"
+            class="flex items-center rounded-lg transition-all duration-200 group relative"
+            :class="[
+              appStore.navStyle === 'horizontal-tabs' ? 'py-2 px-3 flex-shrink-0' : 'px-3 py-2',
+              $route.path === item.path 
+                ? (appStore.navStyle === 'horizontal-tabs' ? 'text-primary-600 dark:text-primary-400' : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700')
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            ]"
+            :style="{ fontSize: appStore.fontSizes.menu + 'px' }"
+            :title="item.name"
+          >
+            <div 
+              class="rounded-md transition-all duration-300" 
+              :class="[
+                 appStore.navStyle === 'horizontal-tabs' ? 'p-0.5' : 'p-1.5',
+                 $route.path === item.path && appStore.navStyle !== 'horizontal-tabs' ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+              ]"
+            >
+              <component :is="item.icon" :class="appStore.navStyle === 'horizontal-tabs' ? 'w-5 h-5' : 'w-4 h-4'" />
+            </div>
+            <span v-if="appStore.navStyle !== 'horizontal-tabs'" class="ml-3 font-bold tracking-tight">{{ item.name }}</span>
+            <ChevronRight v-if="$route.path === item.path && appStore.navStyle !== 'horizontal-tabs'" class="ml-auto w-3.5 h-3.5 opacity-50" />
+            
+            <!-- Active Indicator for horizontal mode -->
+            <div v-if="appStore.navStyle === 'horizontal-tabs' && $route.path === item.path" class="absolute -bottom-2 left-2 right-2 h-0.5 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.3)]"></div>
+          </router-link>
+        </div>
+      </nav>
+
+      <!-- Explorer Header -->
+      <div v-show="!isCollapsed" class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0" :style="{ fontSize: (appStore.fontSizes.schema - 2) + 'px', fontWeight: 'bold' }">
+        <span>{{ route.path === '/compare' ? $t('navigation.explorer.source') : (route.path === '/history' ? $t('navigation.explorer.history') : $t('navigation.explorer.schema')) }}</span>
+        <div class="flex items-center space-x-1">
+          <button @click="sidebarStore.requestRefresh()" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.refresh')">
+            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+          </button>
+          <button @click="expandAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.expandAll')">
+            <PlusSquare class="w-3.5 h-3.5" />
+          </button>
+          <button @click="collapseAll" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" :title="$t('navigation.actions.collapseAll')">
+            <MinusSquare class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      <!-- Search Box -->
+      <div v-show="!isCollapsed" class="px-3 pb-2 pt-1 border-b border-gray-100 dark:border-gray-800/50">
+        <div class="relative group">
+          <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+            <Search class="h-3.5 w-3.5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+          </div>
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="block w-full pl-8 pr-20 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+            :placeholder="$t('common.search')"
+          />
+          
+          <!-- Search Flags -->
+          <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 space-x-0.5">
+            <button 
+              @click="searchFlags.caseSensitive = !searchFlags.caseSensitive"
+              class="p-1 rounded transition-colors"
+              :class="searchFlags.caseSensitive ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+              :title="$t('common.matchCase')"
+            >
+              <CaseSensitive class="w-3.5 h-3.5" />
+            </button>
+            <button 
+              @click="searchFlags.wholeWord = !searchFlags.wholeWord"
+              class="p-1 rounded transition-colors"
+              :class="searchFlags.wholeWord ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+              :title="$t('common.wholeWord')"
+            >
+              <WholeWord class="w-3.5 h-3.5" />
+            </button>
+            <button 
+              @click="searchFlags.regex = !searchFlags.regex"
+              class="p-1 rounded transition-colors"
+              :class="searchFlags.regex ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+              :title="$t('common.useRegex')"
+            >
+              <Regex class="w-3.5 h-3.5" />
+            </button>
+            
+            <!-- Clear Button -->
+            <button 
+              v-if="searchQuery"
+              @click="searchQuery = ''"
+              class="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Tree Content (Always show if has data, even while loading in background) -->
-      <div v-else class="pb-4">
-        <div v-for="env in filteredEnvironments" :key="env.name">
+      <!-- Tree Content -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-white dark:bg-gray-900">
+        <!-- Loading State (Only if no data or requested refresh) -->
+        <div v-if="sidebarStore.loading && sidebarStore.environments.length === 0" class="p-4 space-y-2 opacity-50">
+          <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+          <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
+          <div class="h-4 bg-gray-700/20 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
+        </div>
 
-          <!-- Environment Node -->
-          <div 
-            class="group/env flex items-center h-7 px-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
-            :class="{ 
-              'text-gray-900 dark:text-white': expandedEnvironments.has(env.name),
-              'border-blue-500 bg-blue-50 dark:bg-gray-800': isSourceEnvironment(env.name)
-            }"
-            @click="toggleEnvironment(env.name)"
-            :style="{ fontSize: appStore.fontSizes.schema + 'px' }"
-          >
-            <span class="w-4 flex items-center justify-center mr-1">
-              <ChevronRight 
-                class="w-3.5 h-3.5 transition-transform duration-200"
-                :class="{ 'rotate-90': expandedEnvironments.has(env.name) }" 
-              />
-            </span>
-            <component :is="getEnvIcon(env.name)" class="w-4 h-4 mr-2 text-blue-500 dark:text-blue-400" />
-            <span class="font-semibold truncate flex-1">{{ env.name }}</span>
-            <span v-if="isSourceEnvironment(env.name)" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }" class="ml-auto text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-400/10 px-1 rounded uppercase font-bold">SRC</span>
-          </div>
+        <!-- Tree Content (Always show if has data, even while loading in background) -->
+        <div v-else class="pb-4">
+          <div v-for="env in displayEnvironments" :key="env.name">
 
-          <!-- Databases -->
-          <div v-if="expandedEnvironments.has(env.name)">
-            <div v-for="db in env.databases" :key="db.name" class="relative">
-              <!-- Indentation Guide -->
-              <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700"></div>
-              
-              <div 
-                class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer transition-colors border-l-2"
-                :class="[
-                  isActiveDatabase(db) 
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-500 font-bold' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent',
-                  expandedDatabases.has(`${env.name}-${db.name}`) && !isActiveDatabase(db) ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : ''
-                ]"
-                @click="selectDatabase(env.name, db.name)"
-                :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
-              >
-                <span 
-                  class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
-                  @click.stop="toggleDatabase(env.name, db.name)"
+            <!-- Environment Node -->
+            <div 
+              class="group/env flex items-center h-7 px-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
+              :class="{ 
+                'text-gray-900 dark:text-white': expandedEnvironments.has(env.name),
+                'border-blue-500 bg-blue-50 dark:bg-gray-800': isSourceEnvironment(env.name)
+              }"
+              @click="toggleEnvironment(env.name)"
+              :style="{ fontSize: appStore.fontSizes.schema + 'px' }"
+            >
+              <span class="w-4 flex items-center justify-center mr-1">
+                <ChevronRight 
+                  class="w-3.5 h-3.5 transition-transform duration-200"
+                  :class="{ 'rotate-90': expandedEnvironments.has(env.name) }" 
+                />
+              </span>
+              <component :is="getEnvIcon(env.name)" class="w-4 h-4 mr-2 text-blue-500 dark:text-blue-400" />
+              <span class="font-semibold truncate flex-1">{{ env.name }}</span>
+              <span v-if="isSourceEnvironment(env.name)" :style="{ fontSize: (appStore.fontSizes.schema - 3) + 'px' }" class="ml-auto text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-400/10 px-1 rounded uppercase font-bold">SRC</span>
+            </div>
+
+            <!-- Databases -->
+            <div v-if="expandedEnvironments.has(env.name)">
+              <div v-for="db in env.databases" :key="db.name" class="relative">
+                <!-- Indentation Guide -->
+                <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700"></div>
+                
+                <div 
+                  class="group/db flex items-center h-7 px-2 pl-[22px] cursor-pointer transition-colors border-l-2"
+                  :class="[
+                    isActiveDatabase(db) 
+                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-500 font-bold' 
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent',
+                    expandedDatabases.has(`${env.name}-${db.name}`) && !isActiveDatabase(db) ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800' : ''
+                  ]"
+                  @click="selectDatabase(env.name, db.name)"
+                  :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
                 >
-                  <ChevronRight 
-                    class="w-3.5 h-3.5 transition-transform duration-200"
-                    :class="{ 'rotate-90': expandedDatabases.has(`${env.name}-${db.name}`) }" 
-                  />
-                </span>
-                <Database class="w-3.5 h-3.5 mr-2 text-amber-600 dark:text-amber-500" />
-                <span class="truncate flex-1">{{ db.name }}</span>
+                  <span 
+                    class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
+                    @click.stop="toggleDatabase(env.name, db.name)"
+                  >
+                    <ChevronRight 
+                      class="w-3.5 h-3.5 transition-transform duration-200"
+                      :class="{ 'rotate-90': expandedDatabases.has(`${env.name}-${db.name}`) }" 
+                    />
+                  </span>
+                  <Database class="w-3.5 h-3.5 mr-2 text-amber-600 dark:text-amber-500" />
+                  <span class="truncate flex-1">{{ db.name }}</span>
 
-                <!-- Fast Refresh Action -->
-                <button 
-                  @click.stop="refreshDatabase(env.name, db.name)"
-                  class="p-1 opacity-0 group-hover/db:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 mx-1"
-                  :title="$t('common.tooltips.refreshSchema')"
-                >
-                  <RefreshCw class="w-3 h-3" />
-                </button>
-              </div>
+                  <!-- Fast Refresh Action -->
+                  <button 
+                    @click.stop="refreshDatabase(env.name, db.name)"
+                    class="p-1 opacity-0 group-hover/db:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 mx-1"
+                    :title="$t('common.tooltips.refreshSchema')"
+                  >
+                    <RefreshCw class="w-3 h-3" />
+                  </button>
+                </div>
 
-              <!-- Object Categories -->
-              <div v-if="expandedDatabases.has(`${env.name}-${db.name}`)" class="relative">
-                 <!-- Indentation Guide Level 2 -->
-                 <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
-                 <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                <!-- Object Categories -->
+                <div v-if="expandedDatabases.has(`${env.name}-${db.name}`)" class="relative">
+                   <!-- Indentation Guide Level 2 -->
+                   <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                   <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
 
-                <div v-for="type in ddlTypes" :key="type.key">
-                  <!-- Only show if has items -->
-                  <div v-if="db[type.key]?.length > 0">
-                    <div 
-                      class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
-                      :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800/50': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
-                      @click="selectCategory(env.name, db.name, type.key)"
-                      :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
-                    >
-                      <span 
-                        class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
-                        @click.stop="toggleType(env.name, db.name, type.key)"
-                      >
-                        <ChevronRight 
-                          class="w-3.5 h-3.5 transition-transform duration-200"
-                          :class="{ 'rotate-90': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }" 
-                        />
-                      </span>
-                      <component 
-                        :is="expandedTypes.has(`${env.name}-${db.name}-${type.key}`) ? FolderOpen : Folder" 
-                        class="w-3.5 h-3.5 mr-2"
-                        :class="type.colorClass || 'text-indigo-400'"
-                      />
-                       <span class="truncate flex-1">{{ type.label }}</span>
-                       <span class="ml-2 text-[10px] opacity-40 font-mono">{{ db[type.key].length }}</span>
-
-                       <!-- Fast Refresh Category -->
-                       <button 
-                         @click.stop="refreshCategory(env.name, db.name, type.key)"
-                         class="p-0.5 opacity-0 group-hover/cat:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-1.5"
-                         :title="$t('common.tooltips.refreshCategory')"
-                       >
-                         <RefreshCw class="w-3 h-3" />
-                       </button>
-                       
-                       <!-- Changes Badge (Compare Mode Only) -->
-                       <span v-if="isCompareView && getCategoryChangeCount(db, type.key) > 0" class="ml-1.5 mr-1 h-3.5 min-w-[14px] px-1 flex items-center justify-center rounded-sm bg-amber-100 dark:bg-amber-500 text-[10px] text-amber-700 dark:text-gray-900 font-bold leading-none">
-                         {{ getCategoryChangeCount(db, type.key) }}
-                       </span>
-                    </div>
-
-                    <!-- Leaves (Objects) -->
-                    <div v-if="expandedTypes.has(`${env.name}-${db.name}-${type.key}`)" class="relative">
-                       <!-- Indentation Guide Level 3 -->
-                       <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
-                       <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
-                       <div class="absolute left-[63px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
-                      
+                  <div v-for="type in ddlTypes" :key="type.key">
+                    <!-- Only show if has items -->
+                    <div v-if="db[type.key]?.length > 0">
                       <div 
-                        v-for="item in db[type.key]" 
-                        :key="item.name"
-                        @click="selectObject(env.name, db.name, type.key, item)"
-                        class="group/obj flex items-center h-6 px-2 pl-[66px] cursor-pointer text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
-                        :class="{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border-blue-500': selectedObjectId === item.name }"
+                        class="group/cat flex items-center h-7 px-2 pl-[44px] cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent transition-colors"
+                        :class="{ 'text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800/50': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }"
+                        @click="selectCategory(env.name, db.name, type.key)"
+                        :style="{ fontSize: (appStore.fontSizes.schema - 1) + 'px' }"
                       >
-                        <component :is="type.icon" class="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
                         <span 
-                          class="truncate font-mono leading-tight flex-1"
-                          :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }"
-                          :class="{ 
-                            'text-amber-600 dark:text-amber-400': isCompareView && isModified(type.key, item.name), 
-                            'text-green-600 dark:text-green-400': isCompareView && isNew(type.key, item.name) 
-                          }"
+                          class="w-4 flex items-center justify-center mr-1 hover:text-gray-700 dark:hover:text-white"
+                          @click.stop="toggleType(env.name, db.name, type.key)"
                         >
-                          {{ item.name }}
+                          <ChevronRight 
+                            class="w-3.5 h-3.5 transition-transform duration-200"
+                            :class="{ 'rotate-90': expandedTypes.has(`${env.name}-${db.name}-${type.key}`) }" 
+                          />
                         </span>
+                        <component 
+                          :is="expandedTypes.has(`${env.name}-${db.name}-${type.key}`) ? FolderOpen : Folder" 
+                          class="w-3.5 h-3.5 mr-2"
+                          :class="type.colorClass || 'text-indigo-400'"
+                        />
+                         <span class="truncate flex-1">{{ type.label }}</span>
+                         <span class="ml-2 text-[10px] opacity-40 font-mono">{{ db[type.key].length }}</span>
 
-                        <!-- Fast Refresh Object -->
-                        <button 
-                          @click.stop="refreshObject(env.name, db.name, type.key, item.name)"
-                          class="p-0.5 opacity-0 group-hover/obj:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-2"
-                          :title="$t('common.tooltips.refreshObject')"
+                         <!-- Fast Refresh Category -->
+                         <button 
+                           @click.stop="refreshCategory(env.name, db.name, type.key)"
+                           class="p-0.5 opacity-0 group-hover/cat:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-1.5"
+                           :title="$t('common.tooltips.refreshCategory')"
+                         >
+                           <RefreshCw class="w-3 h-3" />
+                         </button>
+                         
+                         <!-- Changes Badge (Compare Mode Only) -->
+                         <span v-if="isCompareView && getCategoryChangeCount(db, type.key) > 0" class="ml-1.5 mr-1 h-3.5 min-w-[14px] px-1 flex items-center justify-center rounded-sm bg-amber-100 dark:bg-amber-500 text-[10px] text-amber-700 dark:text-gray-900 font-bold leading-none">
+                           {{ getCategoryChangeCount(db, type.key) }}
+                         </span>
+                      </div>
+
+                      <!-- Leaves (Objects) -->
+                      <div v-if="expandedTypes.has(`${env.name}-${db.name}-${type.key}`)" class="relative">
+                         <!-- Indentation Guide Level 3 -->
+                         <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                         <div class="absolute left-[41px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                         <div class="absolute left-[63px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+                        
+                        <div 
+                          v-for="item in db[type.key]" 
+                          :key="item.name"
+                          @click="selectObject(env.name, db.name, type.key, item)"
+                          class="group/obj flex items-center h-6 px-2 pl-[66px] cursor-pointer text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 border-l-2 border-transparent"
+                          :class="{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border-blue-500': selectedObjectId === item.name }"
                         >
-                          <RefreshCw class="w-2.5 h-2.5" />
-                        </button>
+                          <component :is="type.icon" class="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
+                          <span 
+                            class="truncate font-mono leading-tight flex-1"
+                            :style="{ fontSize: appStore.fontSizes.ddlName + 'px' }"
+                            :class="{ 
+                              'text-amber-600 dark:text-amber-400': isCompareView && isModified(type.key, item.name), 
+                              'text-green-600 dark:text-green-400': isCompareView && isNew(type.key, item.name) 
+                            }"
+                          >
+                            {{ item.name }}
+                          </span>
+
+                          <!-- Fast Refresh Object -->
+                          <button 
+                            @click.stop="refreshObject(env.name, db.name, type.key, item.name)"
+                            class="p-0.5 opacity-0 group-hover/obj:opacity-100 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm hover:scale-110 transition-all text-primary-500 shrink-0 ml-2"
+                            :title="$t('common.tooltips.refreshObject')"
+                          >
+                            <RefreshCw class="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -225,13 +289,13 @@
           </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Collapsed Mode Icon Bar -->
-    <div v-if="isCollapsed" class="flex flex-col items-center py-4 space-y-4">
-      <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 rounded" :title="item.name">
-        <component :is="item.icon" class="w-5 h-5" />
-      </router-link>
+      
+      <!-- Collapsed Mode Icon Bar -->
+      <div v-if="isCollapsed" class="flex flex-col items-center py-4 space-y-4">
+        <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 rounded" :title="item.name">
+          <component :is="item.icon" class="w-5 h-5" />
+        </router-link>
+      </div>
     </div>
   </aside>
 </template>
@@ -262,7 +326,12 @@ import {
   FolderOpen,
 
   MinusSquare,
-  PlusSquare
+  PlusSquare,
+  Search,
+  CaseSensitive,
+  WholeWord,
+  Regex,
+  X
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -277,18 +346,25 @@ const projectsStore = useProjectsStore()
 const isCollapsed = computed(() => appStore.sidebarCollapsed)
 const activePair = computed(() => connectionPairsStore.activePair)
 
+const isGlobalLayer = computed(() => {
+  const globalRoutes = ['Settings', 'ProjectSettings', 'Projects']
+  return globalRoutes.includes(String(route.name))
+})
+
+const shouldBlur = computed(() => {
+  return !appStore.projectManagerMode && isGlobalLayer.value
+})
+
 // Navigation Items
 // Navigation Items
 const navItems = computed(() => {
-  const items = [
+  return [
     { name: t('common.dashboard'), path: '/', icon: Home },
-    { name: t('projects.title'), path: '/projects', icon: Folder },
     { name: t('common.schema'), path: '/schema', icon: Database },
     { name: t('common.compare'), path: '/compare', icon: GitCompare },
     { name: t('common.history'), path: '/history', icon: History },
     { name: t('settings.project_settings'), path: '/project-settings', icon: Layers }, 
   ]
-  return items.filter(i => i.path !== '/projects')
 })
 
 // Schema Tree State
@@ -299,6 +375,15 @@ const expandedEnvironments = computed(() => sidebarStore.expandedEnvironments)
 const expandedDatabases = computed(() => sidebarStore.expandedDatabases)
 const expandedTypes = computed(() => sidebarStore.expandedTypes)
 const selectedObjectId = ref<string | null>(null)
+
+// Search State
+const searchQuery = ref('')
+const searchFlags = ref({
+  caseSensitive: false,
+  wholeWord: false,
+  regex: false
+})
+const isSearchActive = computed(() => searchQuery.value.length > 0)
 
 
 const isCompareView = computed(() => route.path === '/compare')
@@ -354,6 +439,72 @@ const filteredEnvironments = computed(() => {
     if (orderA !== orderB) return orderA - orderB
     return a.name.localeCompare(b.name)
   })
+})
+
+const displayEnvironments = computed(() => {
+  const envs = filteredEnvironments.value
+  if (!isSearchActive.value) return envs
+
+  const q = searchQuery.value
+  const { caseSensitive, wholeWord, regex } = searchFlags.value
+
+  let filterFn: (name: string) => boolean
+
+  if (regex) {
+    try {
+      const re = new RegExp(q, caseSensitive ? '' : 'i')
+      filterFn = (name: string) => re.test(name)
+    } catch (e) {
+      filterFn = () => false
+    }
+  } else {
+    const searchVal = caseSensitive ? q : q.toLowerCase()
+    filterFn = (name: string) => {
+      const itemVal = caseSensitive ? name : name.toLowerCase()
+      if (wholeWord) {
+        return itemVal === searchVal
+      }
+      return itemVal.includes(searchVal)
+    }
+  }
+
+  // Deep filter
+  const result: any[] = []
+  
+  envs.forEach(env => {
+    const filteredDatabases: any[] = []
+    
+    env.databases.forEach((db: any) => {
+      const filteredDb = { ...db }
+      let dbHasMatch = false
+      
+      // Also check if DB name itself matches (optional, but good for UX)
+      // if (filterFn(db.name)) dbHasMatch = true
+      
+      ddlTypes.value.forEach(type => {
+        const items = db[type.key] || []
+        const filteredItems = items.filter((item: any) => filterFn(item.name))
+        filteredDb[type.key] = filteredItems
+        if (filteredItems.length > 0) {
+          dbHasMatch = true
+          // Auto-expand if search matches
+          expandedEnvironments.value.add(env.name)
+          expandedDatabases.value.add(`${env.name}-${db.name}`)
+          expandedTypes.value.add(`${env.name}-${db.name}-${type.key}`)
+        }
+      })
+      
+      if (dbHasMatch) {
+        filteredDatabases.push(filteredDb)
+      }
+    })
+    
+    if (filteredDatabases.length > 0) {
+      result.push({ ...env, databases: filteredDatabases })
+    }
+  })
+  
+  return result
 })
 
 // DDL Types Mapping
@@ -517,23 +668,31 @@ const refreshSchemas = async (force = false) => {
       }
     })
     
-    // 2. Merge with results from SQLite
+    // 2. Merge with results from SQLite - ONLY for connections in the current project
     if (result && Array.isArray(result)) {
       result.forEach((remoteEnv: any) => {
-        let localEnv = envMap.get(remoteEnv.name)
-        if (!localEnv) {
-           localEnv = { name: remoteEnv.name, databases: [] }
-           envMap.set(remoteEnv.name, localEnv)
-        }
-        
         remoteEnv.databases.forEach((remoteDb: any) => {
-          let localDb = localEnv.databases.find((db: any) => db.name === remoteDb.name)
-          if (localDb) {
-            // Found configured connection, merge actual counts/data
-            Object.assign(localDb, remoteDb)
-          } else {
-            // Schema exists in SQLite but no connection found in appStore
-            localEnv.databases.push(remoteDb)
+          // Find matching connection in current project scope
+          const projectConn = conns.find(c => 
+            c.environment.toLowerCase() === remoteEnv.name.toLowerCase() && 
+            c.database.toLowerCase() === remoteDb.name.toLowerCase()
+          )
+
+          if (projectConn) {
+            let localEnv = envMap.get(remoteEnv.name)
+            if (!localEnv) {
+               localEnv = { name: remoteEnv.name, databases: [] }
+               envMap.set(remoteEnv.name, localEnv)
+            }
+            
+            let localDb = localEnv.databases.find((db: any) => db.name === remoteDb.name)
+            if (localDb) {
+              // Found configured connection, merge actual counts/data
+              Object.assign(localDb, remoteDb)
+            } else {
+              // Should have been created in Step 1, but added here for safety
+              localEnv.databases.push({ ...remoteDb, connectionId: projectConn.id })
+            }
           }
         })
       })

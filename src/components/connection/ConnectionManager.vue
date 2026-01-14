@@ -274,9 +274,9 @@ const enabledEnvironments = computed(() => connectionPairsStore.enabledEnvironme
 
 const displayedConnections = computed(() => {
   if (viewMode.value === 'all') {
-    return appStore.connections
+    return appStore.filteredConnections
   }
-  return appStore.connections.filter(conn => conn.environment === selectedEnvironment.value)
+  return appStore.filteredConnections.filter(conn => conn.environment === selectedEnvironment.value)
 })
 
 // Methods
@@ -291,7 +291,7 @@ const getEnvironmentBadgeClass = (environment: string) => {
 }
 
 const getConnectionCount = (environmentName: string) => {
-  return appStore.connections.filter(conn => conn.environment === environmentName).length
+  return appStore.filteredConnections.filter(conn => conn.environment === environmentName).length
 }
 
 const formatLastTested = (lastTested?: string | Date) => {

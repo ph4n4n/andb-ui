@@ -21,6 +21,11 @@ common:
   add: 'Thêm'
   create: 'Tạo'
   test: 'Kiểm tra'
+  search: 'Tìm kiếm'
+  switch: 'Chuyển'
+  matchCase: 'Khớp hoa thường'
+  wholeWord: 'Khớp cả từ'
+  useRegex: 'Sử dụng Regex'
 
   refresh: 'Làm mới'
   loading: 'Đang tải...'
@@ -41,6 +46,8 @@ common:
   close: 'Đóng'
   copy: 'Sao chép'
   copied: 'Đã sao chép'
+  comingSoon: 'Sắp ra mắt'
+  back: 'Quay lại'
   tooltips:
     refreshSchema: 'Buộc làm mới Lược đồ'
     refreshCategory: 'Buộc làm mới Danh mục'
@@ -62,6 +69,7 @@ console:
 navigation:
   sidebar: 'Thanh bên'
   toggleSidebar: 'Chuyển đổi thanh bên'
+  closeGlobal: 'Đóng và Quay lại Dự án'
   theme: 'Giao diện'
   language: 'Ngôn ngữ'
   actions:
@@ -82,6 +90,8 @@ navigation:
 dashboard:
   title: 'Bảng điều khiển'
   subtitle: 'Tổng quan hoạt động'
+  projectSettings: 'Cài đặt dự án'
+  switchProject: 'Chuyển dự án'
   newConnection: 'Kết nối mới'
   newComparison: 'So sánh mới'
   loadSamples: 'Tải dữ liệu mẫu'
@@ -156,7 +166,7 @@ header:
   about: 'Giới thiệu'
 
 about:
-  title: 'Andb'
+  title: 'The Andb'
   subtitle: 'Công cụ di trú cơ sở dữ liệu đơn giản nhất'
   version: 'Phiên bản'
   author: 'Tác giả'
@@ -420,6 +430,7 @@ settings:
     pairs: 'Cặp đồng bộ'
     backup: 'Sao lưu'
     update: 'Cập nhật'
+    engine: 'Engine'
   appearance: 'Giao diện'
   theme: 'Chủ đề'
   light: 'Sáng'

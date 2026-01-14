@@ -1,94 +1,54 @@
 <template>
   <MainLayout>
-    <!-- Dashboard Content -->
-    <main class="flex-1 p-6 overflow-y-auto">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header & Quick Actions -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-          <div class="flex flex-col gap-1">
-            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+    <template #toolbar>
+      <div class="flex items-center justify-between w-full h-full gap-4">
+        <!-- Title & Status -->
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col gap-0.5">
+            <h1 class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center">
+              <Folder class="w-5 h-5 mr-3 text-primary-500" />
               {{ currentProject?.name || $t('dashboard.title') }}
             </h1>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] opacity-60">
               {{ $t('dashboard.projectDashboard') }}
             </p>
           </div>
+        </div>
 
-          <!-- Project Quick Actions (Unified) -->
-          <div class="flex items-center gap-3">
-             <button 
+        <!-- Project Quick Actions (Unified) -->
+        <div class="flex items-center gap-3">
+             <!-- Vertical Divider -->
+             <div class="h-6 w-px bg-gray-200 dark:bg-gray-700/50 hidden sm:block mx-1"></div>
+
+            <!-- Switch Project Button -->
+            <button 
                 @click="navigateTo('/projects')"
-                class="group flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 text-gray-700 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
-             >
-                <div class="p-1 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-primary-500/10 transition-colors duration-300">
-                  <ArrowLeft class="w-3.5 h-3.5" />
-                </div>
-                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('common.back') }}</span>
-             </button>
-             <button 
-                @click="navigateTo('/settings?tab=connections&action=new')"
-                class="group flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all duration-200"
-             >
-                <div class="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
-                  <Plus class="w-3.5 h-3.5 text-white" />
-                </div>
-                <span class="text-[10px] font-black uppercase tracking-widest">{{ $t('dashboard.addConnection') }}</span>
-             </button>
-          </div>
-        </div>
-        
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 hidden">
-          <div class="flex flex-col gap-1">
-            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              {{ $t('dashboard.title') }}
-            </h1>
-            <p class="text-xs text-gray-500 font-medium uppercase tracking-[0.2em]">{{ $t('dashboard.subtitle') }}</p>
-          </div>
-          
-          <div 
-            class="flex items-center gap-2 p-1.5 rounded-2xl transition-all duration-300"
-            :class="[
-              appStore.buttonStyle === 'full' ? 'bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5' : '',
-              appStore.buttonStyle === 'minimal' || appStore.buttonStyle === 'icons' ? 'bg-transparent border-transparent px-0 shadow-none' : ''
-            ]"
-          >
-
-            <!-- Load Samples Button -->
-            <button 
-              @click="loadSampleData" 
-              class="flex items-center justify-center font-bold uppercase tracking-wider transition-all duration-200" 
-              :class="[
-                appStore.buttonStyle === 'full' ? 'px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-xl gap-2' : '',
-                appStore.buttonStyle === 'minimal' ? 'px-3 py-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg gap-2' : '',
-                appStore.buttonStyle === 'icons' ? 'w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50' : ''
-              ]"
-              :style="{ fontSize: appStore.fontSizes.button + 'px' }"
-              :disabled="isLoadingSample"
-              :title="$t('dashboard.loadSamples')"
+                class="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 px-3 py-1.5 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-500/50 dark:hover:border-primary-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/5 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                :title="$t('dashboard.switchProject')"
             >
-              <Database class="w-4 h-4" />
-              <span v-if="appStore.buttonStyle !== 'icons'">{{ isLoadingSample ? $t('dashboard.loading') : (appStore.buttonStyle === 'full' ? $t('dashboard.loadSamples') : $t('dashboard.samples')) }}</span>
+                <div class="flex items-center gap-2 relative z-10">
+                    <LayoutGrid class="w-3.5 h-3.5 transition-transform group-hover:rotate-180 duration-500" />
+                    <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{{ $t('common.switch') }}</span>
+                </div>
             </button>
 
-            <!-- Refresh Button -->
+            <!-- Settings Button -->
             <button 
-              @click="refreshData" 
-              class="flex items-center justify-center font-bold uppercase transition-all duration-300"
-              :class="[
-                appStore.buttonStyle === 'full' ? 'px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 gap-2' : '',
-                appStore.buttonStyle === 'minimal' ? 'px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg tracking-wider active:scale-95 shadow-sm gap-2' : '',
-                appStore.buttonStyle === 'icons' ? 'w-10 h-10 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 hover:scale-110 active:scale-95' : ''
-              ]"
-              :style="{ fontSize: appStore.fontSizes.button + 'px' }"
-              :title="$t('dashboard.refreshDashboard')"
+                @click="navigateTo('/project-settings')"
+                class="group relative overflow-hidden rounded-xl bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white shadow-md shadow-primary-500/20 px-3 py-1.5 border border-transparent transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                :title="$t('common.settings')"
             >
-              <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" />
-              <span v-if="appStore.buttonStyle !== 'icons'">{{ appStore.buttonStyle === 'full' ? $t('dashboard.refreshDashboard') : $t('dashboard.refresh') }}</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-20"></div>
+                <div class="flex items-center gap-2 relative z-10">
+                    <Settings class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-500" />
+                    <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{{ $t('common.settings') }}</span>
+                </div>
             </button>
-          </div>
         </div>
-        
-        <!-- Stats Cards -->
+      </div>
+    </template>
+    <main class="flex-1 p-6 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <!-- Total Connections -->
           <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-blue-500/10 p-6 border border-gray-100 dark:border-gray-700 transition-all duration-300">
@@ -362,7 +322,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Database, 
@@ -370,13 +330,12 @@ import {
   GitCompare, 
   Activity, 
   TrendingUp, 
-  RefreshCw,
   CheckCircle,
   FileCode,
   Clock,
   ArrowRightLeft,
-  Plus,
-  ArrowLeft
+  LayoutGrid,
+  Settings
 } from 'lucide-vue-next'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAppStore } from '@/stores/app'
@@ -391,24 +350,6 @@ const connectionPairsStore = useConnectionPairsStore()
 const operationsStore = useOperationsStore()
 
 const isRefreshing = ref(false)
-const isLoadingSample = ref(false)
-
-// Load sample data function
-const loadSampleData = async () => {
-  isLoadingSample.value = true
-  try {
-    const result = await (window as any).electronAPI?.loadMockCompareData?.()
-    if (result?.success) {
-      await refreshData()
-    }
-  } catch (error: any) {
-    if ((window as any).electronAPI) {
-      (window as any).electronAPI.log.send('error', 'Error loading sample data in dashboard', error.message)
-    }
-  } finally {
-    isLoadingSample.value = false
-  }
-}
 
 const currentProject = computed(() => projectsStore.currentProject)
 
@@ -417,9 +358,26 @@ const displayedConnections = computed(() => {
   return appStore.connections.filter(c => currentProject.value?.connectionIds.includes(c.id))
 })
 
+const activeProjectEnvironments = computed(() => {
+  if (!currentProject.value) return []
+  return currentProject.value.enabledEnvironmentIds || []
+})
+
 const displayedPairs = computed(() => {
   if (!currentProject.value) return []
-  return connectionPairsStore.connectionPairs.filter(p => currentProject.value?.pairIds.includes(p.id))
+  
+  const allowedEnvs = new Set(activeProjectEnvironments.value)
+
+  return connectionPairsStore.connectionPairs.filter(p => {
+    // 1. Must be linked to the current project
+    if (!currentProject.value?.pairIds.includes(p.id)) return false
+    
+    // 2. Both environments must be currently enabled in the project
+    // This allows users to "hide" standard pairs by disabling environments
+    if (!allowedEnvs.has(p.sourceEnv) || !allowedEnvs.has(p.targetEnv)) return false
+    
+    return true
+  })
 })
 
 const totalConnections = computed(() => displayedConnections.value.length)
@@ -655,7 +613,6 @@ const comparePair = (pair: any) => {
   router.push({ path: '/compare', query: { pairId: pair.id } })
 }
 
-import { onMounted } from 'vue'
 onMounted(async () => {
   if (appStore.projectManagerMode) {
     router.push('/projects')
@@ -664,13 +621,7 @@ onMounted(async () => {
 
   // Load data from store (which loads from storage)
   if ((window as any).electronAPI) {
-    await Promise.all([
-      appStore.reloadData(),
-      connectionPairsStore.reloadData(),
-      operationsStore.loadOperations()
-    ])
-  } else {
-    // If running in browser/testing, maybe load defaults?
+    await refreshData()
   }
 })
 </script>

@@ -2,6 +2,24 @@
 
 All notable changes to the **andb-ui** project will be documented in this file.
 
+## [Released] - 2026-01-14 (v2.2.0)
+
+### ✨ New & Improved
+
+- **Context-Aware Dashboard**: The "Sync Mappings" list is now strictly intelligent. It filters connection pairs based on your **Active Project** and **Enabled Environments** (e.g. enabling/disabling UAT).
+- **Premium Visuals**: Completely redesigned "Switch Project" and "Settings" buttons in the dashboard with kinetic hover effects and premium styling.
+- **Interactive Global Blur**: The blurred sidebar in global views now acts as a click-to-close surface, improving navigation fluidity.
+
+### 🐛 Bug Fixes
+
+- **Zombie Project Fix**: Resolved a critical issue where duplicated projects inherited "System Protected" status (undeletable). Added auto-sanitization to fix existing corrupted projects on startup.
+- **Robust ID Generation**: Replaced UUID generator with a fail-safe implementation for reliable project creation/copying.
+
+### 🚧 Coming Soon
+
+- **Project Focus Mode**: Explicitly marked as "In Development".
+- **Auto-Migration Engine**: Safe execution engine is being finalized.
+
 ## [Released] - 2026-01-12
 
 ### ✨ Features

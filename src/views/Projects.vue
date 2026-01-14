@@ -2,9 +2,9 @@
   <MainLayout>
     <template #toolbar>
       <div class="flex items-center justify-between w-full h-full px-2">
-        <!-- Breadcrumb + Inline Edit Title -->
+        <!-- Breadcrumb + Inline Edit Title (Focus Mode Only) -->
         <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap overflow-hidden">
+          <div v-if="appStore.projectManagerMode" class="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap overflow-hidden">
              <template v-for="(crumb, index) in displayedBreadcrumbs" :key="index">
                  <button 
                     @click="columnsViewRef?.jumpToBreadcrumb(crumb)"
@@ -16,9 +16,13 @@
                  <span v-if="index < displayedBreadcrumbs.length - 1" class="mx-1 text-gray-300 dark:text-gray-700 select-none">/</span>
              </template>
           </div>
+          <div v-else class="flex items-center gap-2">
+            <Folder class="w-4 h-4 text-primary-500" />
+            <span class="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">{{ t('projects.title') }}</span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div v-if="appStore.projectManagerMode" class="flex items-center gap-3">
           <!-- Auto Collapse Toggle -->
           <div class="flex items-center gap-2 border-l border-gray-200 dark:border-gray-800 pl-3">
               <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none">Auto Collapse</span>
@@ -39,9 +43,18 @@
     </template>
 
     <div class="flex-1 flex w-full h-full overflow-hidden">
-      <!-- Projects Content (Columns Only) -->
+      <!-- Projects Content -->
       <div class="flex-1 overflow-hidden">
+        <ProjectsListView 
+          v-if="!appStore.projectManagerMode"
+          @open="openProject"
+          @create="createNewProject"
+          @delete="handleDeleteProject"
+          @rename="handleRenameProject"
+          @duplicate="handleDuplicateProject"
+        />
         <ProjectsColumnsView 
+          v-else
           ref="columnsViewRef"
           class="h-full" 
           @open="openProject"
@@ -49,9 +62,8 @@
           @update-breadcrumbs="currentBreadcrumbs = $event"
         />
       </div>
-
-      <!-- Properties Panel Removed as per feedback -->
     </div>
+
   </MainLayout>
 </template>
 
@@ -61,8 +73,12 @@ import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
 import MainLayout from '@/layouts/MainLayout.vue'
 import ProjectsColumnsView from '@/components/projects/ProjectsColumnsView.vue'
+import ProjectsListView from '@/components/projects/ProjectsListView.vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { Folder } from 'lucide-vue-next'
 
+const { t } = useI18n()
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const appStore = useAppStore()
@@ -104,10 +120,12 @@ const createNewProject = () => {
   
   projectsStore.selectProject(newProject.id)
   
-  // Auto-focus title for editing
-  nextTick(() => {
-    startEditTitle()
-  })
+  if (appStore.projectManagerMode) {
+    // Auto-focus title for editing in columns mode
+    nextTick(() => {
+      startEditTitle()
+    })
+  }
 }
 
 const startEditTitle = () => {
@@ -119,6 +137,23 @@ const startEditTitle = () => {
       titleInput.value?.select()
     })
   }
+}
+
+const handleDeleteProject = (id: string) => {
+  const project = projectsStore.projects.find(p => p.id === id)
+  if (!project) return
+  
+  if (confirm(t('projects.deleteConfirm', { name: project.name }))) {
+    projectsStore.removeProject(id)
+  }
+}
+
+const handleRenameProject = (id: string, newName: string) => {
+  projectsStore.updateProject(id, { name: newName })
+}
+
+const handleDuplicateProject = (id: string) => {
+  projectsStore.duplicateProject(id)
 }
 
 

@@ -132,6 +132,7 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
 
   const selectedPairId = ref('1') // Default to first pair
 
+
   // Watch and auto-save to storage
   watch(
     environments,
@@ -165,11 +166,55 @@ export const useConnectionPairsStore = defineStore('connectionPairs', () => {
   const availablePairs = computed(() => {
     const projectsStore = useProjectsStore()
     const project = projectsStore.currentProject
-
-    // Specific project -> filter by IDs
     if (!project) return []
-    return connectionPairs.value.filter(pair => project.pairIds.includes(pair.id))
+
+    // 1. Get environments enabled for this project and sort by order
+    const sortedEnvs = [...enabledEnvironments.value].sort((a, b) => a.order - b.order)
+
+    if (sortedEnvs.length < 2) return []
+
+    // 2. Auto-generate sequential "One Way" migrate pairs
+    // Logic: Env[i] -> Env[i+1] (Low order to High order)
+    const autoPairs: ConnectionPair[] = []
+    const appStore = useAppStore()
+
+    for (let i = 0; i < sortedEnvs.length - 1; i++) {
+      const source = sortedEnvs[i]
+      const target = sortedEnvs[i + 1]
+
+      // Look for a custom override pair if it exists (for specific connection mapping)
+      const existing = connectionPairs.value.find(p => p.sourceEnv === source.id && p.targetEnv === target.id)
+
+      // Auto-pick logic for specific connection IDs
+      const autoSourceConn = appStore.connections.find(c => c.environment === source.id)?.id || ''
+      const autoTargetConn = appStore.connections.find(c => c.environment === target.id)?.id || ''
+
+      autoPairs.push({
+        id: existing?.id || `auto-${source.id}-${target.id}`,
+        name: existing?.name || `${source.name} to ${target.name}`,
+        sourceEnv: source.id,
+        targetEnv: target.id,
+        sourceConnectionId: existing?.sourceConnectionId || autoSourceConn,
+        targetConnectionId: existing?.targetConnectionId || autoTargetConn,
+        description: existing?.description || `Auto-generated migration path from ${source.name} to ${target.name}`,
+        isDefault: existing?.isDefault || i === 0,
+        status: existing?.status || 'idle'
+      })
+    }
+
+    return autoPairs
   })
+
+  // Auto-select first pair if current one becomes invalid (e.g. project switch)
+  watch(() => availablePairs.value, (newPairs) => {
+    if (newPairs.length > 0) {
+      if (!newPairs.some(p => p.id === selectedPairId.value)) {
+        selectedPairId.value = newPairs[0].id
+      }
+    } else {
+      selectedPairId.value = ''
+    }
+  }, { immediate: true })
 
 
 
