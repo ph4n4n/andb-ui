@@ -1,14 +1,9 @@
 <template>
-  <MainLayout>
-    <template #toolbar>
-      <div class="flex items-center gap-2">
-        <Layers class="w-4 h-4 text-primary-500" />
-        <span class="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{{ $t('settings.project_settings') }}</span>
-      </div>
-    </template>
-
-    <!-- Settings Workspace -->
-    <div class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900">
+  <div class="h-screen flex flex-col pt-0 bg-gray-50 dark:bg-gray-900" :style="{ fontFamily: appStore.fontFamilies.general, fontSize: appStore.fontSizes.main + 'px' }">
+    <Header />
+    <div class="flex-1 flex overflow-hidden">
+      <Sidebar />
+      <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
         <!-- Settings Category Sidebar -->
         <div class="w-64 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-md flex flex-col shrink-0">
           <div class="p-8 pb-4">
@@ -171,7 +166,7 @@
 
           </div>
         </div>
-    </div>
+
 
     <!-- Reset Data Confirmation Modal (Pro Style) -->
     <div v-if="showResetModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -262,8 +257,10 @@
           </button>
         </div>
       </div>
-      </div>
-  </MainLayout>
+    </div>
+    </main>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -283,7 +280,8 @@ import {
   Cpu,
   Shield
 } from 'lucide-vue-next'
-import MainLayout from '@/layouts/MainLayout.vue'
+import Header from '@/components/general/Header.vue'
+import Sidebar from '@/components/general/Sidebar.vue'
 import EnvironmentManager from '@/components/connection/EnvironmentManager.vue'
 import ConnectionPairManager from '@/components/connection/ConnectionPairManager.vue'
 import ConnectionManager from '@/components/connection/ConnectionManager.vue'
