@@ -47,9 +47,9 @@ const router = useRouter()
 const { t } = useI18n()
 
 // App metadata from package.json
-const version = '2.1.0'
-const author = 'ph4n4n'
-const license = 'AGPL-3.0'
+const version = __APP_VERSION__
+const author = 'The Andb'
+const license = 'GPL-3.0'
 
 // Loading state
 const progress = ref(0)

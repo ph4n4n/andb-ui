@@ -3,7 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import ViteYaml from '@modyfi/vite-plugin-yaml'
 import { resolve } from 'path'
 
+import packageJson from './package.json'
+
 export default defineConfig({
+  define: {
+    '__APP_VERSION__': JSON.stringify(packageJson.version)
+  },
   plugins: [vue(), ViteYaml()],
   base: './',
   build: {

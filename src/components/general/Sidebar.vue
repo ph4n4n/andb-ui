@@ -19,7 +19,7 @@
     <div :class="['flex-1 flex flex-col min-h-0', shouldBlur ? 'pointer-events-none' : '']">
       <!-- Navigation Menu (Side Activity Bar style if collapsed, or just top menu) -->
       <!-- Navigation Menu (Dynamic Style) -->
-      <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center px-4 overflow-hidden">
+      <nav v-show="!isCollapsed" class="flex-shrink-0 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700 p-2 overflow-hidden">
         <div 
           :class="[
             appStore.navStyle === 'horizontal-tabs' 
@@ -347,7 +347,7 @@ const isCollapsed = computed(() => appStore.sidebarCollapsed)
 const activePair = computed(() => connectionPairsStore.activePair)
 
 const isGlobalLayer = computed(() => {
-  const globalRoutes = ['Settings', 'ProjectSettings', 'Projects']
+  const globalRoutes = ['Settings', 'Projects']
   return globalRoutes.includes(String(route.name))
 })
 

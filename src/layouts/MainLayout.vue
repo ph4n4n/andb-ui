@@ -102,7 +102,7 @@ const consoleStore = useConsoleStore()
 const { t: $t } = useI18n()
 
 const isGlobalLayer = computed(() => {
-  const globalRoutes = ['Settings', 'ProjectSettings', 'Projects']
+  const globalRoutes = ['Settings', 'Projects']
   return globalRoutes.includes(String(route.name))
 })
 
