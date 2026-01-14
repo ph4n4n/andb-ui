@@ -10,6 +10,7 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 - **Multiple Database Connections**: Manage multiple database configurations
 - **Connection Pairs**: Select source ↔ target for compare/migrate operations
 - **Visual Diff**: Side-by-side comparison with status indicators & syntax highlighting
+- **Context-Aware Dashboard**: Intelligent filtering of connections and pairs based on active project context
 - **Export Preview**: Live SQL preview with syntax highlighting (Rainbow brackets + Line numbers)
 - **Migration Management**: Create and track database migrations
 - **Script Generator**: Generate andb-core CLI scripts
@@ -28,12 +29,20 @@ Desktop application for andb-core database migration tool using Electron + Vue.j
 - **Database Tool**: andb-core
 - **Metadata Storage**: SQLite (better-sqlite3)
 
+## 📥 Download
+
+Latest Release: **v2.2.0**
+
+- **macOS (Apple Silicon)**: [The-Andb-2.2.0-arm64.dmg](https://github.com/The-Andb/andb/releases/download/v2.2.0/The-Andb-2.2.0-arm64.dmg)
+- **macOS (Portable ZIP)**: [The-Andb-2.2.0-arm64-mac.zip](https://github.com/The-Andb/andb/releases/download/v2.2.0/The-Andb-2.2.0-arm64-mac.zip)
+- [All Releases](https://github.com/The-Andb/andb/releases)
+
 ## 📦 Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/ph4n4n/andb-ui.git
-cd andb-ui
+git clone https://github.com/The-Andb/andb.git
+cd andb
 
 # Install dependencies
 npm install

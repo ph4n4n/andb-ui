@@ -1,7 +1,7 @@
 {
   "name": "andb",
   "productName": "The Andb",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Simplest Database Migration Tool by ph4n4n",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ph4n4n/andb-ui.git"
+    "url": "git+https://github.com/The-Andb/andb.git"
   },
   "keywords": [
     "electron",
@@ -33,12 +33,12 @@
     "andb-core"
   ],
   "author": "ph4n4n",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/ph4n4n/andb-ui/issues"
+    "url": "https://github.com/The-Andb/andb/issues"
   },
-  "homepage": "https://github.com/ph4n4n/andb-ui#readme",
+  "homepage": "https://github.com/The-Andb/andb#readme",
   "devDependencies": {
     "@modyfi/vite-plugin-yaml": "^1.1.1",
     "@tailwindcss/typography": "^0.5.10",
@@ -81,7 +81,9 @@
       "dist-electron/**/*",
       "!dist-electron/main.ts",
       "package.json",
-      "public/**/*"
+      "public/**/*",
+      "!public/*.dmg",
+      "!public/*.zip"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
@@ -100,8 +102,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "ph4n4n",
-        "repo": "andb-ui"
+        "owner": "The-Andb",
+        "repo": "andb"
       }
     ]
   },

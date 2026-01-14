@@ -190,8 +190,8 @@
                   <p v-if="!showMigrateModal" class="text-xs uppercase tracking-widest font-bold">{{ $t('history.noHistory') }}</p>
                 </div>
 
-                <!-- OVERVIEW MODE: Stack view of categories -->
-                <div v-else-if="selectedFilterType === 'all'" class="space-y-2">
+                <!-- OVERVIEW MODE: Stack view of categories or when modal is open -->
+                <div v-else-if="selectedFilterType === 'all' || showMigrateModal" class="space-y-2">
                   <div 
                     v-for="cat in resultsByCategory" :key="cat.type"
                     @click="selectedFilterType = cat.type; showMigrateModal = false"

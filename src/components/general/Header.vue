@@ -63,7 +63,7 @@
                   :class="{'text-gray-400 font-normal': !selectedPairId}"
                   :title="$t('header.pairContext')"
                 >
-                  <option value="" class="text-gray-400 bg-white dark:bg-gray-800">{{ $t('header.selectPair') }}</option>
+                  <option value="" disabled class="text-gray-400 bg-white dark:bg-gray-800">{{ $t('header.selectPair') }}</option>
                   <option v-for="pair in availablePairs" :key="pair.id" :value="pair.id" class="bg-white dark:bg-gray-800 font-bold text-gray-900 dark:text-white">
                     {{ pair.name }}
                   </option>
@@ -85,7 +85,7 @@
               class="pr-8 py-1.5 border-none bg-transparent text-gray-900 dark:text-white text-sm font-bold focus:ring-0 cursor-pointer"
             >
               <option value="" disabled>{{ $t('header.selectDatabase') }}</option>
-              <option v-for="conn in appStore.connections" :key="conn.id" :value="conn.id" class="bg-white dark:bg-gray-800">
+              <option v-for="conn in appStore.filteredConnections" :key="conn.id" :value="conn.id" class="bg-white dark:bg-gray-800">
                 {{ conn.environment }}: {{ conn.database }}
               </option>
             </select>
@@ -154,6 +154,17 @@
               </option>
             </select>
           </div>
+
+          <!-- Project Manager Shortcut (OOP improvement: next to selector) -->
+          <button 
+            v-if="!appStore.projectManagerMode"
+            @click="router.push('/projects')"
+            class="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all mr-2"
+            :title="$t('projects.title')"
+          >
+            <LayoutGridIcon class="w-4.5 h-4.5" />
+          </button>
+
           <ThemeToggle />
           <LanguageToggle />
         </div>
@@ -224,7 +235,8 @@ import {
   Database,
   Download,
   Folder,
-  Layers 
+  Layers,
+  LayoutGrid as LayoutGridIcon
 } from 'lucide-vue-next'
 
 import { useUpdaterStore } from '@/stores/updater'
@@ -368,7 +380,7 @@ const currentPageTitle = computed(() => {
     '/schema': $t('common.schema'),
     '/compare': $t('common.compare'),
     '/settings': $t('common.settings'),
-    '/projects': 'BASES'
+    '/projects': $t('projects.title')
   }
   return routeNames[route.path] || $t('common.dashboard')
 })

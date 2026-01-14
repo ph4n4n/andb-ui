@@ -93,8 +93,8 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: join(__dirname, 'preload.js'),
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     },
     icon: join(__dirname, '../public/icon.png'),
     titleBarStyle: 'default',
@@ -110,7 +110,6 @@ function createWindow() {
   } else {
     loadURL(mainWindow).then(() => {
       mainWindow.loadURL('app://-/index.html#splash')
-      mainWindow.webContents.openDevTools() // DEBUG
     })
   }
 
@@ -307,27 +306,29 @@ ipcMain.handle('open-backup-folder', async () => {
 /**
  * Create a manual DDL snapshot
  */
-ipcMain.handle('create-snapshot', async (event, connection, type, name) => {
+ipcMain.handle('andb-create-snapshot', async (event, args) => {
+  const { connection, type, name } = args
   try {
-    if ((global as any).logger) (global as any).logger.info(`IPC: create-snapshot for ${type}:${name}`)
+    if ((global as any).logger) (global as any).logger.info(`IPC: andb-create-snapshot for ${type}:${name}`)
     const result = await AndbBuilder.createManualSnapshot(connection, type, name)
     return { success: true, data: result }
   } catch (error: any) {
-    if ((global as any).logger) (global as any).logger.error('create-snapshot error:', error)
+    if ((global as any).logger) (global as any).logger.error('andb-create-snapshot error:', error)
     return { success: false, error: error.message }
   }
 })
 
 /**
- * Restore a DDL snapshot
+ * Restore a snapshot
  */
-ipcMain.handle('restore-snapshot', async (event, connection, snapshot) => {
+ipcMain.handle('andb-restore-snapshot', async (event, args) => {
+  const { connection, snapshot } = args
   try {
-    if ((global as any).logger) (global as any).logger.info(`IPC: restore-snapshot for ${snapshot.ddl_type}:${snapshot.ddl_name}`)
+    if ((global as any).logger) (global as any).logger.info(`IPC: andb-restore-snapshot for ${snapshot.ddl_type}:${snapshot.ddl_name}`)
     const result = await AndbBuilder.restoreSnapshot(connection, snapshot)
     return { success: true, data: result }
   } catch (error: any) {
-    if ((global as any).logger) (global as any).logger.error('restore-snapshot error:', error)
+    if ((global as any).logger) (global as any).logger.error('andb-restore-snapshot error:', error)
     return { success: false, error: error.message }
   }
 })

@@ -5,7 +5,6 @@ import { useProjectsStore } from './projects'
 import { Folder } from 'lucide-vue-next'
 import { useMillerStore } from '@/packages/miller-column/store'
 import { type MillerNode, ColumnNode } from '@/packages/miller-column/types'
-import { sampleTreeData } from '@/packages/miller-column/sample-data'
 
 export const useProjectNavigationStore = defineStore('projectNavigation', () => {
   const millerStore = useMillerStore()
@@ -25,12 +24,6 @@ export const useProjectNavigationStore = defineStore('projectNavigation', () => 
    * The abstract fetcher that bridges domain data to Miller package
    */
   const millerFetcher = async (node: MillerNode): Promise<MillerNode[]> => {
-    // Check if we are in Sample Mode
-    if (node.id === 'miller-sample-blueprint' || node.rawData?.isSample) {
-      if (node.id === 'miller-sample-blueprint') return sampleTreeData.map(n => mapNode(n, { isSample: true }))
-      return (node.children || []).map(n => mapNode(n, { isSample: true }))
-    }
-
     const contextType = node.type || 'projects'
     const result = await loadNodeChildren(node, contextType, node.rawData?.context || {})
 
@@ -51,26 +44,26 @@ export const useProjectNavigationStore = defineStore('projectNavigation', () => 
       isTerminal: false
     }))
 
-    // 1. Remove mock sample from UI list if present (Optional but helps focus)
-    const filteredRoots = rootItems.filter(i => i.id !== 'miller-sample-blueprint')
-
     // Initialize the root column in the abstract store
     millerStore.columns = [
       new ColumnNode({
         id: 'root',
         level: 0,
         title: 'Active Bases',
-        items: [...filteredRoots], // Spread to ensure new reference
+        items: [...rootItems], // Spread to ensure new reference
         isPinned: true
       })
     ]
 
     // 2. Auto-Focus Logic: Deep expand "Schema" for the current project
-    const targetId = projectId || filteredRoots[0]?.id
+    const targetId = projectId || rootItems[0]?.id
     if (targetId) {
-      const pNode = filteredRoots.find(i => i.id === targetId)
+      const pNode = rootItems.find(i => i.id === targetId)
       if (pNode) {
         // Step 1: Select Project
+        if (pNode.type === 'projects') {
+          projectsStore.selectProject(pNode.id)
+        }
         await selectNode(pNode, 0)
 
         // Step 2: Auto-select "Schema" Category (Level 1)

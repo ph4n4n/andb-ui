@@ -1,6 +1,6 @@
 <template>
   <div class="h-full w-full flex flex-col bg-gray-50 dark:bg-gray-950">
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between shrink-0 h-16 gap-4">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between shrink-0 h-16 gap-4">
         <!-- Title & Connection Selection -->
         <div class="flex items-center gap-4">
           <div class="flex flex-col gap-0.5">
@@ -14,7 +14,7 @@
                <button 
                  @click="loadSchema(false)" 
                  class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-400 hover:text-primary-500 transition-colors"
-                 title="Reload view from local cache"
+                 :title="$t('schema.reloadLocal')"
                >
                  <RotateCcw class="w-3 h-3" />
                </button>
@@ -50,6 +50,16 @@
           >
             <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
             <span v-if="appStore.buttonStyle !== 'icons'">{{ loading ? $t('schema.fetching') : (appStore.buttonStyle === 'full' ? $t('schema.fetchFromDB') : $t('schema.fetch')) }}</span>
+          </button>
+
+          <!-- System Logs Toggle -->
+          <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+          <button 
+            @click="consoleStore.toggleVisibility()" 
+            class="p-2 rounded-xl text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all border border-transparent"
+            :title="$t('console.toggle')"
+          >
+            <PanelBottom class="w-4 h-4" />
           </button>
         </div>
     </div>
@@ -292,7 +302,8 @@ import {
   Camera,
   RotateCcw,
   History,
-  Network
+  Network,
+  PanelBottom
 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -352,7 +363,8 @@ const allResults = computed(() => {
     ...schemaData.value.views.map(i => ({ ...i, type: 'views' })),
     ...schemaData.value.triggers.map(i => ({ ...i, type: 'triggers' }))
   ]
-  if (hasResults.value) {
+  const hasData = base.length > 0
+  if (hasData) {
     base.unshift({ name: 'Interactive ERD', type: 'diagrams' })
   }
   return base
@@ -634,9 +646,13 @@ const loadSchema = async (forceRefresh = false) => {
   }
 }
 
-watch(() => appStore.selectedConnectionId, (newId) => {
+watch(() => appStore.selectedConnectionId, async (newId) => {
   if (newId) {
-    loadSchema(false)
+    await loadSchema(false)
+    // Auto fetch if cache is empty AND never synced before
+    if (!selectedDbLastUpdated.value && !allResults.value.some(i => i.type !== 'diagrams')) {
+      loadSchema(true)
+    }
   }
 }, { immediate: true })
 

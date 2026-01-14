@@ -231,9 +231,12 @@ export const useAppStore = defineStore('app', () => {
     const projectsStore = useProjectsStore()
     const project = projectsStore.currentProject
 
-    // Specific project -> filter by IDs (even if empty or default)
+    // Filter by both IDs assigned to the project AND the environments enabled for this project
     if (!project) return []
-    return connections.value.filter(conn => project.connectionIds.includes(conn.id))
+    return connections.value.filter(conn =>
+      project.connectionIds.includes(conn.id) &&
+      project.enabledEnvironmentIds.includes(conn.environment)
+    )
   })
 
 
@@ -250,6 +253,17 @@ export const useAppStore = defineStore('app', () => {
     },
     { deep: true }
   )
+
+  // Auto-select first connection if current one becomes invalid (e.g. project switch)
+  watch(() => filteredConnections.value, (newConns) => {
+    if (newConns.length > 0) {
+      if (!newConns.some(c => c.id === selectedConnectionId.value)) {
+        selectedConnectionId.value = newConns[0].id
+      }
+    } else {
+      selectedConnectionId.value = ''
+    }
+  }, { immediate: true })
 
   watch(sidebarCollapsed, newValue => {
     storage.updateSettings({ sidebarCollapsed: newValue })

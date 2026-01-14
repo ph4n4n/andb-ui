@@ -22,6 +22,11 @@ common:
   create: 'Create'
   test: 'Test'
   new: 'New'
+  search: 'Search'
+  switch: 'Switch'
+  matchCase: 'Match Case'
+  wholeWord: 'Match Whole Word'
+  useRegex: 'Use Regular Expression'
 
   refresh: 'Refresh'
   loading: 'Loading...'
@@ -66,6 +71,7 @@ console:
 navigation:
   sidebar: 'Sidebar'
   toggleSidebar: 'Toggle Sidebar'
+  closeGlobal: 'Close and Return to Project'
   theme: 'Theme'
   language: 'Language'
   actions:
@@ -87,6 +93,8 @@ dashboard:
   title: 'Dashboard'
   subtitle: 'Operational Overview'
   projectDashboard: 'Project Dashboard'
+  projectSettings: 'Project Settings'
+  switchProject: 'Switch Project'
   newConnection: 'New Connection'
   newComparison: 'New Comparison'
   loadSamples: 'Load Samples'
@@ -163,7 +171,7 @@ header:
   about: 'About'
 
 about:
-  title: 'Andb'
+  title: 'The Andb'
   subtitle: 'Simplest Database Migration Tool'
   version: 'Version'
   author: 'Author'
@@ -435,6 +443,7 @@ settings:
     pairs: 'Sync Pairs'
     backup: 'Backups'
     update: 'Updates'
+    engine: 'Engine'
     templates: 'Global Connections'
     security: 'Security'
   security:
@@ -452,6 +461,7 @@ settings:
   sections:
     app: 'Application Settings'
     project: 'Project Settings'
+    engine: 'Engine Settings'
   project_settings: 'Project Settings'
   templates:
     title: 'Database Connections'

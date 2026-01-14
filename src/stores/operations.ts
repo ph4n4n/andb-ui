@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useProjectsStore } from './projects'
 
 export interface Operation {
   id: string
+  projectId: string // Isolation link
   type: 'compare' | 'migrate' | 'export' | 'import' | 'test'
   sourceEnv?: string
   targetEnv?: string
@@ -21,37 +23,45 @@ export const useOperationsStore = defineStore('operations', () => {
   // State
   const operations = ref<Operation[]>([])
 
-  // Computed
-  const totalOperations = computed(() => operations.value.length)
+  // Helper for filtered data
+  const filteredOperations = computed(() => {
+    const projectsStore = useProjectsStore()
+    const projectId = projectsStore.selectedProjectId
+    if (!projectId) return []
+    return operations.value.filter(op => op.projectId === projectId)
+  })
+
+  // Computed (Isolated)
+  const totalOperations = computed(() => filteredOperations.value.length)
 
   const operationsByType = computed(() => {
-    return operations.value.reduce((acc, op) => {
+    return filteredOperations.value.reduce((acc, op) => {
       acc[op.type] = (acc[op.type] || 0) + 1
       return acc
     }, {} as Record<string, number>)
   })
 
   const successfulOperations = computed(() =>
-    operations.value.filter(op => op.status === 'success').length
+    filteredOperations.value.filter(op => op.status === 'success').length
   )
 
   const failedOperations = computed(() =>
-    operations.value.filter(op => op.status === 'failed').length
+    filteredOperations.value.filter(op => op.status === 'failed').length
   )
 
   const totalDDLCount = computed(() =>
-    operations.value.reduce((sum, op) => sum + (op.ddlCount || 0), 0)
+    filteredOperations.value.reduce((sum, op) => sum + (op.ddlCount || 0), 0)
   )
 
   const averageDuration = computed(() => {
-    const completedOps = operations.value.filter(op => op.duration)
+    const completedOps = filteredOperations.value.filter(op => op.duration)
     if (completedOps.length === 0) return 0
     const total = completedOps.reduce((sum, op) => sum + (op.duration || 0), 0)
     return Math.round(total / completedOps.length)
   })
 
   const recentOperations = computed(() =>
-    [...operations.value]
+    [...filteredOperations.value]
       .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 10)
   )
@@ -59,12 +69,12 @@ export const useOperationsStore = defineStore('operations', () => {
   const operationsToday = computed(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return operations.value.filter(op => new Date(op.startTime) >= today).length
+    return filteredOperations.value.filter(op => new Date(op.startTime) >= today).length
   })
 
   const ddlByConnection = computed(() => {
     const result: Record<string, number> = {}
-    operations.value.forEach(op => {
+    filteredOperations.value.forEach(op => {
       if (op.connectionId && op.ddlCount) {
         result[op.connectionId] = (result[op.connectionId] || 0) + op.ddlCount
       }
@@ -74,7 +84,7 @@ export const useOperationsStore = defineStore('operations', () => {
 
   const migratesByPair = computed(() => {
     const result: Record<string, { count: number; totalDuration: number; avgDuration: number }> = {}
-    operations.value
+    filteredOperations.value
       .filter(op => op.type === 'migrate' && op.sourceEnv && op.targetEnv)
       .forEach(op => {
         const key = `${op.sourceEnv}->${op.targetEnv}`
@@ -98,10 +108,12 @@ export const useOperationsStore = defineStore('operations', () => {
   })
 
   // Actions
-  const addOperation = (operation: Omit<Operation, 'id'>) => {
+  const addOperation = (operation: Omit<Operation, 'id' | 'projectId'>) => {
+    const projectsStore = useProjectsStore()
     const newOp: Operation = {
       ...operation,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      projectId: projectsStore.selectedProjectId || 'default'
     }
     operations.value.push(newOp)
     saveToStorage()
@@ -132,7 +144,10 @@ export const useOperationsStore = defineStore('operations', () => {
   }
 
   const clearOperations = () => {
-    operations.value = []
+    const projectsStore = useProjectsStore()
+    const projectId = projectsStore.selectedProjectId
+    // Isolated clear: only clear current project's operations
+    operations.value = operations.value.filter(op => op.projectId !== projectId)
     saveToStorage()
   }
 
@@ -171,6 +186,7 @@ export const useOperationsStore = defineStore('operations', () => {
   return {
     // State
     operations,
+    filteredOperations,
 
     // Computed
     totalOperations,

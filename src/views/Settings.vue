@@ -1,20 +1,14 @@
 <template>
-  <div class="h-screen flex flex-col pt-0 bg-gray-50 dark:bg-gray-900" :style="{ fontFamily: appStore.fontFamilies.general, fontSize: appStore.fontSizes.main + 'px' }">
-    <!-- Header -->
-    <Header />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- App Sidebar (The main navigation) -->
-      <div 
-        class="transition-all duration-300 ease-in-out overflow-hidden"
-        :class="!appStore.projectManagerMode ? 'w-auto opacity-100' : 'w-0 opacity-0'"
-      >
-         <Sidebar class="h-full" />
+  <MainLayout>
+    <template #toolbar>
+      <div class="flex items-center gap-2">
+        <SettingsIcon class="w-4 h-4 text-primary-500" />
+        <span class="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{{ $t('settings.title') }}</span>
       </div>
-      
-      <!-- Settings Workspace -->
-      <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
+    </template>
+
+    <!-- Settings Workspace -->
+    <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
         <!-- Settings Category Sidebar -->
         <div class="w-64 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-md flex flex-col shrink-0">
           <!-- Back to Project Button (Moved to Top) -->
@@ -93,21 +87,22 @@
 
                            <div class="flex-1 mr-8">
                               <div class="flex items-center gap-2 mb-3">
-                                 <div class="px-2 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 uppercase tracking-widest">
+                                 <div class="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500 text-white dark:bg-amber-500/20 dark:text-amber-300 uppercase tracking-widest flex items-center gap-1">
+                                    <Clock class="w-2.5 h-2.5 fill-current" />
                                     COMING SOON
                                  </div>
                               </div>
-                              <h3 class="text-xl font-black text-gray-400 dark:text-gray-600 mb-2 tracking-tight transition-colors">Project Focus Mode</h3>
-                              <p class="text-xs text-gray-500 dark:text-gray-600 leading-relaxed font-medium">
+                              <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight transition-colors">Project Focus Mode</h3>
+                              <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
                                  Hide the sidebar and header clutter to maximize your workspace. 
                                  Perfect for managing complex connection matrices on smaller screens.
                               </p>
                            </div>
 
-                           <div class="flex flex-col items-center gap-3 relative z-20 opacity-50 grayscale cursor-not-allowed">
+                           <div class="flex flex-col items-center gap-3 relative z-20 opacity-60">
                               <button 
                                  disabled
-                                 class="relative w-20 h-10 rounded-full transition-all duration-300 focus:outline-none shadow-inner bg-gray-200 dark:bg-gray-800"
+                                 class="relative w-20 h-10 rounded-full transition-all duration-300 focus:outline-none shadow-inner bg-gray-200 dark:bg-gray-800 cursor-not-allowed grayscale"
                               >
                                  <div 
                                     class="absolute top-1 left-1 bg-white w-8 h-8 rounded-full shadow-lg transform transition-transform duration-300 flex items-center justify-center border border-gray-100 translate-x-0"
@@ -115,8 +110,8 @@
                                     <Minimize class="w-4 h-4 text-gray-400" />
                                  </div>
                               </button>
-                               <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
-                                  Disabled
+                               <span class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500">
+                                  In Development
                                </span>
                            </div>
                         </div>
@@ -641,7 +636,6 @@
           </div>
         </div>
       </main>
-    </div>
 
     <!-- Reset Data Confirmation Modal (Pro Style) -->
     <div v-if="showResetModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -733,7 +727,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
@@ -766,10 +760,10 @@ import {
   Columns as ColumnsIcon,
   RefreshCw,
   GitCompare,
-  Cpu
+  Cpu,
+  Clock
 } from 'lucide-vue-next'
-import Sidebar from '@/components/general/Sidebar.vue'
-import Header from '@/components/general/Header.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import BackupManager from '@/components/general/BackupManager.vue'
 import ConnectionTemplateManager from '@/components/connection/ConnectionTemplateManager.vue'
 import { useConnectionPairsStore } from '@/stores/connectionPairs'

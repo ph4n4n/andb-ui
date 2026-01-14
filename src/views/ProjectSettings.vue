@@ -1,15 +1,14 @@
 <template>
-  <div class="h-screen flex flex-col pt-0 bg-gray-50 dark:bg-gray-900" :style="{ fontFamily: appStore.fontFamilies.general, fontSize: appStore.fontSizes.main + 'px' }">
-    <!-- Header -->
-    <Header />
+  <MainLayout>
+    <template #toolbar>
+      <div class="flex items-center gap-2">
+        <Layers class="w-4 h-4 text-primary-500" />
+        <span class="text-xs font-black uppercase tracking-[0.2em] text-gray-500">{{ $t('settings.project_settings') }}</span>
+      </div>
+    </template>
 
-    <!-- Main Content Area -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- App Sidebar (The main navigation) -->
-      <Sidebar />
-      
-      <!-- Settings Workspace -->
-      <main class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
+    <!-- Settings Workspace -->
+    <div class="flex-1 flex overflow-hidden bg-white dark:bg-gray-900">
         <!-- Settings Category Sidebar -->
         <div class="w-64 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 backdrop-blur-md flex flex-col shrink-0">
           <div class="p-8 pb-4">
@@ -63,7 +62,7 @@
                   <p class="text-xs text-gray-500 font-medium uppercase tracking-widest opacity-70">{{ $t('settings.environment.subtitle') }}</p>
                 </div>
               </div>
-              <EnvironmentManager />
+              <EnvironmentManager @show-connection-manager="activeCategory = 'connections'" />
             </div>
 
             <!-- CONNECTIONS SECTION -->
@@ -172,7 +171,6 @@
 
           </div>
         </div>
-      </main>
     </div>
 
     <!-- Reset Data Confirmation Modal (Pro Style) -->
@@ -264,8 +262,8 @@
           </button>
         </div>
       </div>
-    </div>
-  </div>
+      </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
@@ -285,8 +283,7 @@ import {
   Cpu,
   Shield
 } from 'lucide-vue-next'
-import Sidebar from '@/components/general/Sidebar.vue'
-import Header from '@/components/general/Header.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import EnvironmentManager from '@/components/connection/EnvironmentManager.vue'
 import ConnectionPairManager from '@/components/connection/ConnectionPairManager.vue'
 import ConnectionManager from '@/components/connection/ConnectionManager.vue'
@@ -309,9 +306,8 @@ const categories = computed(() => {
   const projectCats = [
     { id: 'environment', label: t('settings.categories.environment'), icon: Globe2 },
     { id: 'connections', label: t('settings.categories.connections'), icon: Link2 },
-    { id: 'connection-template', label: 'Connection Template', icon: Link2 },
     { id: 'pairs', label: t('settings.categories.pairs'), icon: GitCompare },
-    { id: 'engine', label: 'Engine', icon: Cpu }
+    { id: 'engine', label: t('settings.categories.engine'), icon: Cpu }
   ]
   
   return projectCats.map(c => ({ ...c, type: 'project' }))

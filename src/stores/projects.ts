@@ -52,22 +52,24 @@ export const useProjectsStore = defineStore('projects', () => {
       })
     }
 
-    // 3. Ensure Miller Sample (Always for now to test)
-    if (!projects.value.some(p => p.id === 'miller-sample-blueprint')) {
-      projects.value.unshift({
-        id: 'miller-sample-blueprint',
-        name: '✨ Miller Blueprint Sample',
-        description: 'Mock data for Miller Column testing',
-        connectionIds: [],
-        pairIds: [],
-        enabledEnvironmentIds: ['DEV'],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-    }
+
 
     // 4. Set Selection
     const lastSelected = await storage.get('settings').then(s => s?.lastSelectedProjectId)
+
+    // 5. Data Sanitization (Fix duplicate IDs from previous bugs)
+    // If multiple projects share 'default' ID, only the first one stays 'default'
+    let defaultCount = 0
+    projects.value = projects.value.map(p => {
+      if (p.id === 'default') {
+        defaultCount++
+        if (defaultCount > 1) {
+          return { ...p, id: generateId() }
+        }
+      }
+      return p
+    })
+
     if (lastSelected && projects.value.some(p => p.id === lastSelected)) {
       selectedProjectId.value = lastSelected
     } else {
@@ -99,10 +101,24 @@ export const useProjectsStore = defineStore('projects', () => {
     return projects.value.find(p => p.id === selectedProjectId.value) || null
   })
 
+  /**
+   * Safe UUID generator with fallbacks
+   */
+  const generateId = () => {
+    try {
+      if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+        return window.crypto.randomUUID()
+      }
+      return 'p-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9)
+    } catch (e) {
+      return 'p-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9)
+    }
+  }
+
   // Actions
   function addProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Project {
     const newProject: Project = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...project
@@ -125,9 +141,15 @@ export const useProjectsStore = defineStore('projects', () => {
 
   const removeProject = (id: string) => {
     if (id === 'default') return // Cannot remove default project
+
+    // Check if we are deleting the currently selected project
+    const wasSelected = selectedProjectId.value === id
+
     projects.value = projects.value.filter(p => p.id !== id)
-    if (selectedProjectId.value === id) {
-      selectedProjectId.value = 'default'
+
+    if (wasSelected) {
+      // Find another project to select, or fallback to default
+      selectedProjectId.value = projects.value[0]?.id || 'default'
     }
   }
 
@@ -135,6 +157,22 @@ export const useProjectsStore = defineStore('projects', () => {
     if (projects.value.some(p => p.id === id)) {
       selectedProjectId.value = id
     }
+  }
+
+  const duplicateProject = (id: string) => {
+    const source = projects.value.find(p => p.id === id)
+    if (!source) return
+
+    const newProject: Project = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: generateId(), // OVERWRITE the ID from source
+      name: `${source.name} (Copy)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    projects.value.push(newProject)
+    return newProject
   }
 
   const addItemToProject = (type: 'connection' | 'pair', itemId: string) => {
@@ -165,6 +203,7 @@ export const useProjectsStore = defineStore('projects', () => {
     currentProject,
     addProject,
     updateProject,
+    duplicateProject,
     removeProject,
     selectProject,
     addItemToProject,

@@ -6,7 +6,7 @@
       </h3>
       <div class="flex items-center gap-2">
         <button
-          @click="showConnectionManager"
+          @click="showConnectionManager()"
           class="btn btn-secondary flex items-center"
         >
           <Database class="w-4 h-4 mr-2" />
@@ -69,13 +69,17 @@
                 {{ getEnvironmentType(env.name) }}
               </span>
 
-              <!-- Connection Count -->
-              <div class="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
-                <Database class="w-3 h-3 text-gray-500" />
-                <span class="text-xs text-gray-600 dark:text-gray-400">
+              <!-- Connection Count (Clickable to jump to connections) -->
+              <button 
+                @click="showConnectionManager(env.name)"
+                class="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 rounded-full transition-all group/badge"
+                title="View Connections"
+              >
+                <Database class="w-3 h-3 text-gray-500 group-hover/badge:text-primary-500" />
+                <span class="text-xs text-gray-600 dark:text-gray-400 group-hover/badge:text-primary-600">
                   {{ getConnectionCount(env.name) }}
                 </span>
-              </div>
+              </button>
 
               <!-- Actions -->
               <div class="flex items-center space-x-2">
@@ -154,11 +158,11 @@ const toggleEnv = (envId: string, isChecked: boolean) => {
 }
 
 const emit = defineEmits<{
-  showConnectionManager: []
+  showConnectionManager: [envName?: string]
 }>()
 
-const showConnectionManager = () => {
-  emit('showConnectionManager')
+const showConnectionManager = (envName?: string) => {
+  emit('showConnectionManager', envName)
 }
 
 const getConnectionCount = (environmentName: string) => {

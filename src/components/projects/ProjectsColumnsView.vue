@@ -390,6 +390,9 @@ const handleAbstractSelect = async (node: MillerNode, level: number, skipFetch?:
               ddl: typeDict[tableName] || `/* DDL not found for ${tableName} */` 
             }))
           }
+        } else {
+            // Auto fetch if no data in cache
+            refreshConnection(node)
         }
       } catch (e) {
         console.error('Failed to load database overview:', e)
@@ -525,6 +528,7 @@ const addNewProject = async () => {
     })
     // Ensure reactivity settled
     await nextTick()
+    projectsStore.selectProject(newP.id)
     await navStore.loadRoot(newP.id)
 }
 
